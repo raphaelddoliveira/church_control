@@ -1,0 +1,75 @@
+// Export pages
+export '/pastor/pastor_financas/pastor_financas_widget.dart'
+    show PastorFinancasWidget;
+export '/pastor/page_membros_pastor/page_membros_pastor_widget.dart'
+    show PageMembrosPastorWidget;
+export '/secretaria/page_membros_secretaria/page_membros_secretaria_widget.dart'
+    show PageMembrosSecretariaWidget;
+export '/pastor/homepage_pastor/homepage_pastor_widget.dart'
+    show HomepagePastorWidget;
+export '/secretaria/page_ministerios_secretaria/page_ministerios_secretaria_widget.dart'
+    show PageMinisteriosSecretariaWidget;
+export '/admin/page_ministerios_admin/page_ministerios_admin_widget.dart'
+    show PageMinisteriosAdminWidget;
+export '/secretaria/page_membros_detalhes_secretaria/page_membros_detalhes_secretaria_widget.dart'
+    show PageMembrosDetalhesSecretariaWidget;
+export '/lider/homepage_lider/homepage_lider_widget.dart'
+    show HomepageLiderWidget;
+export '/secretaria/page_membros_novo_secretaria/page_membros_novo_secretaria_widget.dart'
+    show PageMembrosNovoSecretariaWidget;
+export '/secretaria/page_home_secretaria/page_home_secretaria_widget.dart'
+    show PageHomeSecretariaWidget;
+export '/pastor/page_ministerios_pastor/page_ministerios_pastor_widget.dart'
+    show PageMinisteriosPastorWidget;
+export '/secretaria/page_ministerio_detalhes_secretaria/page_ministerio_detalhes_secretaria_widget.dart'
+    show PageMinisterioDetalhesSecretariaWidget;
+export '/pastor/page_ministerio_detalhes_pastor/page_ministerio_detalhes_pastor_widget.dart'
+    show PageMinisterioDetalhesPastorWidget;
+export '/pastor/page_membros_detalhes_pastor/page_membros_detalhes_pastor_widget.dart'
+    show PageMembrosDetalhesPastorWidget;
+export '/admin/page_membros_admin/page_membros_admin_widget.dart'
+    show PageMembrosAdminWidget;
+export '/admin/page_membros_admin_detalhes/page_membros_admin_detalhes_widget.dart'
+    show PageMembrosAdminDetalhesWidget;
+export '/admin/page_ministerios_admin_detalhes/page_ministerios_admin_detalhes_widget.dart'
+    show PageMinisteriosAdminDetalhesWidget;
+export '/lider/page_ministerios_lider/page_ministerios_lider_widget.dart'
+    show PageMinisteriosLiderWidget;
+export '/lider/page_cria_escala_lider/page_cria_escala_lider_widget.dart'
+    show PageCriaEscalaLiderWidget;
+export '/admin/home_page_admin/home_page_admin_widget.dart'
+    show HomePageAdminWidget;
+export '/pages/login_teste/login_teste_widget.dart' show LoginTesteWidget;
+export '/admin/page_ministerio_admin_novo/page_ministerio_admin_novo_widget.dart'
+    show PageMinisterioAdminNovoWidget;
+export '/paginadetransicao/paginadetransicao_widget.dart'
+    show PaginadetransicaoWidget;
+export '/secretaria/page_membro_secretaria_min/page_membro_secretaria_min_widget.dart'
+    show PageMembroSecretariaMinWidget;
+export '/lider/page_membro_lider_min/page_membro_lider_min_widget.dart'
+    show PageMembroLiderMinWidget;
+export '/lider/page_escala_lider_membro/page_escala_lider_membro_widget.dart'
+    show PageEscalaLiderMembroWidget;
+export '/lider/pageescalacriada/pageescalacriada_widget.dart'
+    show PageescalacriadaWidget;
+export '/lider/page_ministerio_detalhes_lider/page_ministerio_detalhes_lider_widget.dart'
+    show PageMinisterioDetalhesLiderWidget;
+export '/recuperacaode_senha/recuperacaode_senha_widget.dart'
+    show RecuperacaodeSenhaWidget;
+export '/secretaria/page_membros_editar_detalhes_secretaria/page_membros_editar_detalhes_secretaria_widget.dart'
+    show PageMembrosEditarDetalhesSecretariaWidget;
+export '/admin/page_ministerio_admin_editar/page_ministerio_admin_editar_widget.dart'
+    show PageMinisterioAdminEditarWidget;
+export '/page_membro/page_membro_widget.dart' show PageMembroWidget;
+export '/page_membro/page_membros_nova_widget.dart' show PageMembrosNovaWidget;
+export '/home07_invoices/home07_invoices_widget.dart' show Home07InvoicesWidget;
+export '/home26_list_features/home26_list_features_widget.dart'
+    show Home26ListFeaturesWidget;
+export '/secretaria/page_avisos_secretaria/page_avisos_secretaria_widget.dart'
+    show PageAvisosSecretariaWidget;
+export '/secretaria/page_novo_aviso_secretaria/page_novo_aviso_secretaria_widget.dart'
+    show PageNovoAvisoSecretariaWidget;
+export '/seleciona_perfil/seleciona_perfil_widget.dart'
+    show SelecionaPerfilWidget;
+export '/registro_membro/registro_membro_widget.dart'
+    show RegistroMembroWidget;

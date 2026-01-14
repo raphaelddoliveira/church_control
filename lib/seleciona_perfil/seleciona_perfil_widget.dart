@@ -1,0 +1,364 @@
+import '/auth/supabase_auth/auth_util.dart';
+import '/backend/supabase/supabase.dart';
+import '/flutter_flow/flutter_flow_theme.dart';
+import '/flutter_flow/flutter_flow_util.dart';
+import '/flutter_flow/flutter_flow_widgets.dart';
+import '/index.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'seleciona_perfil_model.dart';
+export 'seleciona_perfil_model.dart';
+
+class SelecionaPerfilWidget extends StatefulWidget {
+  const SelecionaPerfilWidget({super.key});
+
+  static String routeName = 'SelecionaPerfil';
+  static String routePath = '/selecionaPerfil';
+
+  @override
+  State<SelecionaPerfilWidget> createState() => _SelecionaPerfilWidgetState();
+}
+
+class _SelecionaPerfilWidgetState extends State<SelecionaPerfilWidget> {
+  late SelecionaPerfilModel _model;
+  final scaffoldKey = GlobalKey<ScaffoldState>();
+  MembrosRow? _membroAtual;
+
+  @override
+  void initState() {
+    super.initState();
+    _model = createModel(context, () => SelecionaPerfilModel());
+
+    // Buscar dados do membro atual
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      final membros = await MembrosTable().queryRows(
+        queryFn: (q) => q.eqOrNull('id_auth', currentUserUid),
+      );
+
+      final membro = membros.firstOrNull;
+
+      setState(() {
+        _membroAtual = membro;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _model.dispose();
+    super.dispose();
+  }
+
+  String _getNomeAreaAdmin() {
+    switch (_membroAtual?.idNivelAcesso) {
+      case 1:
+        return 'Secretaria';
+      case 3:
+        return 'Administração';
+      case 4:
+        return 'Pastor';
+      case 6:
+        return 'Líder';
+      default:
+        return 'Administrativo';
+    }
+  }
+
+  void _navegarParaAreaAdmin() {
+    switch (_membroAtual?.idNivelAcesso) {
+      case 1:
+        context.pushReplacementNamed(PageHomeSecretariaWidget.routeName);
+        break;
+      case 3:
+        context.pushReplacementNamed(HomePageAdminWidget.routeName);
+        break;
+      case 4:
+        context.pushReplacementNamed(HomepagePastorWidget.routeName);
+        break;
+      case 6:
+        context.pushReplacementNamed(HomepageLiderWidget.routeName);
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      child: Scaffold(
+        key: scaffoldKey,
+        backgroundColor: Color(0xFF0A0A0A),
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF0A0A0A),
+                Color(0xFF1A1A1A),
+                Color(0xFF0A0A0A),
+              ],
+            ),
+          ),
+          child: SafeArea(
+            top: true,
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo e título modernos
+                Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(24.0, 0.0, 24.0, 48.0),
+                  child: Column(
+                    children: [
+                      // Logo com glassmorphism
+                      Container(
+                        width: 100.0,
+                        height: 100.0,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [
+                              FlutterFlowTheme.of(context).primary,
+                              FlutterFlowTheme.of(context).secondary,
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: FlutterFlowTheme.of(context).primary.withOpacity(0.3),
+                              blurRadius: 30.0,
+                              spreadRadius: 10.0,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.church_rounded,
+                          color: Colors.white,
+                          size: 50.0,
+                        ),
+                      ),
+                      SizedBox(height: 24.0),
+                      Text(
+                        'ChurchControl',
+                        style: FlutterFlowTheme.of(context).displaySmall.override(
+                              font: GoogleFonts.poppins(),
+                              color: Colors.white,
+                              fontSize: 32.0,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -1.0,
+                            ),
+                      ),
+                      SizedBox(height: 12.0),
+                      Text(
+                        'Olá, ${_membroAtual?.nomeMembro ?? 'Usuário'}! 👋',
+                        style: FlutterFlowTheme.of(context).headlineSmall.override(
+                              font: GoogleFonts.inter(),
+                              color: Color(0xFFE0E0E0),
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.0,
+                            ),
+                      ),
+                      SizedBox(height: 8.0),
+                      Text(
+                        'Como você gostaria de continuar?',
+                        style: FlutterFlowTheme.of(context).bodyLarge.override(
+                              font: GoogleFonts.inter(),
+                              color: Color(0xFF999999),
+                              letterSpacing: 0.0,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // Cards de seleção modernos
+              Padding(
+                padding: EdgeInsetsDirectional.fromSTEB(24.0, 0.0, 24.0, 0.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Card Área Administrativa
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _navegarParaAreaAdmin(),
+                        child: Container(
+                          height: 280.0,
+                          constraints: BoxConstraints(maxWidth: 350.0),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                FlutterFlowTheme.of(context).secondary.withOpacity(0.1),
+                                Color(0xFF1A1A1A),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(24.0),
+                            border: Border.all(
+                              color: FlutterFlowTheme.of(context).secondary.withOpacity(0.3),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: FlutterFlowTheme.of(context).secondary.withOpacity(0.15),
+                                blurRadius: 20.0,
+                                offset: Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(36.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 80.0,
+                                  height: 80.0,
+                                  decoration: BoxDecoration(
+                                    color: FlutterFlowTheme.of(context).secondary.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(20.0),
+                                  ),
+                                  child: Icon(
+                                    Icons.admin_panel_settings_rounded,
+                                    color: FlutterFlowTheme.of(context).secondary,
+                                    size: 40.0,
+                                  ),
+                                ),
+                                SizedBox(height: 20.0),
+                                Text(
+                                  _getNomeAreaAdmin(),
+                                  style: FlutterFlowTheme.of(context)
+                                      .headlineMedium
+                                      .override(
+                                        font: GoogleFonts.poppins(),
+                                        color: Colors.white,
+                                        fontSize: 22.0,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: -0.5,
+                                      ),
+                                ),
+                                SizedBox(height: 10.0),
+                                Text(
+                                  'Ferramentas\nadministrativas',
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  style: FlutterFlowTheme.of(context)
+                                      .bodyMedium
+                                      .override(
+                                        font: GoogleFonts.inter(),
+                                        color: Color(0xFFAAAAAA),
+                                        fontSize: 14.0,
+                                        letterSpacing: 0.0,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(width: 20.0),
+
+                    // Card Área de Membro
+                    Expanded(
+                      child: InkWell(
+                        onTap: () {
+                          context.pushReplacementNamed(
+                              PageMembrosNovaWidget.routeName);
+                        },
+                        child: Container(
+                          height: 280.0,
+                          constraints: BoxConstraints(maxWidth: 350.0),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                FlutterFlowTheme.of(context).primary.withOpacity(0.15),
+                                Color(0xFF1A1A1A),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(24.0),
+                            border: Border.all(
+                              color: FlutterFlowTheme.of(context).primary.withOpacity(0.4),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: FlutterFlowTheme.of(context).primary.withOpacity(0.2),
+                                blurRadius: 20.0,
+                                offset: Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(36.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 80.0,
+                                  height: 80.0,
+                                  decoration: BoxDecoration(
+                                    color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(20.0),
+                                  ),
+                                  child: Icon(
+                                    Icons.person_rounded,
+                                    color: FlutterFlowTheme.of(context).primary,
+                                    size: 40.0,
+                                  ),
+                                ),
+                                SizedBox(height: 20.0),
+                                Text(
+                                  'Área do Membro',
+                                  style: FlutterFlowTheme.of(context)
+                                      .headlineMedium
+                                      .override(
+                                        font: GoogleFonts.poppins(),
+                                        color: Colors.white,
+                                        fontSize: 22.0,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: -0.5,
+                                      ),
+                                ),
+                                SizedBox(height: 10.0),
+                                Text(
+                                  'Avisos, eventos e\ninformações',
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  style: FlutterFlowTheme.of(context)
+                                      .bodyMedium
+                                      .override(
+                                        font: GoogleFonts.inter(),
+                                        color: Color(0xFFAAAAAA),
+                                        fontSize: 14.0,
+                                        letterSpacing: 0.0,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        ),
+      ),
+    );
+  }
+}

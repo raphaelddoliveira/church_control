@@ -1,0 +1,38 @@
+export '../../../flutter_flow/lat_lng.dart';
+export 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+
+export '../supabase.dart';
+export 'row.dart';
+export 'table.dart';
+
+export 'tables/vw_saidas_mes_atual.dart';
+export 'tables/arquivos.dart';
+export 'tables/niveis_acesso.dart';
+export 'tables/soma_entradas_por_mes.dart';
+export 'tables/ministerio.dart';
+export 'tables/historico_transacoes.dart';
+export 'tables/quantidade_entradas.dart';
+export 'tables/membros_escalas.dart';
+export 'tables/endereco.dart';
+export 'tables/membros_por_mes.dart';
+export 'tables/organizacao.dart';
+export 'tables/view_fluxo_financeiro_projetado.dart';
+export 'tables/vw_escalas_ativas.dart';
+export 'tables/cidade.dart';
+export 'tables/caixa.dart';
+export 'tables/resumo_financeiro.dart';
+export 'tables/view_qtd_membros_por_escala.dart';
+export 'tables/vw_estatistica_escalas_mensal.dart';
+export 'tables/soma_despesas_por_mes.dart';
+export 'tables/membros.dart';
+export 'tables/membros_ministerios.dart';
+export 'tables/escalas.dart';
+export 'tables/telefone.dart';
+export 'tables/saida_financeira.dart';
+export 'tables/vw_criacoes_mes_atual.dart';
+export 'tables/users.dart';
+export 'tables/estado.dart';
+export 'tables/entrada_financeira.dart';
+export 'tables/vw_participacoes_mes.dart';
+export 'tables/aviso.dart';
+export 'tables/curtidas.dart';

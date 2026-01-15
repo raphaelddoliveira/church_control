@@ -75,3 +75,7 @@ export '/seleciona_perfil/seleciona_perfil_widget.dart'
     show SelecionaPerfilWidget;
 export '/registro_membro/registro_membro_widget.dart'
     show RegistroMembroWidget;
+export '/secretaria/page_nova_celula_secretaria/page_nova_celula_secretaria_widget.dart'
+    show PageNovaCelulaSecretariaWidget;
+export '/secretaria/page_celula_detalhes_secretaria/page_celula_detalhes_secretaria_widget.dart'
+    show PageCelulaDetalhesSecretariaWidget;

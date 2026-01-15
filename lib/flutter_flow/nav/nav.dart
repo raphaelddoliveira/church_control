@@ -427,6 +427,22 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           name: RegistroMembroWidget.routeName,
           path: RegistroMembroWidget.routePath,
           builder: (context, params) => RegistroMembroWidget(),
+        ),
+        FFRoute(
+          name: PageNovaCelulaSecretariaWidget.routeName,
+          path: PageNovaCelulaSecretariaWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageNovaCelulaSecretariaWidget(
+            celulaId: params.getParam('celulaId', ParamType.int),
+          ),
+        ),
+        FFRoute(
+          name: PageCelulaDetalhesSecretariaWidget.routeName,
+          path: PageCelulaDetalhesSecretariaWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageCelulaDetalhesSecretariaWidget(
+            celulaId: params.getParam('celulaId', ParamType.int)!,
+          ),
         )
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );

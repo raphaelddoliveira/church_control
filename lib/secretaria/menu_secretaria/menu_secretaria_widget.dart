@@ -55,7 +55,7 @@ class _MenuSecretariaWidgetState extends State<MenuSecretariaWidget> {
         Padding(
           padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
           child: Container(
-            width: MediaQuery.sizeOf(context).width * 1.0,
+            width: 250.0,
             height: 500.0,
             decoration: BoxDecoration(
               color: Color(0xFF3C3D3E),
@@ -390,7 +390,7 @@ class _MenuSecretariaWidgetState extends State<MenuSecretariaWidget> {
         Padding(
           padding: EdgeInsetsDirectional.fromSTEB(8.0, 8.0, 8.0, 8.0),
           child: Container(
-            width: MediaQuery.sizeOf(context).width * 1.0,
+            width: 250.0,
             height: 80.0,
             decoration: BoxDecoration(
               color: Color(0xFF3C3D3E),

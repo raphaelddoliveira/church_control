@@ -46,28 +46,52 @@ class _PageCelulasSecretariaWidgetState
       },
       child: Scaffold(
         key: scaffoldKey,
-        backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        body: SafeArea(
-          top: true,
+        backgroundColor: Color(0xFF14181B),
+        body: Container(
+          width: MediaQuery.sizeOf(context).width * 1.0,
+          height: MediaQuery.sizeOf(context).height * 1.0,
+          decoration: BoxDecoration(
+            color: Color(0xFF14181B),
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Menu lateral
-              wrapWithModel(
-                model: _model.menuSecretariaModel,
-                updateCallback: () => setState(() {}),
-                child: MenuSecretariaWidget(),
-              ),
+              if (responsiveVisibility(
+                context: context,
+                phone: false,
+                tablet: false,
+                tabletLandscape: false,
+              ))
+                Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
+                  child: Container(
+                    width: 250.0,
+                    height: MediaQuery.sizeOf(context).height * 1.0,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3C3D3E),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: wrapWithModel(
+                      model: _model.menuSecretariaModel,
+                      updateCallback: () => safeSetState(() {}),
+                      child: MenuSecretariaWidget(),
+                    ),
+                  ),
+                ),
 
               // Conteúdo principal
               Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: FlutterFlowTheme.of(context).primaryBackground,
-                  ),
-                  child: SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
+                  child: Container(
+                    width: 100.0,
+                    height: MediaQuery.sizeOf(context).height * 1.0,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3C3D3E),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.max,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +125,9 @@ class _PageCelulasSecretariaWidgetState
                               ),
                               FFButtonWidget(
                                 onPressed: () {
-                                  // TODO: Navegar para página de criar célula
+                                  context.pushNamed(
+                                    'PageNovaCelulaSecretaria',
+                                  );
                                 },
                                 text: 'Nova Célula',
                                 icon: Icon(
@@ -270,6 +296,7 @@ class _PageCelulasSecretariaWidgetState
                                       final numParticipantes = item['numParticipantes'] as int;
 
                                       return _buildCelulaCard(
+                                        celulaId: celula.id,
                                         nome: celula.nomeCelula ?? 'Célula sem nome',
                                         lider: lider?.nomeMembro ?? 'Sem líder',
                                         numParticipantes: numParticipantes,
@@ -288,11 +315,12 @@ class _PageCelulasSecretariaWidgetState
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildStatCard({
@@ -349,6 +377,7 @@ class _PageCelulasSecretariaWidgetState
   }
 
   Widget _buildCelulaCard({
+    required int celulaId,
     required String nome,
     required String lider,
     required int numParticipantes,
@@ -367,7 +396,12 @@ class _PageCelulasSecretariaWidgetState
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // TODO: Navegar para detalhes da célula
+            context.pushNamed(
+              'PageCelulaDetalhesSecretaria',
+              queryParameters: {
+                'celulaId': serializeParam(celulaId, ParamType.int),
+              },
+            );
           },
           borderRadius: BorderRadius.circular(16.0),
           child: Padding(

@@ -125,6 +125,12 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => PageMinisteriosSecretariaWidget(),
         ),
         FFRoute(
+          name: PageCelulasSecretariaWidget.routeName,
+          path: PageCelulasSecretariaWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageCelulasSecretariaWidget(),
+        ),
+        FFRoute(
           name: PageMinisteriosAdminWidget.routeName,
           path: PageMinisteriosAdminWidget.routePath,
           requireAuth: true,

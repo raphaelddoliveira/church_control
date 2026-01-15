@@ -56,7 +56,7 @@ class _MenuSecretariaWidgetState extends State<MenuSecretariaWidget> {
           padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
           child: Container(
             width: MediaQuery.sizeOf(context).width * 1.0,
-            height: 430.17,
+            height: 500.0,
             decoration: BoxDecoration(
               color: Color(0xFF3C3D3E),
               borderRadius: BorderRadius.circular(12.0),
@@ -297,6 +297,66 @@ class _MenuSecretariaWidgetState extends State<MenuSecretariaWidget> {
                                   8.0, 0.0, 0.0, 0.0),
                               child: Text(
                                 'Avisos',
+                                style: FlutterFlowTheme.of(context)
+                                    .bodyMedium
+                                    .override(
+                                      font: GoogleFonts.inter(
+                                        fontWeight: FontWeight.w500,
+                                        fontStyle: FlutterFlowTheme.of(context)
+                                            .bodyMedium
+                                            .fontStyle,
+                                      ),
+                                      color: FlutterFlowTheme.of(context)
+                                          .secondaryBackground,
+                                      fontSize: 14.0,
+                                      letterSpacing: 0.0,
+                                      fontWeight: FontWeight.w500,
+                                      fontStyle: FlutterFlowTheme.of(context)
+                                          .bodyMedium
+                                          .fontStyle,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 8.0),
+                  child: InkWell(
+                    splashColor: Colors.transparent,
+                    focusColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    onTap: () async {
+                      context.pushNamed(PageCelulasSecretariaWidget.routeName);
+                    },
+                    child: Container(
+                      width: MediaQuery.sizeOf(context).width * 1.0,
+                      height: 50.0,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF14181B),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: Padding(
+                        padding:
+                            EdgeInsetsDirectional.fromSTEB(8.0, 0.0, 8.0, 0.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          children: [
+                            Icon(
+                              Icons.groups_rounded,
+                              color: FlutterFlowTheme.of(context)
+                                  .secondaryBackground,
+                              size: 25.0,
+                            ),
+                            Padding(
+                              padding: EdgeInsetsDirectional.fromSTEB(
+                                  8.0, 0.0, 0.0, 0.0),
+                              child: Text(
+                                'Células',
                                 style: FlutterFlowTheme.of(context)
                                     .bodyMedium
                                     .override(

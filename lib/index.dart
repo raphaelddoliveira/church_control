@@ -19,6 +19,8 @@ export '/secretaria/page_membros_novo_secretaria/page_membros_novo_secretaria_wi
     show PageMembrosNovoSecretariaWidget;
 export '/secretaria/page_home_secretaria/page_home_secretaria_widget.dart'
     show PageHomeSecretariaWidget;
+export '/secretaria/page_celulas_secretaria/page_celulas_secretaria_widget.dart'
+    show PageCelulasSecretariaWidget;
 export '/pastor/page_ministerios_pastor/page_ministerios_pastor_widget.dart'
     show PageMinisteriosPastorWidget;
 export '/secretaria/page_ministerio_detalhes_secretaria/page_ministerio_detalhes_secretaria_widget.dart'

@@ -36,3 +36,5 @@ export 'tables/entrada_financeira.dart';
 export 'tables/vw_participacoes_mes.dart';
 export 'tables/aviso.dart';
 export 'tables/curtidas.dart';
+export 'tables/celula.dart';
+export 'tables/membros_celula.dart';

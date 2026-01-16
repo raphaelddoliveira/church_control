@@ -47,6 +47,19 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
     return ministerios.isNotEmpty;
   }
 
+  Future<bool> _temEscalasPendentes(String? idMembro) async {
+    if (idMembro == null) return false;
+
+    final membrosEscalas = await MembrosEscalasTable().queryRows(
+      queryFn: (q) => q.eqOrNull('id_membro', idMembro),
+    );
+
+    // Verifica se há alguma escala sem resposta (aceitou_escala é null ou vazio)
+    return membrosEscalas.any((me) =>
+      me.aceitouEscala == null || me.aceitouEscala!.isEmpty
+    );
+  }
+
   Future<List<AvisoRow>> _carregarAvisos() async {
     // Buscar todos os avisos
     var query = AvisoTable().queryRows(
@@ -545,35 +558,43 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                   return SizedBox.shrink();
                 }
 
-                return Container(
-                  height: 60.0,
-                  decoration: BoxDecoration(
-                    color: Color(0xFF1A1A1A),
-                    border: Border(
-                      top: BorderSide(
-                        color: Color(0xFF2A2A2A),
-                        width: 0.5,
+                return FutureBuilder<bool>(
+                  future: _temEscalasPendentes(membroAtual?.idMembro),
+                  builder: (context, snapshotPendentes) {
+                    final temPendentes = snapshotPendentes.data ?? false;
+
+                    return Container(
+                      height: 60.0,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF1A1A1A),
+                        border: Border(
+                          top: BorderSide(
+                            color: Color(0xFF2A2A2A),
+                            width: 0.5,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  child: SafeArea(
-                    top: false,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildNavItem(
-                          icon: Icons.home_rounded,
-                          label: 'Feed',
-                          index: 0,
+                      child: SafeArea(
+                        top: false,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildNavItem(
+                              icon: Icons.home_rounded,
+                              label: 'Feed',
+                              index: 0,
+                            ),
+                            _buildNavItem(
+                              icon: Icons.calendar_today_rounded,
+                              label: 'Escalas',
+                              index: 1,
+                              showBadge: temPendentes,
+                            ),
+                          ],
                         ),
-                        _buildNavItem(
-                          icon: Icons.calendar_today_rounded,
-                          label: 'Escalas',
-                          index: 1,
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
@@ -602,10 +623,25 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
         );
 
         if (escalas.isNotEmpty) {
+          final escala = escalas.first;
+
+          // Buscar o nome do ministério
+          String? nomeMinisterio;
+          if (escala.idMinisterio != null) {
+            final ministerios = await MinisterioTable().queryRows(
+              queryFn: (q) => q.eq('id_ministerio', escala.idMinisterio!),
+            );
+            if (ministerios.isNotEmpty) {
+              nomeMinisterio = ministerios.first.nomeMinisterio;
+            }
+          }
+
           escalasCompletas.add({
-            'escala': escalas.first,
+            'escala': escala,
             'funcao': membroEscala.funcaoEscala,
             'aceitou': membroEscala.aceitouEscala,
+            'nomeMinisterio': nomeMinisterio,
+            'idMembroEscala': membroEscala.idMembroEscala,
           });
         }
       }
@@ -624,12 +660,12 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
     return escalasCompletas;
   }
 
-  void _mostrarModalEscala(BuildContext context, EscalasRow escala, String? funcao, String? aceitou) {
+  void _mostrarModalEscala(BuildContext context, EscalasRow escala, String? funcao, String? aceitou, int idMembroEscala, String? nomeMinisterio) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (modalContext) {
         return Container(
           height: MediaQuery.of(context).size.height * 0.85,
           decoration: BoxDecoration(
@@ -676,7 +712,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(modalContext),
                       icon: Icon(Icons.close_rounded),
                       color: Color(0xFF999999),
                     ),
@@ -844,9 +880,14 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                           children: [
                             Expanded(
                               child: ElevatedButton.icon(
-                                onPressed: () {
-                                  // TODO: Aceitar convite
-                                  Navigator.pop(context);
+                                onPressed: () async {
+                                  // Aceitar escala
+                                  await MembrosEscalasTable().update(
+                                    data: {'aceitou_escala': 'sim'},
+                                    matchingRows: (rows) => rows.eq('id_membro_escala', idMembroEscala),
+                                  );
+                                  Navigator.pop(modalContext);
+                                  setState(() {});
                                 },
                                 icon: Icon(Icons.check_rounded, size: 20.0),
                                 label: Text(
@@ -869,9 +910,14 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                             SizedBox(width: 12.0),
                             Expanded(
                               child: ElevatedButton.icon(
-                                onPressed: () {
-                                  // TODO: Recusar convite
-                                  Navigator.pop(context);
+                                onPressed: () async {
+                                  // Recusar escala
+                                  await MembrosEscalasTable().update(
+                                    data: {'aceitou_escala': 'nao'},
+                                    matchingRows: (rows) => rows.eq('id_membro_escala', idMembroEscala),
+                                  );
+                                  Navigator.pop(modalContext);
+                                  setState(() {});
                                 },
                                 icon: Icon(Icons.close_rounded, size: 20.0),
                                 label: Text(
@@ -1031,109 +1077,143 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
           );
         }
 
-        return ListView.builder(
-          padding: EdgeInsets.all(16.0),
-          itemCount: escalasCompletas.length,
-          itemBuilder: (context, index) {
-            final item = escalasCompletas[index];
-            final escala = item['escala'] as EscalasRow;
-            final funcao = item['funcao'] as String?;
-            final aceitou = item['aceitou'] as String?;
-
-            return InkWell(
-              onTap: () {
-                _mostrarModalEscala(context, escala, funcao, aceitou);
-              },
-              child: Container(
-                margin: EdgeInsets.only(bottom: 16.0),
-                decoration: BoxDecoration(
-                  color: Color(0xFF1A1A1A),
-                  borderRadius: BorderRadius.circular(16.0),
-                  border: Border.all(
-                    color: Color(0xFF2A2A2A),
-                    width: 1.0,
-                  ),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Título "Escalas"
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+              child: Text(
+                'Escalas',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.bold,
                 ),
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      // Ícone
-                      Container(
-                        width: 48.0,
-                        height: 48.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.event_rounded,
-                          color: FlutterFlowTheme.of(context).primary,
-                          size: 24.0,
+              ),
+            ),
+            // Lista de escalas
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.all(16.0),
+                itemCount: escalasCompletas.length,
+                itemBuilder: (context, index) {
+                  final item = escalasCompletas[index];
+                  final escala = item['escala'] as EscalasRow;
+                  final funcao = item['funcao'] as String?;
+                  final aceitou = item['aceitou'] as String?;
+                  final nomeMinisterio = item['nomeMinisterio'] as String?;
+                  final idMembroEscala = item['idMembroEscala'] as int;
+
+                  return InkWell(
+                    onTap: () {
+                      _mostrarModalEscala(context, escala, funcao, aceitou, idMembroEscala, nomeMinisterio);
+                    },
+                    child: Container(
+                      margin: EdgeInsets.only(bottom: 16.0),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(16.0),
+                        border: Border.all(
+                          color: Color(0xFF2A2A2A),
+                          width: 1.0,
                         ),
                       ),
-                      SizedBox(width: 16.0),
-
-                      // Informações
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Row(
                           children: [
-                            Text(
-                              escala.nomeEscala ?? 'Escala',
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.w600,
+                            // Ícone
+                            Container(
+                              width: 48.0,
+                              height: 48.0,
+                              decoration: BoxDecoration(
+                                color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.event_rounded,
+                                color: FlutterFlowTheme.of(context).primary,
+                                size: 24.0,
                               ),
                             ),
-                            SizedBox(height: 4.0),
-                            Text(
-                              escala.dataHoraEscala != null
-                                  ? dateTimeFormat('dd/MM/yyyy - HH:mm', escala.dataHoraEscala)
-                                  : 'Data não informada',
-                              style: GoogleFonts.inter(
-                                color: Color(0xFF999999),
-                                fontSize: 14.0,
+                            SizedBox(width: 16.0),
+
+                            // Informações
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    escala.nomeEscala ?? 'Escala',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontSize: 16.0,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4.0),
+                                  // Nome do ministério
+                                  if (nomeMinisterio != null && nomeMinisterio.isNotEmpty) ...[
+                                    Text(
+                                      nomeMinisterio,
+                                      style: GoogleFonts.inter(
+                                        color: FlutterFlowTheme.of(context).primary,
+                                        fontSize: 13.0,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2.0),
+                                  ],
+                                  Text(
+                                    escala.dataHoraEscala != null
+                                        ? dateTimeFormat('dd/MM/yyyy - HH:mm', escala.dataHoraEscala)
+                                        : 'Data não informada',
+                                    style: GoogleFonts.inter(
+                                      color: Color(0xFF999999),
+                                      fontSize: 14.0,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
+
+                            // Status badge (se já respondeu)
+                            if (aceitou != null && aceitou.isNotEmpty)
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                                decoration: BoxDecoration(
+                                  color: aceitou == 'sim' ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20.0),
+                                  border: Border.all(
+                                    color: aceitou == 'sim' ? Colors.green : Colors.red,
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: Text(
+                                  aceitou == 'sim' ? 'Aceito' : 'Recusado',
+                                  style: GoogleFonts.inter(
+                                    color: aceitou == 'sim' ? Colors.green : Colors.red,
+                                    fontSize: 12.0,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              )
+                            else
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                color: Color(0xFF666666),
+                                size: 24.0,
+                              ),
                           ],
                         ),
                       ),
-
-                      // Status badge (se já respondeu)
-                      if (aceitou != null && aceitou.isNotEmpty)
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                          decoration: BoxDecoration(
-                            color: aceitou == 'sim' ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20.0),
-                            border: Border.all(
-                              color: aceitou == 'sim' ? Colors.green : Colors.red,
-                              width: 1.0,
-                            ),
-                          ),
-                          child: Text(
-                            aceitou == 'sim' ? 'Aceito' : 'Recusado',
-                            style: GoogleFonts.inter(
-                              color: aceitou == 'sim' ? Colors.green : Colors.red,
-                              fontSize: 12.0,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        )
-                      else
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          color: Color(0xFF666666),
-                          size: 24.0,
-                        ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ],
         );
       },
     );
@@ -1170,6 +1250,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
     required IconData icon,
     required String label,
     required int index,
+    bool showBadge = false,
   }) {
     final isSelected = _paginaAtual == index;
 
@@ -1184,10 +1265,32 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: isSelected ? FlutterFlowTheme.of(context).primary : Color(0xFF666666),
-              size: 22.0,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected ? FlutterFlowTheme.of(context).primary : Color(0xFF666666),
+                  size: 22.0,
+                ),
+                if (showBadge)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      width: 10.0,
+                      height: 10.0,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Color(0xFF1A1A1A),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             SizedBox(height: 2.0),
             Text(

@@ -33,6 +33,7 @@ tmpclaude-*-cwd
 .pub-cache/
 .pub/
 /build/
+!/build/web/
 
 # Firebase – this is necessary if you use Firebase since it could otherwise 
 # lead to leaking of private certificates to your repository, which is no bueno.

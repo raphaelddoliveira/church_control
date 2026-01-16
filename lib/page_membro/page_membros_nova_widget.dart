@@ -883,7 +883,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                                 onPressed: () async {
                                   // Aceitar escala
                                   await MembrosEscalasTable().update(
-                                    data: {'aceitou_escala': 'sim'},
+                                    data: {'aceitou_escala': 'aceito'},
                                     matchingRows: (rows) => rows.eq('id_membro_escala', idMembroEscala),
                                   );
                                   Navigator.pop(modalContext);
@@ -913,7 +913,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                                 onPressed: () async {
                                   // Recusar escala
                                   await MembrosEscalasTable().update(
-                                    data: {'aceitou_escala': 'nao'},
+                                    data: {'aceitou_escala': 'recusado'},
                                     matchingRows: (rows) => rows.eq('id_membro_escala', idMembroEscala),
                                   );
                                   Navigator.pop(modalContext);
@@ -943,10 +943,10 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                           width: double.infinity,
                           padding: EdgeInsets.symmetric(vertical: 16.0),
                           decoration: BoxDecoration(
-                            color: aceitou == 'sim' ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                            color: aceitou == 'aceito' ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12.0),
                             border: Border.all(
-                              color: aceitou == 'sim' ? Colors.green : Colors.red,
+                              color: aceitou == 'aceito' ? Colors.green : Colors.red,
                               width: 1.5,
                             ),
                           ),
@@ -954,15 +954,15 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                aceitou == 'sim' ? Icons.check_circle_rounded : Icons.cancel_rounded,
-                                color: aceitou == 'sim' ? Colors.green : Colors.red,
+                                aceitou == 'aceito' ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                                color: aceitou == 'aceito' ? Colors.green : Colors.red,
                                 size: 24.0,
                               ),
                               SizedBox(width: 12.0),
                               Text(
-                                aceitou == 'sim' ? 'Você aceitou esta escala' : 'Você recusou esta escala',
+                                aceitou == 'aceito' ? 'Você aceitou esta escala' : 'Você recusou esta escala',
                                 style: GoogleFonts.inter(
-                                  color: aceitou == 'sim' ? Colors.green : Colors.red,
+                                  color: aceitou == 'aceito' ? Colors.green : Colors.red,
                                   fontSize: 16.0,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -1183,17 +1183,17 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                               Container(
                                 padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
                                 decoration: BoxDecoration(
-                                  color: aceitou == 'sim' ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                                  color: aceitou == 'aceito' ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(20.0),
                                   border: Border.all(
-                                    color: aceitou == 'sim' ? Colors.green : Colors.red,
+                                    color: aceitou == 'aceito' ? Colors.green : Colors.red,
                                     width: 1.0,
                                   ),
                                 ),
                                 child: Text(
-                                  aceitou == 'sim' ? 'Aceito' : 'Recusado',
+                                  aceitou == 'aceito' ? 'Aceito' : 'Recusado',
                                   style: GoogleFonts.inter(
-                                    color: aceitou == 'sim' ? Colors.green : Colors.red,
+                                    color: aceitou == 'aceito' ? Colors.green : Colors.red,
                                     fontSize: 12.0,
                                     fontWeight: FontWeight.w600,
                                   ),

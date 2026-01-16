@@ -79,3 +79,7 @@ export '/secretaria/page_nova_celula_secretaria/page_nova_celula_secretaria_widg
     show PageNovaCelulaSecretariaWidget;
 export '/secretaria/page_celula_detalhes_secretaria/page_celula_detalhes_secretaria_widget.dart'
     show PageCelulaDetalhesSecretariaWidget;
+export '/lider/page_escalas_lider/page_escalas_lider_widget.dart'
+    show PageEscalasLiderWidget;
+export '/lider/page_escala_detalhes_lider/page_escala_detalhes_lider_widget.dart'
+    show PageEscalaDetalhesLiderWidget;

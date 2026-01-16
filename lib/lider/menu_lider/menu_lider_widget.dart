@@ -288,8 +288,23 @@ class _MenuLiderWidgetState extends State<MenuLiderWidget> {
                         hoverColor: Colors.transparent,
                         highlightColor: Colors.transparent,
                         onTap: () async {
-                          context
-                              .pushNamed(PageMinisteriosLiderWidget.routeName);
+                          // Buscar ministério do líder
+                          final idMembro = containerMembrosRow?.idMembro;
+                          if (idMembro == null) return;
+                          final ministerioRows = await MinisterioTable().queryRows(
+                            queryFn: (q) => q.eq('id_lider', idMembro),
+                          );
+                          if (ministerioRows.isNotEmpty) {
+                            context.pushNamed(
+                              PageEscalasLiderWidget.routeName,
+                              queryParameters: {
+                                'idministerio': serializeParam(
+                                  ministerioRows.first.idMinisterio,
+                                  ParamType.int,
+                                ),
+                              }.withoutNulls,
+                            );
+                          }
                         },
                         child: Container(
                           width: MediaQuery.sizeOf(context).width * 1.0,

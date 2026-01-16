@@ -5,11 +5,9 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/lider/menu_lider/menu_lider_widget.dart';
 import '/lider/menu_lider_mobile/menu_lider_mobile_widget.dart';
-import 'dart:ui';
 import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'page_ministerios_lider_model.dart';
 export 'page_ministerios_lider_model.dart';
 
@@ -30,18 +28,97 @@ class _PageMinisteriosLiderWidgetState
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
+  MembrosRow? _membro;
+  MinisterioRow? _ministerio;
+  List<EscalasRow> _escalas = [];
+  List<VwParticipacoesMesRow> _participacoes = [];
+  Map<int, int> _membrosCount = {};
+  int _totalMembrosMinisterio = 0;
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
     _model = createModel(context, () => PageMinisteriosLiderModel());
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
+    _carregarDados();
+  }
+
+  Future<void> _carregarDados() async {
+    try {
+      // Buscar membro logado
+      final membroRows = await MembrosTable().queryRows(
+        queryFn: (q) => q.eq('id_auth', currentUserUid),
+      );
+
+      MembrosRow? membro;
+      if (membroRows.isNotEmpty) {
+        membro = membroRows.first;
+      }
+
+      // Buscar ministério do líder
+      MinisterioRow? ministerio;
+      if (membro != null) {
+        final ministerioRows = await MinisterioTable().queryRows(
+          queryFn: (q) => q.eq('id_lider', membro!.idMembro),
+        );
+        if (ministerioRows.isNotEmpty) {
+          ministerio = ministerioRows.first;
+        }
+      }
+
+      // Buscar escalas do ministério
+      List<EscalasRow> escalas = [];
+      List<VwParticipacoesMesRow> participacoes = [];
+      Map<int, int> membrosCount = {};
+      int totalMembros = 0;
+
+      if (ministerio != null) {
+        // Buscar escalas
+        escalas = await EscalasTable().queryRows(
+          queryFn: (q) => q
+              .eq('id_ministerio', ministerio!.idMinisterio)
+              .order('data_hora_escala', ascending: false),
+        );
+
+        // Buscar participações no mês
+        participacoes = await VwParticipacoesMesTable().queryRows(
+          queryFn: (q) => q.eq('id_ministerio', ministerio!.idMinisterio),
+        );
+
+        // Contar membros por escala
+        for (var escala in escalas) {
+          final membrosEscala = await MembrosEscalasTable().queryRows(
+            queryFn: (q) => q.eq('id_escala', escala.idEscala),
+          );
+          membrosCount[escala.idEscala] = membrosEscala.length;
+        }
+
+        // Contar total de membros do ministério
+        final membrosMinisterio = await MembrosMinisteriosTable().queryRows(
+          queryFn: (q) => q.eq('id_ministerio', ministerio!.idMinisterio),
+        );
+        totalMembros = membrosMinisterio.length;
+      }
+
+      setState(() {
+        _membro = membro;
+        _ministerio = ministerio;
+        _escalas = escalas;
+        _participacoes = participacoes;
+        _membrosCount = membrosCount;
+        _totalMembrosMinisterio = totalMembros;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Erro ao carregar dados: $e');
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
   void dispose() {
     _model.dispose();
-
     super.dispose();
   }
 
@@ -64,6 +141,7 @@ class _PageMinisteriosLiderWidgetState
           child: Row(
             mainAxisSize: MainAxisSize.max,
             children: [
+              // Menu lateral
               if (responsiveVisibility(
                 context: context,
                 phone: false,
@@ -71,8 +149,7 @@ class _PageMinisteriosLiderWidgetState
                 tabletLandscape: false,
               ))
                 Padding(
-                  padding:
-                      EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
+                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
                   child: Container(
                     width: 250.0,
                     height: MediaQuery.sizeOf(context).height * 1.0,
@@ -87,1122 +164,563 @@ class _PageMinisteriosLiderWidgetState
                     ),
                   ),
                 ),
+
+              // Conteúdo principal
               Expanded(
                 child: Padding(
-                  padding:
-                      EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
-                  child: FutureBuilder<List<MembrosRow>>(
-                    future: MembrosTable().querySingleRow(
-                      queryFn: (q) => q.eqOrNull(
-                        'id_auth',
-                        currentUserUid,
-                      ),
+                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
+                  child: Container(
+                    width: 100.0,
+                    height: MediaQuery.sizeOf(context).height * 1.0,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3C3D3E),
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
-                    builder: (context, snapshot) {
-                      // Customize what your widget looks like when it's loading.
-                      if (!snapshot.hasData) {
-                        return Center(
-                          child: SizedBox(
-                            width: 50.0,
-                            height: 50.0,
+                    child: _isLoading
+                        ? Center(
                             child: CircularProgressIndicator(
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 FlutterFlowTheme.of(context).primary,
                               ),
                             ),
-                          ),
-                        );
-                      }
-                      List<MembrosRow> conteudoMembrosRowList = snapshot.data!;
-
-                      final conteudoMembrosRow =
-                          conteudoMembrosRowList.isNotEmpty
-                              ? conteudoMembrosRowList.first
-                              : null;
-
-                      return Container(
-                        width: 100.0,
-                        height: MediaQuery.sizeOf(context).height * 1.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF3C3D3E),
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: FutureBuilder<List<MinisterioRow>>(
-                          future: MinisterioTable().querySingleRow(
-                            queryFn: (q) => q.eqOrNull(
-                              'id_lider',
-                              conteudoMembrosRow?.idMembro,
-                            ),
-                          ),
-                          builder: (context, snapshot) {
-                            // Customize what your widget looks like when it's loading.
-                            if (!snapshot.hasData) {
-                              return Center(
-                                child: SizedBox(
-                                  width: 50.0,
-                                  height: 50.0,
-                                  child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      FlutterFlowTheme.of(context).primary,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                            List<MinisterioRow> columnMinisterioRowList =
-                                snapshot.data!;
-
-                            final columnMinisterioRow =
-                                columnMinisterioRowList.isNotEmpty
-                                    ? columnMinisterioRowList.first
-                                    : null;
-
-                            return SingleChildScrollView(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        8.0, 8.0, 8.0, 8.0),
-                                    child: Container(
-                                      width: MediaQuery.sizeOf(context).width *
-                                          1.0,
-                                      height: 90.0,
-                                      decoration: BoxDecoration(
-                                        color: Color(0x00FFFFFF),
-                                        borderRadius:
-                                            BorderRadius.circular(12.0),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Container(
-                                              width: 100.0,
-                                              height: 100.0,
-                                              decoration: BoxDecoration(
-                                                color: Color(0x00FFFFFF),
-                                              ),
-                                              child: Padding(
-                                                padding: EdgeInsetsDirectional
-                                                    .fromSTEB(
-                                                        0.0, 8.0, 0.0, 0.0),
-                                                child: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.max,
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      'Meu Ministério,',
-                                                      style: FlutterFlowTheme
-                                                              .of(context)
-                                                          .bodyMedium
-                                                          .override(
-                                                            font: GoogleFonts
-                                                                .inter(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                              fontStyle:
-                                                                  FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .bodyMedium
-                                                                      .fontStyle,
-                                                            ),
-                                                            color: FlutterFlowTheme
-                                                                    .of(context)
-                                                                .primaryBackground,
-                                                            letterSpacing: 0.0,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            fontStyle:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .bodyMedium
-                                                                    .fontStyle,
-                                                          ),
-                                                    ),
-                                                    Text(
-                                                      'PIB Santa Fé do Sul',
-                                                      style: FlutterFlowTheme
-                                                              .of(context)
-                                                          .bodyMedium
-                                                          .override(
-                                                            font: GoogleFonts
-                                                                .inter(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w500,
-                                                              fontStyle:
-                                                                  FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .bodyMedium
-                                                                      .fontStyle,
-                                                            ),
-                                                            color: FlutterFlowTheme
-                                                                    .of(context)
-                                                                .primaryBackground,
-                                                            fontSize: 20.0,
-                                                            letterSpacing: 0.0,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            fontStyle:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .bodyMedium
-                                                                    .fontStyle,
-                                                          ),
-                                                    ),
-                                                  ],
-                                                ),
+                          )
+                        : SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.max,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Header
+                                Padding(
+                                  padding: EdgeInsets.all(32.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              _ministerio?.nomeMinisterio ?? 'Meu Ministério',
+                                              style: GoogleFonts.poppins(
+                                                color: Colors.white,
+                                                fontSize: 32.0,
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
-                                          ),
+                                            SizedBox(height: 8.0),
+                                            Text(
+                                              'Gerencie suas escalas e participantes',
+                                              style: GoogleFonts.inter(
+                                                color: Color(0xFF999999),
+                                                fontSize: 16.0,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Row(
+                                        children: [
                                           if (responsiveVisibility(
                                             context: context,
                                             desktop: false,
                                           ))
                                             InkWell(
-                                              splashColor: Colors.transparent,
-                                              focusColor: Colors.transparent,
-                                              hoverColor: Colors.transparent,
-                                              highlightColor:
-                                                  Colors.transparent,
                                               onTap: () async {
                                                 await showModalBottomSheet(
                                                   isScrollControlled: true,
-                                                  backgroundColor:
-                                                      Color(0x80000000),
+                                                  backgroundColor: Color(0x80000000),
                                                   enableDrag: false,
                                                   context: context,
                                                   builder: (context) {
                                                     return GestureDetector(
                                                       onTap: () {
-                                                        FocusScope.of(context)
-                                                            .unfocus();
-                                                        FocusManager.instance
-                                                            .primaryFocus
-                                                            ?.unfocus();
+                                                        FocusScope.of(context).unfocus();
+                                                        FocusManager.instance.primaryFocus?.unfocus();
                                                       },
                                                       child: Padding(
-                                                        padding: MediaQuery
-                                                            .viewInsetsOf(
-                                                                context),
-                                                        child:
-                                                            MenuLiderMobileWidget(),
+                                                        padding: MediaQuery.viewInsetsOf(context),
+                                                        child: MenuLiderMobileWidget(),
                                                       ),
                                                     );
                                                   },
-                                                ).then((value) =>
-                                                    safeSetState(() {}));
+                                                ).then((value) => safeSetState(() {}));
                                               },
-                                              child: Icon(
-                                                Icons.menu,
-                                                color:
-                                                    FlutterFlowTheme.of(context)
-                                                        .secondaryText,
-                                                size: 30.0,
+                                              child: Container(
+                                                padding: EdgeInsets.all(12.0),
+                                                decoration: BoxDecoration(
+                                                  color: Color(0xFF2A2A2A),
+                                                  borderRadius: BorderRadius.circular(12.0),
+                                                ),
+                                                child: Icon(
+                                                  Icons.menu,
+                                                  color: Colors.white,
+                                                  size: 24.0,
+                                                ),
                                               ),
                                             ),
-                                          if (responsiveVisibility(
-                                            context: context,
-                                            phone: false,
-                                          ))
-                                            Align(
-                                              alignment: AlignmentDirectional(
-                                                  1.0, 0.0),
-                                              child: Padding(
-                                                padding: EdgeInsetsDirectional
-                                                    .fromSTEB(
-                                                        0.0, 0.0, 16.0, 0.0),
-                                                child: FFButtonWidget(
-                                                  onPressed: () async {
-                                                    context.pushNamed(
-                                                      PageCriaEscalaLiderWidget
-                                                          .routeName,
-                                                      queryParameters: {
-                                                        'idministerio':
-                                                            serializeParam(
-                                                          columnMinisterioRow
-                                                              ?.idMinisterio,
-                                                          ParamType.int,
-                                                        ),
-                                                      }.withoutNulls,
-                                                    );
-                                                  },
-                                                  text: 'Nova Escala',
-                                                  icon: Icon(
-                                                    Icons.add,
-                                                    size: 15.0,
+                                          SizedBox(width: 12.0),
+                                          FFButtonWidget(
+                                            onPressed: () {
+                                              context.pushNamed(
+                                                PageCriaEscalaLiderWidget.routeName,
+                                                queryParameters: {
+                                                  'idministerio': serializeParam(
+                                                    _ministerio?.idMinisterio,
+                                                    ParamType.int,
                                                   ),
-                                                  options: FFButtonOptions(
-                                                    height: 40.0,
-                                                    padding:
-                                                        EdgeInsetsDirectional
-                                                            .fromSTEB(16.0, 0.0,
-                                                                16.0, 0.0),
-                                                    iconPadding:
-                                                        EdgeInsetsDirectional
-                                                            .fromSTEB(0.0, 0.0,
-                                                                0.0, 0.0),
-                                                    color: FlutterFlowTheme.of(
-                                                            context)
-                                                        .success,
-                                                    textStyle: FlutterFlowTheme
-                                                            .of(context)
-                                                        .titleSmall
-                                                        .override(
-                                                          font: GoogleFonts
-                                                              .interTight(
-                                                            fontWeight:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .titleSmall
-                                                                    .fontWeight,
-                                                            fontStyle:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .titleSmall
-                                                                    .fontStyle,
+                                                }.withoutNulls,
+                                              );
+                                            },
+                                            text: 'Nova Escala',
+                                            icon: Icon(
+                                              Icons.add_rounded,
+                                              size: 20.0,
+                                            ),
+                                            options: FFButtonOptions(
+                                              height: 48.0,
+                                              padding: EdgeInsets.symmetric(horizontal: 24.0),
+                                              color: FlutterFlowTheme.of(context).primary,
+                                              textStyle: GoogleFonts.inter(
+                                                color: Colors.white,
+                                                fontSize: 16.0,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                              elevation: 0.0,
+                                              borderRadius: BorderRadius.circular(12.0),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Cards de estatísticas
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildStatCard(
+                                          icon: Icons.event_rounded,
+                                          title: 'Escalas',
+                                          value: _escalas.length.toString(),
+                                          color: Color(0xFF4B39EF),
+                                        ),
+                                      ),
+                                      SizedBox(width: 24.0),
+                                      Expanded(
+                                        child: _buildStatCard(
+                                          icon: Icons.people_rounded,
+                                          title: 'Membros',
+                                          value: _totalMembrosMinisterio.toString(),
+                                          color: Color(0xFF39D2C0),
+                                        ),
+                                      ),
+                                      SizedBox(width: 24.0),
+                                      Expanded(
+                                        child: _buildStatCard(
+                                          icon: Icons.check_circle_rounded,
+                                          title: 'Participações',
+                                          value: _participacoes.fold<int>(
+                                            0,
+                                            (sum, p) => sum + (p.qtdParticipacoes ?? 0),
+                                          ).toString(),
+                                          color: Color(0xFFFF9800),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                SizedBox(height: 32.0),
+
+                                // Participações do mês
+                                if (_participacoes.isNotEmpty) ...[
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Participações do Mês',
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.white,
+                                            fontSize: 20.0,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        SizedBox(height: 16.0),
+                                        Container(
+                                          width: double.infinity,
+                                          padding: EdgeInsets.all(24.0),
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFF2A2A2A),
+                                            borderRadius: BorderRadius.circular(16.0),
+                                          ),
+                                          child: SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: Row(
+                                              children: _participacoes.map((p) {
+                                                return Padding(
+                                                  padding: EdgeInsets.only(right: 24.0),
+                                                  child: Column(
+                                                    children: [
+                                                      Container(
+                                                        width: 60.0,
+                                                        height: 60.0,
+                                                        decoration: BoxDecoration(
+                                                          color: Color(0xFF4B39EF),
+                                                          shape: BoxShape.circle,
+                                                        ),
+                                                        child: Center(
+                                                          child: Text(
+                                                            p.iniciais ?? '??',
+                                                            style: GoogleFonts.poppins(
+                                                              color: Colors.white,
+                                                              fontSize: 18.0,
+                                                              fontWeight: FontWeight.w600,
+                                                            ),
                                                           ),
-                                                          color: Colors.white,
-                                                          letterSpacing: 0.0,
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .titleSmall
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .titleSmall
-                                                                  .fontStyle,
                                                         ),
-                                                    elevation: 0.0,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8.0),
+                                                      ),
+                                                      SizedBox(height: 8.0),
+                                                      Text(
+                                                        p.nomeMembro ?? '',
+                                                        style: GoogleFonts.inter(
+                                                          color: Colors.white,
+                                                          fontSize: 14.0,
+                                                        ),
+                                                      ),
+                                                      SizedBox(height: 4.0),
+                                                      Container(
+                                                        padding: EdgeInsets.symmetric(
+                                                          horizontal: 12.0,
+                                                          vertical: 4.0,
+                                                        ),
+                                                        decoration: BoxDecoration(
+                                                          color: Color(0xFF39D2C0),
+                                                          borderRadius: BorderRadius.circular(12.0),
+                                                        ),
+                                                        child: Text(
+                                                          '${p.qtdParticipacoes ?? 0}',
+                                                          style: GoogleFonts.inter(
+                                                            color: Colors.white,
+                                                            fontSize: 14.0,
+                                                            fontWeight: FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
+                                                );
+                                              }).toList(),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: 32.0),
+                                ],
+
+                                // Lista de escalas
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Escalas Recentes',
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.white,
+                                              fontSize: 20.0,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          if (_escalas.length > 5)
+                                            TextButton(
+                                              onPressed: () {
+                                                context.pushNamed(
+                                                  PageEscalasLiderWidget.routeName,
+                                                  queryParameters: {
+                                                    'idministerio': serializeParam(
+                                                      _ministerio?.idMinisterio,
+                                                      ParamType.int,
+                                                    ),
+                                                  }.withoutNulls,
+                                                );
+                                              },
+                                              child: Text(
+                                                'Ver todas',
+                                                style: GoogleFonts.inter(
+                                                  color: FlutterFlowTheme.of(context).primary,
+                                                  fontSize: 14.0,
+                                                  fontWeight: FontWeight.w600,
                                                 ),
                                               ),
                                             ),
                                         ],
                                       ),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: double.infinity,
-                                    height: MediaQuery.sizeOf(context).height *
-                                        0.824,
-                                    decoration: BoxDecoration(
-                                      color: Color(0xFF3C3D3E),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          blurRadius: 3.0,
-                                          color: Color(0x33000000),
-                                          offset: Offset(
-                                            0.0,
-                                            1.0,
+                                      SizedBox(height: 16.0),
+
+                                      if (_escalas.isEmpty)
+                                        Container(
+                                          padding: EdgeInsets.all(48.0),
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFF2A2A2A),
+                                            borderRadius: BorderRadius.circular(16.0),
+                                          ),
+                                          child: Center(
+                                            child: Column(
+                                              children: [
+                                                Icon(
+                                                  Icons.event_busy_rounded,
+                                                  size: 64.0,
+                                                  color: Color(0xFF666666),
+                                                ),
+                                                SizedBox(height: 16.0),
+                                                Text(
+                                                  'Nenhuma escala encontrada',
+                                                  style: GoogleFonts.inter(
+                                                    color: Color(0xFF999999),
+                                                    fontSize: 16.0,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 8.0),
+                                                Text(
+                                                  'Clique em "Nova Escala" para criar',
+                                                  style: GoogleFonts.inter(
+                                                    color: Color(0xFF666666),
+                                                    fontSize: 14.0,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         )
-                                      ],
-                                    ),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Color(0xFF3C3D3E),
-                                      ),
-                                      child: Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                            16.0, 16.0, 16.0, 16.0),
-                                        child: SingleChildScrollView(
-                                          primary: false,
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Row(
-                                                mainAxisSize: MainAxisSize.max,
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.label_rounded,
-                                                    color: Color(0xFF4B39EF),
-                                                    size: 28.0,
-                                                  ),
-                                                  Text(
-                                                    'Histórico de Escalas',
-                                                    style: FlutterFlowTheme.of(
-                                                            context)
-                                                        .headlineMedium
-                                                        .override(
-                                                          font: GoogleFonts
-                                                              .interTight(
-                                                            fontWeight:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .headlineMedium
-                                                                    .fontWeight,
-                                                            fontStyle:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .headlineMedium
-                                                                    .fontStyle,
-                                                          ),
-                                                          color: Colors.white,
-                                                          letterSpacing: 0.0,
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .headlineMedium
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .headlineMedium
-                                                                  .fontStyle,
-                                                        ),
-                                                  ),
-                                                ].divide(SizedBox(width: 8.0)),
-                                              ),
-                                              Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Padding(
-                                                    padding:
-                                                        EdgeInsetsDirectional
-                                                            .fromSTEB(16.0, 0.0,
-                                                                16.0, 0.0),
-                                                    child: Container(
-                                                      width: double.infinity,
-                                                      height: 228.43,
-                                                      decoration: BoxDecoration(
-                                                        color:
-                                                            Color(0xFF14181B),
-                                                        boxShadow: [
-                                                          BoxShadow(
-                                                            blurRadius: 4.0,
-                                                            color: Color(
-                                                                0x33000000),
-                                                            offset: Offset(
-                                                              0.0,
-                                                              2.0,
-                                                            ),
-                                                            spreadRadius: 0.0,
-                                                          )
-                                                        ],
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(12.0),
-                                                      ),
-                                                      child: Padding(
-                                                        padding: EdgeInsets.all(
-                                                            16.0),
-                                                        child: Column(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            Text(
-                                                              'Participações no mês',
-                                                              style: FlutterFlowTheme
-                                                                      .of(context)
-                                                                  .titleMedium
-                                                                  .override(
-                                                                    font: GoogleFonts
-                                                                        .interTight(
-                                                                      fontWeight: FlutterFlowTheme.of(
-                                                                              context)
-                                                                          .titleMedium
-                                                                          .fontWeight,
-                                                                      fontStyle: FlutterFlowTheme.of(
-                                                                              context)
-                                                                          .titleMedium
-                                                                          .fontStyle,
-                                                                    ),
-                                                                    color: Colors
-                                                                        .white,
-                                                                    letterSpacing:
-                                                                        0.0,
-                                                                    fontWeight: FlutterFlowTheme.of(
-                                                                            context)
-                                                                        .titleMedium
-                                                                        .fontWeight,
-                                                                    fontStyle: FlutterFlowTheme.of(
-                                                                            context)
-                                                                        .titleMedium
-                                                                        .fontStyle,
-                                                                  ),
-                                                            ),
-                                                            Container(
-                                                              height: 132.55,
-                                                              child: FutureBuilder<
-                                                                  List<
-                                                                      VwParticipacoesMesRow>>(
-                                                                future:
-                                                                    VwParticipacoesMesTable()
-                                                                        .queryRows(
-                                                                  queryFn: (q) =>
-                                                                      q.eqOrNull(
-                                                                    'id_ministerio',
-                                                                    columnMinisterioRow
-                                                                        ?.idMinisterio,
-                                                                  ),
-                                                                ),
-                                                                builder: (context,
-                                                                    snapshot) {
-                                                                  // Customize what your widget looks like when it's loading.
-                                                                  if (!snapshot
-                                                                      .hasData) {
-                                                                    return Center(
-                                                                      child:
-                                                                          SizedBox(
-                                                                        width:
-                                                                            50.0,
-                                                                        height:
-                                                                            50.0,
-                                                                        child:
-                                                                            CircularProgressIndicator(
-                                                                          valueColor:
-                                                                              AlwaysStoppedAnimation<Color>(
-                                                                            FlutterFlowTheme.of(context).primary,
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    );
-                                                                  }
-                                                                  List<VwParticipacoesMesRow>
-                                                                      listViewVwParticipacoesMesRowList =
-                                                                      snapshot
-                                                                          .data!;
+                                      else
+                                        ListView.builder(
+                                          shrinkWrap: true,
+                                          physics: NeverScrollableScrollPhysics(),
+                                          itemCount: _escalas.length > 5 ? 5 : _escalas.length,
+                                          itemBuilder: (context, index) {
+                                            final escala = _escalas[index];
+                                            final numMembros = _membrosCount[escala.idEscala] ?? 0;
 
-                                                                  return ListView
-                                                                      .separated(
-                                                                    padding:
-                                                                        EdgeInsets
-                                                                            .fromLTRB(
-                                                                      8.0,
-                                                                      0,
-                                                                      8.0,
-                                                                      0,
-                                                                    ),
-                                                                    primary:
-                                                                        false,
-                                                                    shrinkWrap:
-                                                                        true,
-                                                                    scrollDirection:
-                                                                        Axis.horizontal,
-                                                                    itemCount:
-                                                                        listViewVwParticipacoesMesRowList
-                                                                            .length,
-                                                                    separatorBuilder: (_,
-                                                                            __) =>
-                                                                        SizedBox(
-                                                                            width:
-                                                                                16.0),
-                                                                    itemBuilder:
-                                                                        (context,
-                                                                            listViewIndex) {
-                                                                      final listViewVwParticipacoesMesRow =
-                                                                          listViewVwParticipacoesMesRowList[
-                                                                              listViewIndex];
-                                                                      return Column(
-                                                                        mainAxisSize:
-                                                                            MainAxisSize.min,
-                                                                        crossAxisAlignment:
-                                                                            CrossAxisAlignment.center,
-                                                                        children:
-                                                                            [
-                                                                          Container(
-                                                                            width:
-                                                                                60.0,
-                                                                            height:
-                                                                                60.0,
-                                                                            decoration:
-                                                                                BoxDecoration(
-                                                                              color: Color(0xFF4B39EF),
-                                                                              shape: BoxShape.circle,
-                                                                            ),
-                                                                            child:
-                                                                                Align(
-                                                                              alignment: AlignmentDirectional(0.0, 0.0),
-                                                                              child: Padding(
-                                                                                padding: EdgeInsets.all(8.0),
-                                                                                child: Text(
-                                                                                  valueOrDefault<String>(
-                                                                                    listViewVwParticipacoesMesRow.iniciais,
-                                                                                    'JP',
-                                                                                  ),
-                                                                                  style: FlutterFlowTheme.of(context).titleMedium.override(
-                                                                                        font: GoogleFonts.interTight(
-                                                                                          fontWeight: FlutterFlowTheme.of(context).titleMedium.fontWeight,
-                                                                                          fontStyle: FlutterFlowTheme.of(context).titleMedium.fontStyle,
-                                                                                        ),
-                                                                                        color: Colors.white,
-                                                                                        letterSpacing: 0.0,
-                                                                                        fontWeight: FlutterFlowTheme.of(context).titleMedium.fontWeight,
-                                                                                        fontStyle: FlutterFlowTheme.of(context).titleMedium.fontStyle,
-                                                                                      ),
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                          Text(
-                                                                            valueOrDefault<String>(
-                                                                              listViewVwParticipacoesMesRow.nomeMembro,
-                                                                              'João',
-                                                                            ),
-                                                                            style: FlutterFlowTheme.of(context).bodySmall.override(
-                                                                                  font: GoogleFonts.inter(
-                                                                                    fontWeight: FlutterFlowTheme.of(context).bodySmall.fontWeight,
-                                                                                    fontStyle: FlutterFlowTheme.of(context).bodySmall.fontStyle,
-                                                                                  ),
-                                                                                  color: Colors.white,
-                                                                                  letterSpacing: 0.0,
-                                                                                  fontWeight: FlutterFlowTheme.of(context).bodySmall.fontWeight,
-                                                                                  fontStyle: FlutterFlowTheme.of(context).bodySmall.fontStyle,
-                                                                                ),
-                                                                          ),
-                                                                          Container(
-                                                                            width:
-                                                                                40.0,
-                                                                            height:
-                                                                                40.0,
-                                                                            decoration:
-                                                                                BoxDecoration(
-                                                                              color: Color(0xFF39D2C0),
-                                                                              shape: BoxShape.circle,
-                                                                            ),
-                                                                            child:
-                                                                                Align(
-                                                                              alignment: AlignmentDirectional(0.0, 0.0),
-                                                                              child: Padding(
-                                                                                padding: EdgeInsets.all(8.0),
-                                                                                child: Text(
-                                                                                  valueOrDefault<String>(
-                                                                                    listViewVwParticipacoesMesRow.qtdParticipacoes?.toString(),
-                                                                                    '1',
-                                                                                  ),
-                                                                                  style: FlutterFlowTheme.of(context).labelSmall.override(
-                                                                                        font: GoogleFonts.inter(
-                                                                                          fontWeight: FontWeight.bold,
-                                                                                          fontStyle: FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                                                                                        ),
-                                                                                        color: FlutterFlowTheme.of(context).primaryBackground,
-                                                                                        fontSize: 16.0,
-                                                                                        letterSpacing: 0.0,
-                                                                                        fontWeight: FontWeight.bold,
-                                                                                        fontStyle: FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                                                                                      ),
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ].divide(SizedBox(height: 8.0)),
-                                                                      );
-                                                                    },
-                                                                  );
-                                                                },
-                                                              ),
-                                                            ),
-                                                          ].divide(SizedBox(
-                                                              height: 12.0)),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ].divide(
-                                                    SizedBox(height: 16.0)),
-                                              ),
-                                              Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                    'Escalas Recentes',
-                                                    style: FlutterFlowTheme.of(
-                                                            context)
-                                                        .titleMedium
-                                                        .override(
-                                                          font: GoogleFonts
-                                                              .interTight(
-                                                            fontWeight:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .titleMedium
-                                                                    .fontWeight,
-                                                            fontStyle:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .titleMedium
-                                                                    .fontStyle,
-                                                          ),
-                                                          color: Colors.white,
-                                                          letterSpacing: 0.0,
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .titleMedium
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .titleMedium
-                                                                  .fontStyle,
-                                                        ),
-                                                  ),
-                                                  SingleChildScrollView(
-                                                    primary: false,
-                                                    child: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        FutureBuilder<
-                                                            List<EscalasRow>>(
-                                                          future: EscalasTable()
-                                                              .queryRows(
-                                                            queryFn: (q) => q
-                                                                .eqOrNull(
-                                                                  'id_ministerio',
-                                                                  columnMinisterioRow
-                                                                      ?.idMinisterio,
-                                                                )
-                                                                .order(
-                                                                    'data_hora_escala'),
-                                                            limit: 5,
-                                                          ),
-                                                          builder: (context,
-                                                              snapshot) {
-                                                            // Customize what your widget looks like when it's loading.
-                                                            if (!snapshot
-                                                                .hasData) {
-                                                              return Center(
-                                                                child: SizedBox(
-                                                                  width: 50.0,
-                                                                  height: 50.0,
-                                                                  child:
-                                                                      CircularProgressIndicator(
-                                                                    valueColor:
-                                                                        AlwaysStoppedAnimation<
-                                                                            Color>(
-                                                                      FlutterFlowTheme.of(
-                                                                              context)
-                                                                          .primary,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              );
-                                                            }
-                                                            List<EscalasRow>
-                                                                listViewEscalasRowList =
-                                                                snapshot.data!;
-
-                                                            return ListView
-                                                                .separated(
-                                                              padding:
-                                                                  EdgeInsets
-                                                                      .zero,
-                                                              shrinkWrap: true,
-                                                              scrollDirection:
-                                                                  Axis.vertical,
-                                                              itemCount:
-                                                                  listViewEscalasRowList
-                                                                      .length,
-                                                              separatorBuilder: (_,
-                                                                      __) =>
-                                                                  SizedBox(
-                                                                      height:
-                                                                          8.0),
-                                                              itemBuilder: (context,
-                                                                  listViewIndex) {
-                                                                final listViewEscalasRow =
-                                                                    listViewEscalasRowList[
-                                                                        listViewIndex];
-                                                                return Padding(
-                                                                  padding: EdgeInsetsDirectional
-                                                                      .fromSTEB(
-                                                                          16.0,
-                                                                          0.0,
-                                                                          16.0,
-                                                                          0.0),
-                                                                  child:
-                                                                      InkWell(
-                                                                    splashColor:
-                                                                        Colors
-                                                                            .transparent,
-                                                                    focusColor:
-                                                                        Colors
-                                                                            .transparent,
-                                                                    hoverColor:
-                                                                        Colors
-                                                                            .transparent,
-                                                                    highlightColor:
-                                                                        Colors
-                                                                            .transparent,
-                                                                    onTap:
-                                                                        () async {
-                                                                      context
-                                                                          .pushNamed(
-                                                                        PageescalacriadaWidget
-                                                                            .routeName,
-                                                                        queryParameters:
-                                                                            {
-                                                                          'idministerio':
-                                                                              serializeParam(
-                                                                            columnMinisterioRow?.idMinisterio,
-                                                                            ParamType.int,
-                                                                          ),
-                                                                          'idescala':
-                                                                              serializeParam(
-                                                                            listViewEscalasRow.idEscala,
-                                                                            ParamType.int,
-                                                                          ),
-                                                                        }.withoutNulls,
-                                                                      );
-                                                                    },
-                                                                    child:
-                                                                        Container(
-                                                                      width: double
-                                                                          .infinity,
-                                                                      decoration:
-                                                                          BoxDecoration(
-                                                                        color: Color(
-                                                                            0xFF14181B),
-                                                                        boxShadow: [
-                                                                          BoxShadow(
-                                                                            blurRadius:
-                                                                                4.0,
-                                                                            color:
-                                                                                Color(0x33000000),
-                                                                            offset:
-                                                                                Offset(
-                                                                              0.0,
-                                                                              2.0,
-                                                                            ),
-                                                                          )
-                                                                        ],
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(12.0),
-                                                                      ),
-                                                                      child:
-                                                                          Padding(
-                                                                        padding:
-                                                                            EdgeInsets.all(12.0),
-                                                                        child:
-                                                                            Row(
-                                                                          mainAxisSize:
-                                                                              MainAxisSize.max,
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceBetween,
-                                                                          children: [
-                                                                            Column(
-                                                                              mainAxisSize: MainAxisSize.min,
-                                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                                              children: [
-                                                                                Text(
-                                                                                  valueOrDefault<String>(
-                                                                                    listViewEscalasRow.nomeEscala,
-                                                                                    'Nome',
-                                                                                  ),
-                                                                                  style: FlutterFlowTheme.of(context).titleSmall.override(
-                                                                                        font: GoogleFonts.interTight(
-                                                                                          fontWeight: FlutterFlowTheme.of(context).titleSmall.fontWeight,
-                                                                                          fontStyle: FlutterFlowTheme.of(context).titleSmall.fontStyle,
-                                                                                        ),
-                                                                                        color: Colors.white,
-                                                                                        letterSpacing: 0.0,
-                                                                                        fontWeight: FlutterFlowTheme.of(context).titleSmall.fontWeight,
-                                                                                        fontStyle: FlutterFlowTheme.of(context).titleSmall.fontStyle,
-                                                                                      ),
-                                                                                ),
-                                                                                Padding(
-                                                                                  padding: EdgeInsetsDirectional.fromSTEB(0.0, 4.0, 0.0, 0.0),
-                                                                                  child: Text(
-                                                                                    valueOrDefault<String>(
-                                                                                      dateTimeFormat(
-                                                                                        "d/M",
-                                                                                        listViewEscalasRow.dataHoraEscala,
-                                                                                        locale: FFLocalizations.of(context).languageCode,
-                                                                                      ),
-                                                                                      '3/11',
-                                                                                    ),
-                                                                                    style: FlutterFlowTheme.of(context).bodySmall.override(
-                                                                                          font: GoogleFonts.inter(
-                                                                                            fontWeight: FlutterFlowTheme.of(context).bodySmall.fontWeight,
-                                                                                            fontStyle: FlutterFlowTheme.of(context).bodySmall.fontStyle,
-                                                                                          ),
-                                                                                          color: Color(0xFFE0E3E7),
-                                                                                          letterSpacing: 0.0,
-                                                                                          fontWeight: FlutterFlowTheme.of(context).bodySmall.fontWeight,
-                                                                                          fontStyle: FlutterFlowTheme.of(context).bodySmall.fontStyle,
-                                                                                        ),
-                                                                                  ),
-                                                                                ),
-                                                                              ].divide(SizedBox(height: 4.0)),
-                                                                            ),
-                                                                            Column(
-                                                                              mainAxisSize: MainAxisSize.min,
-                                                                              crossAxisAlignment: CrossAxisAlignment.end,
-                                                                              children: [
-                                                                                Row(
-                                                                                  mainAxisSize: MainAxisSize.max,
-                                                                                  children: [
-                                                                                    Row(
-                                                                                      mainAxisSize: MainAxisSize.max,
-                                                                                      children: [
-                                                                                        Icon(
-                                                                                          Icons.person_rounded,
-                                                                                          color: Color(0xFF4B39EF),
-                                                                                          size: 20.0,
-                                                                                        ),
-                                                                                        FutureBuilder<List<ViewQtdMembrosPorEscalaRow>>(
-                                                                                          future: ViewQtdMembrosPorEscalaTable().querySingleRow(
-                                                                                            queryFn: (q) => q.eqOrNull(
-                                                                                              'id_escala',
-                                                                                              listViewEscalasRow.idEscala,
-                                                                                            ),
-                                                                                          ),
-                                                                                          builder: (context, snapshot) {
-                                                                                            // Customize what your widget looks like when it's loading.
-                                                                                            if (!snapshot.hasData) {
-                                                                                              return Center(
-                                                                                                child: SizedBox(
-                                                                                                  width: 50.0,
-                                                                                                  height: 50.0,
-                                                                                                  child: CircularProgressIndicator(
-                                                                                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                                                                                      FlutterFlowTheme.of(context).primary,
-                                                                                                    ),
-                                                                                                  ),
-                                                                                                ),
-                                                                                              );
-                                                                                            }
-                                                                                            List<ViewQtdMembrosPorEscalaRow> textViewQtdMembrosPorEscalaRowList = snapshot.data!;
-
-                                                                                            final textViewQtdMembrosPorEscalaRow = textViewQtdMembrosPorEscalaRowList.isNotEmpty ? textViewQtdMembrosPorEscalaRowList.first : null;
-
-                                                                                            return Text(
-                                                                                              valueOrDefault<String>(
-                                                                                                textViewQtdMembrosPorEscalaRow?.totalMembros?.toString(),
-                                                                                                '1',
-                                                                                              ),
-                                                                                              style: FlutterFlowTheme.of(context).labelSmall.override(
-                                                                                                    font: GoogleFonts.inter(
-                                                                                                      fontWeight: FlutterFlowTheme.of(context).labelSmall.fontWeight,
-                                                                                                      fontStyle: FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                                                                                                    ),
-                                                                                                    color: Colors.white,
-                                                                                                    letterSpacing: 0.0,
-                                                                                                    fontWeight: FlutterFlowTheme.of(context).labelSmall.fontWeight,
-                                                                                                    fontStyle: FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                                                                                                  ),
-                                                                                            );
-                                                                                          },
-                                                                                        ),
-                                                                                      ].divide(SizedBox(width: 4.0)),
-                                                                                    ),
-                                                                                    Row(
-                                                                                      mainAxisSize: MainAxisSize.max,
-                                                                                      children: [
-                                                                                        Icon(
-                                                                                          Icons.note_rounded,
-                                                                                          color: Color(0xFF39D2C0),
-                                                                                          size: 16.0,
-                                                                                        ),
-                                                                                        FutureBuilder<List<ArquivosRow>>(
-                                                                                          future: ArquivosTable().queryRows(
-                                                                                            queryFn: (q) => q.eqOrNull(
-                                                                                              'id_escala',
-                                                                                              listViewEscalasRow.idEscala,
-                                                                                            ),
-                                                                                          ),
-                                                                                          builder: (context, snapshot) {
-                                                                                            // Customize what your widget looks like when it's loading.
-                                                                                            if (!snapshot.hasData) {
-                                                                                              return Center(
-                                                                                                child: SizedBox(
-                                                                                                  width: 50.0,
-                                                                                                  height: 50.0,
-                                                                                                  child: CircularProgressIndicator(
-                                                                                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                                                                                      FlutterFlowTheme.of(context).primary,
-                                                                                                    ),
-                                                                                                  ),
-                                                                                                ),
-                                                                                              );
-                                                                                            }
-                                                                                            List<ArquivosRow> textArquivosRowList = snapshot.data!;
-
-                                                                                            return Text(
-                                                                                              valueOrDefault<String>(
-                                                                                                textArquivosRowList.length.toString(),
-                                                                                                '1',
-                                                                                              ),
-                                                                                              style: FlutterFlowTheme.of(context).labelSmall.override(
-                                                                                                    font: GoogleFonts.inter(
-                                                                                                      fontWeight: FlutterFlowTheme.of(context).labelSmall.fontWeight,
-                                                                                                      fontStyle: FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                                                                                                    ),
-                                                                                                    color: Colors.white,
-                                                                                                    letterSpacing: 0.0,
-                                                                                                    fontWeight: FlutterFlowTheme.of(context).labelSmall.fontWeight,
-                                                                                                    fontStyle: FlutterFlowTheme.of(context).labelSmall.fontStyle,
-                                                                                                  ),
-                                                                                            );
-                                                                                          },
-                                                                                        ),
-                                                                                      ].divide(SizedBox(width: 4.0)),
-                                                                                    ),
-                                                                                  ].divide(SizedBox(width: 12.0)),
-                                                                                ),
-                                                                              ].divide(SizedBox(height: 8.0)),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                );
-                                                              },
-                                                            );
-                                                          },
-                                                        ),
-                                                      ].divide(SizedBox(
-                                                          height: 12.0)),
-                                                    ),
-                                                  ),
-                                                ].divide(
-                                                    SizedBox(height: 12.0)),
-                                              ),
-                                              Padding(
-                                                padding: EdgeInsetsDirectional
-                                                    .fromSTEB(
-                                                        16.0, 0.0, 16.0, 0.0),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.max,
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    if (responsiveVisibility(
-                                                      context: context,
-                                                      tablet: false,
-                                                      tabletLandscape: false,
-                                                      desktop: false,
-                                                    ))
-                                                      Align(
-                                                        alignment:
-                                                            AlignmentDirectional(
-                                                                1.0, 0.0),
-                                                        child: Padding(
-                                                          padding:
-                                                              EdgeInsetsDirectional
-                                                                  .fromSTEB(
-                                                                      0.0,
-                                                                      0.0,
-                                                                      16.0,
-                                                                      0.0),
-                                                          child: FFButtonWidget(
-                                                            onPressed:
-                                                                () async {
-                                                              context.pushNamed(
-                                                                PageCriaEscalaLiderWidget
-                                                                    .routeName,
-                                                                queryParameters:
-                                                                    {
-                                                                  'idministerio':
-                                                                      serializeParam(
-                                                                    columnMinisterioRow
-                                                                        ?.idMinisterio,
-                                                                    ParamType
-                                                                        .int,
-                                                                  ),
-                                                                }.withoutNulls,
-                                                              );
-                                                            },
-                                                            text: 'Nova Escala',
-                                                            icon: Icon(
-                                                              Icons.add,
-                                                              size: 15.0,
-                                                            ),
-                                                            options:
-                                                                FFButtonOptions(
-                                                              height: 40.0,
-                                                              padding:
-                                                                  EdgeInsetsDirectional
-                                                                      .fromSTEB(
-                                                                          16.0,
-                                                                          0.0,
-                                                                          16.0,
-                                                                          0.0),
-                                                              iconPadding:
-                                                                  EdgeInsetsDirectional
-                                                                      .fromSTEB(
-                                                                          0.0,
-                                                                          0.0,
-                                                                          0.0,
-                                                                          0.0),
-                                                              color: FlutterFlowTheme
-                                                                      .of(context)
-                                                                  .success,
-                                                              textStyle:
-                                                                  FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .titleSmall
-                                                                      .override(
-                                                                        font: GoogleFonts
-                                                                            .interTight(
-                                                                          fontWeight: FlutterFlowTheme.of(context)
-                                                                              .titleSmall
-                                                                              .fontWeight,
-                                                                          fontStyle: FlutterFlowTheme.of(context)
-                                                                              .titleSmall
-                                                                              .fontStyle,
-                                                                        ),
-                                                                        color: Colors
-                                                                            .white,
-                                                                        letterSpacing:
-                                                                            0.0,
-                                                                        fontWeight: FlutterFlowTheme.of(context)
-                                                                            .titleSmall
-                                                                            .fontWeight,
-                                                                        fontStyle: FlutterFlowTheme.of(context)
-                                                                            .titleSmall
-                                                                            .fontStyle,
-                                                                      ),
-                                                              elevation: 0.0,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          8.0),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ].divide(SizedBox(height: 20.0)),
-                                          ),
+                                            return _buildEscalaCard(
+                                              escala: escala,
+                                              numMembros: numMembros,
+                                            );
+                                          },
                                         ),
-                                      ),
-                                    ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
+                                ),
+
+                                SizedBox(height: 32.0),
+                              ],
+                            ),
+                          ),
                   ),
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(12.0),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: Icon(
+              icon,
+              size: 32.0,
+              color: color,
+            ),
+          ),
+          SizedBox(height: 16.0),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: Color(0xFF999999),
+              fontSize: 14.0,
+            ),
+          ),
+          SizedBox(height: 8.0),
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 32.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEscalaCard({
+    required EscalasRow escala,
+    required int numMembros,
+  }) {
+    final isPast = escala.dataHoraEscala != null &&
+        escala.dataHoraEscala!.isBefore(DateTime.now());
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            context.pushNamed(
+              PageEscalaDetalhesLiderWidget.routeName,
+              queryParameters: {
+                'idministerio': serializeParam(_ministerio?.idMinisterio, ParamType.int),
+                'idescala': serializeParam(escala.idEscala, ParamType.int),
+              }.withoutNulls,
+            );
+          },
+          borderRadius: BorderRadius.circular(16.0),
+          child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Row(
+              children: [
+                // Ícone/Data
+                Container(
+                  width: 56.0,
+                  height: 56.0,
+                  decoration: BoxDecoration(
+                    color: isPast
+                        ? Color(0xFF666666).withOpacity(0.1)
+                        : Color(0xFF4B39EF).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        escala.dataHoraEscala != null
+                            ? dateTimeFormat('d', escala.dataHoraEscala!)
+                            : '--',
+                        style: GoogleFonts.poppins(
+                          color: isPast ? Color(0xFF666666) : Color(0xFF4B39EF),
+                          fontSize: 20.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        escala.dataHoraEscala != null
+                            ? dateTimeFormat('MMM', escala.dataHoraEscala!).toUpperCase()
+                            : '--',
+                        style: GoogleFonts.inter(
+                          color: isPast ? Color(0xFF666666) : Color(0xFF4B39EF),
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 16.0),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        escala.nomeEscala ?? 'Sem nome',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 4.0),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.access_time_rounded,
+                            color: Color(0xFF999999),
+                            size: 16.0,
+                          ),
+                          SizedBox(width: 6.0),
+                          Text(
+                            escala.dataHoraEscala != null
+                                ? dateTimeFormat('Hm', escala.dataHoraEscala!)
+                                : '--:--',
+                            style: GoogleFonts.inter(
+                              color: Color(0xFF999999),
+                              fontSize: 14.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Badge de membros
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF3A3A3A),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.people_rounded,
+                        color: Color(0xFF39D2C0),
+                        size: 16.0,
+                      ),
+                      SizedBox(width: 6.0),
+                      Text(
+                        '$numMembros',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 12.0),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFF666666),
+                  size: 24.0,
+                ),
+              ],
+            ),
           ),
         ),
       ),

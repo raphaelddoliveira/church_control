@@ -258,7 +258,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                                 Text(
                                                   _ministerio?.nomeMinisterio ?? 'Ministério',
                                                   style: GoogleFonts.inter(
-                                                    color: FlutterFlowTheme.of(context).primary,
+                                                    color: Color(0xFF39D2C0),
                                                     fontSize: 14.0,
                                                     fontWeight: FontWeight.w500,
                                                   ),
@@ -1043,11 +1043,12 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                           onPressed: () async {
                             DateTime? dataHora;
                             if (dataSelecionada != null && horaSelecionada != null) {
+                              // Adicionar 3 horas para compensar o fuso horário (UTC-3 Brasília)
                               dataHora = DateTime(
                                 dataSelecionada!.year,
                                 dataSelecionada!.month,
                                 dataSelecionada!.day,
-                                horaSelecionada!.hour,
+                                horaSelecionada!.hour + 3,
                                 horaSelecionada!.minute,
                               );
                             }

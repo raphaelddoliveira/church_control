@@ -33,6 +33,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
   MinisterioRow? _ministerio;
   List<EscalasRow> _escalas = [];
   Map<int, int> _membrosCount = {};
+  List<VwParticipacoesMesRow> _participacoes = [];
   bool _isLoading = true;
 
   @override
@@ -80,10 +81,19 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
         membrosCount[escala.idEscala] = membros.length;
       }
 
+      // Carregar participações do mês
+      final participacoes = await VwParticipacoesMesTable().queryRows(
+        queryFn: (q) => q.eq('id_ministerio', widget.idministerio!),
+      );
+
+      // Ordenar participações por quantidade (maior para menor)
+      participacoes.sort((a, b) => (b.qtdParticipacoes ?? 0).compareTo(a.qtdParticipacoes ?? 0));
+
       setState(() {
         _ministerio = ministerio;
         _escalas = escalas;
         _membrosCount = membrosCount;
+        _participacoes = participacoes;
         _isLoading = false;
       });
     } catch (e) {
@@ -198,7 +208,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                                                 Text(
                                                   _ministerio?.nomeMinisterio ?? 'Ministério',
                                                   style: GoogleFonts.inter(
-                                                    color: FlutterFlowTheme.of(context).primary,
+                                                    color: Color(0xFF39D2C0),
                                                     fontSize: 16.0,
                                                     fontWeight: FontWeight.w500,
                                                   ),
@@ -332,6 +342,16 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
 
                                 SizedBox(height: 32.0),
 
+                                // Card de Histórico de Participações
+                                if (_participacoes.isNotEmpty)
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                    child: _buildParticipacaoCard(),
+                                  ),
+
+                                if (_participacoes.isNotEmpty)
+                                  SizedBox(height: 32.0),
+
                                 // Campo de busca
                                 Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 32.0),
@@ -460,6 +480,204 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildParticipacaoCard() {
+    // Separar os que mais participaram e os que menos participaram
+    final maisParticiparam = _participacoes.take(3).toList();
+    final menosParticiparam = _participacoes.length > 3
+        ? _participacoes.reversed.take(3).toList()
+        : <VwParticipacoesMesRow>[];
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(10.0),
+                decoration: BoxDecoration(
+                  color: Color(0xFF4B39EF).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                child: Icon(
+                  Icons.leaderboard_rounded,
+                  color: Color(0xFF4B39EF),
+                  size: 24.0,
+                ),
+              ),
+              SizedBox(width: 12.0),
+              Text(
+                'Participações do Mês',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 24.0),
+
+          // Mais participaram
+          if (maisParticiparam.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.trending_up_rounded,
+                  color: Color(0xFF4CAF50),
+                  size: 20.0,
+                ),
+                SizedBox(width: 8.0),
+                Text(
+                  'Mais participaram',
+                  style: GoogleFonts.inter(
+                    color: Color(0xFF4CAF50),
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.0),
+            ...maisParticiparam.asMap().entries.map((entry) {
+              final index = entry.key;
+              final p = entry.value;
+              return _buildParticipanteItem(
+                iniciais: p.iniciais ?? '??',
+                nome: p.nomeMembro ?? 'Membro',
+                participacoes: p.qtdParticipacoes ?? 0,
+                posicao: index + 1,
+                isTop: true,
+              );
+            }).toList(),
+          ],
+
+          // Menos participaram
+          if (menosParticiparam.isNotEmpty) ...[
+            SizedBox(height: 24.0),
+            Row(
+              children: [
+                Icon(
+                  Icons.trending_down_rounded,
+                  color: Color(0xFFFF5722),
+                  size: 20.0,
+                ),
+                SizedBox(width: 8.0),
+                Text(
+                  'Menos participaram',
+                  style: GoogleFonts.inter(
+                    color: Color(0xFFFF5722),
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.0),
+            ...menosParticiparam.map((p) {
+              return _buildParticipanteItem(
+                iniciais: p.iniciais ?? '??',
+                nome: p.nomeMembro ?? 'Membro',
+                participacoes: p.qtdParticipacoes ?? 0,
+                posicao: null,
+                isTop: false,
+              );
+            }).toList(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildParticipanteItem({
+    required String iniciais,
+    required String nome,
+    required int participacoes,
+    int? posicao,
+    required bool isTop,
+  }) {
+    Color avatarColor;
+    if (posicao == 1) {
+      avatarColor = Color(0xFFFFD700); // Ouro
+    } else if (posicao == 2) {
+      avatarColor = Color(0xFFC0C0C0); // Prata
+    } else if (posicao == 3) {
+      avatarColor = Color(0xFFCD7F32); // Bronze
+    } else {
+      avatarColor = Color(0xFF666666);
+    }
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 8.0),
+      padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF3A3A3A),
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 40.0,
+            height: 40.0,
+            decoration: BoxDecoration(
+              color: avatarColor.withOpacity(0.2),
+              shape: BoxShape.circle,
+              border: isTop && posicao != null && posicao <= 3
+                  ? Border.all(color: avatarColor, width: 2.0)
+                  : null,
+            ),
+            child: Center(
+              child: Text(
+                iniciais,
+                style: GoogleFonts.poppins(
+                  color: isTop ? avatarColor : Colors.white,
+                  fontSize: 14.0,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 12.0),
+          // Nome
+          Expanded(
+            child: Text(
+              nome,
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 14.0,
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // Contagem
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+            decoration: BoxDecoration(
+              color: isTop ? Color(0xFF4CAF50).withOpacity(0.2) : Color(0xFFFF5722).withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: Text(
+              '$participacoes',
+              style: GoogleFonts.poppins(
+                color: isTop ? Color(0xFF4CAF50) : Color(0xFFFF5722),
+                fontSize: 14.0,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -973,12 +1191,12 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                               return;
                             }
 
-                            // Combinar data e hora
+                            // Combinar data e hora (adicionar 3h para compensar fuso UTC-3 Brasília)
                             final dataHora = DateTime(
                               dataSelecionada!.year,
                               dataSelecionada!.month,
                               dataSelecionada!.day,
-                              horaSelecionada!.hour,
+                              horaSelecionada!.hour + 3,
                               horaSelecionada!.minute,
                             );
 
@@ -1000,7 +1218,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                               'PageEscalaDetalhesLider',
                               queryParameters: {
                                 'idministerio': serializeParam(widget.idministerio, ParamType.int),
-                                'idescala': serializeParam(novaEscala.first.idEscala, ParamType.int),
+                                'idescala': serializeParam(novaEscala.idEscala, ParamType.int),
                               },
                             );
                           },

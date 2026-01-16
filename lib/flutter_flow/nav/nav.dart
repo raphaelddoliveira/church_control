@@ -443,6 +443,23 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => PageCelulaDetalhesSecretariaWidget(
             celulaId: params.getParam('celulaId', ParamType.int)!,
           ),
+        ),
+        FFRoute(
+          name: PageEscalasLiderWidget.routeName,
+          path: PageEscalasLiderWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageEscalasLiderWidget(
+            idministerio: params.getParam('idministerio', ParamType.int),
+          ),
+        ),
+        FFRoute(
+          name: PageEscalaDetalhesLiderWidget.routeName,
+          path: PageEscalaDetalhesLiderWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageEscalaDetalhesLiderWidget(
+            idministerio: params.getParam('idministerio', ParamType.int),
+            idescala: params.getParam('idescala', ParamType.int),
+          ),
         )
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );

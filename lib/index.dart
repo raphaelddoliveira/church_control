@@ -48,8 +48,6 @@ export '/paginadetransicao/paginadetransicao_widget.dart'
     show PaginadetransicaoWidget;
 export '/secretaria/page_membro_secretaria_min/page_membro_secretaria_min_widget.dart'
     show PageMembroSecretariaMinWidget;
-export '/lider/page_membro_lider_min/page_membro_lider_min_widget.dart'
-    show PageMembroLiderMinWidget;
 export '/lider/page_escala_lider_membro/page_escala_lider_membro_widget.dart'
     show PageEscalaLiderMembroWidget;
 export '/lider/pageescalacriada/pageescalacriada_widget.dart'

@@ -7,6 +7,7 @@ import '/lider/menu_lider_mobile/menu_lider_mobile_widget.dart';
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:file_picker/file_picker.dart';
 import 'page_escalas_lider_model.dart';
 export 'page_escalas_lider_model.dart';
 
@@ -873,6 +874,8 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
     final descricaoController = TextEditingController();
     DateTime? dataSelecionada;
     TimeOfDay? horaSelecionada;
+    List<PlatformFile> arquivosSelecionados = [];
+    bool isLoading = false;
 
     showModalBottomSheet(
       context: context,
@@ -882,7 +885,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Container(
-              height: MediaQuery.of(context).size.height * 0.85,
+              height: MediaQuery.of(context).size.height * 0.9,
               decoration: BoxDecoration(
                 color: Color(0xFF1A1A1A),
                 borderRadius: BorderRadius.only(
@@ -1119,7 +1122,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                           SizedBox(height: 8.0),
                           TextField(
                             controller: descricaoController,
-                            maxLines: 4,
+                            maxLines: 3,
                             decoration: InputDecoration(
                               hintText: 'Informações adicionais sobre a escala...',
                               hintStyle: GoogleFonts.inter(
@@ -1148,6 +1151,146 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                             ),
                             style: GoogleFonts.inter(color: Colors.white),
                           ),
+
+                          SizedBox(height: 24.0),
+
+                          // Arquivos
+                          Text(
+                            'Arquivos (opcional)',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 14.0,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+
+                          // Botão de adicionar arquivo
+                          InkWell(
+                            onTap: () async {
+                              final result = await FilePicker.platform.pickFiles(
+                                allowMultiple: true,
+                                type: FileType.custom,
+                                allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx'],
+                              );
+                              if (result != null) {
+                                setModalState(() {
+                                  arquivosSelecionados.addAll(result.files);
+                                });
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(12.0),
+                            child: Container(
+                              padding: EdgeInsets.all(20.0),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF2A2A2A),
+                                borderRadius: BorderRadius.circular(12.0),
+                                border: Border.all(
+                                  color: Color(0xFF3A3A3A),
+                                  width: 1.0,
+                                  style: BorderStyle.solid,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.cloud_upload_rounded,
+                                    color: FlutterFlowTheme.of(context).primary,
+                                    size: 24.0,
+                                  ),
+                                  SizedBox(width: 12.0),
+                                  Text(
+                                    'Adicionar arquivos',
+                                    style: GoogleFonts.inter(
+                                      color: FlutterFlowTheme.of(context).primary,
+                                      fontSize: 14.0,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          SizedBox(height: 8.0),
+
+                          Text(
+                            'PDF, PNG, JPG, DOC (máx. 10MB cada)',
+                            style: GoogleFonts.inter(
+                              color: Color(0xFF666666),
+                              fontSize: 12.0,
+                            ),
+                          ),
+
+                          // Lista de arquivos selecionados
+                          if (arquivosSelecionados.isNotEmpty) ...[
+                            SizedBox(height: 16.0),
+                            ...arquivosSelecionados.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final arquivo = entry.value;
+                              final extensao = arquivo.extension?.toLowerCase() ?? '';
+                              IconData icone;
+                              Color corIcone;
+
+                              if (extensao == 'pdf') {
+                                icone = Icons.picture_as_pdf_rounded;
+                                corIcone = Colors.red;
+                              } else if (['png', 'jpg', 'jpeg'].contains(extensao)) {
+                                icone = Icons.image_rounded;
+                                corIcone = Colors.blue;
+                              } else {
+                                icone = Icons.description_rounded;
+                                corIcone = Colors.orange;
+                              }
+
+                              return Container(
+                                margin: EdgeInsets.only(bottom: 8.0),
+                                padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF3A3A3A),
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(icone, color: corIcone, size: 20.0),
+                                    SizedBox(width: 10.0),
+                                    Expanded(
+                                      child: Text(
+                                        arquivo.name,
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white,
+                                          fontSize: 13.0,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.0),
+                                    Text(
+                                      '${(arquivo.size / 1024).toStringAsFixed(0)} KB',
+                                      style: GoogleFonts.inter(
+                                        color: Color(0xFF999999),
+                                        fontSize: 12.0,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.0),
+                                    InkWell(
+                                      onTap: () {
+                                        setModalState(() {
+                                          arquivosSelecionados.removeAt(index);
+                                        });
+                                      },
+                                      child: Icon(
+                                        Icons.close_rounded,
+                                        color: Color(0xFF999999),
+                                        size: 20.0,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ],
                         ],
                       ),
                     ),
@@ -1170,7 +1313,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                       child: SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () async {
+                          onPressed: isLoading ? null : () async {
                             if (nomeController.text.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -1191,36 +1334,111 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                               return;
                             }
 
-                            // Combinar data e hora (adicionar 3h para compensar fuso UTC-3 Brasília)
-                            final dataHora = DateTime(
-                              dataSelecionada!.year,
-                              dataSelecionada!.month,
-                              dataSelecionada!.day,
-                              horaSelecionada!.hour + 3,
-                              horaSelecionada!.minute,
-                            );
+                            setModalState(() => isLoading = true);
 
-                            // Criar escala
-                            final novaEscala = await EscalasTable().insert({
-                              'id_ministerio': widget.idministerio,
-                              'nome_escala': nomeController.text,
-                              'data_hora_escala': dataHora.toIso8601String(),
-                              'descricao': descricaoController.text.isNotEmpty
-                                  ? descricaoController.text
-                                  : null,
-                              'id_responsavel': currentUserUid,
-                            });
+                            try {
+                              // Combinar data e hora
+                              final dataHora = DateTime(
+                                dataSelecionada!.year,
+                                dataSelecionada!.month,
+                                dataSelecionada!.day,
+                                horaSelecionada!.hour,
+                                horaSelecionada!.minute,
+                              );
 
-                            Navigator.pop(modalContext);
+                              // Buscar o id_membro do usuário logado pelo id_auth
+                              String? idMembroResponsavel;
+                              if (currentUserUid.isNotEmpty) {
+                                final membroLogado = await MembrosTable().queryRows(
+                                  queryFn: (q) => q.eq('id_auth', currentUserUid),
+                                );
+                                if (membroLogado.isNotEmpty) {
+                                  idMembroResponsavel = membroLogado.first.idMembro;
+                                }
+                              }
 
-                            // Navegar para página de detalhes da escala criada
-                            context.pushNamed(
-                              'PageEscalaDetalhesLider',
-                              queryParameters: {
-                                'idministerio': serializeParam(widget.idministerio, ParamType.int),
-                                'idescala': serializeParam(novaEscala.idEscala, ParamType.int),
-                              },
-                            );
+                              print('ID Auth: $currentUserUid');
+                              print('ID Membro Responsável: $idMembroResponsavel');
+                              print('ID Ministerio: ${widget.idministerio}');
+
+                              // Criar escala diretamente no Supabase
+                              final response = await SupaFlow.client
+                                  .from('escalas')
+                                  .insert({
+                                    'id_ministerio': widget.idministerio,
+                                    'nome_escala': nomeController.text.trim(),
+                                    'data_hora_escala': dataHora.toIso8601String(),
+                                    'descricao': descricaoController.text.trim().isNotEmpty
+                                        ? descricaoController.text.trim()
+                                        : null,
+                                    'id_responsavel': idMembroResponsavel,
+                                  })
+                                  .select()
+                                  .single();
+
+                              print('Resposta do insert: $response');
+
+                              final novaEscala = EscalasRow(response);
+                              print('Escala criada com ID: ${novaEscala.idEscala}');
+
+                              // Upload de arquivos se houver
+                              if (arquivosSelecionados.isNotEmpty) {
+                                for (var arquivo in arquivosSelecionados) {
+                                  if (arquivo.bytes != null) {
+                                    // Gerar nome único para o arquivo
+                                    final nomeArquivo = '${DateTime.now().millisecondsSinceEpoch}_${arquivo.name}';
+                                    final path = 'escalas/${novaEscala.idEscala}/$nomeArquivo';
+
+                                    // Upload para o Storage do Supabase
+                                    final response = await SupaFlow.client.storage
+                                        .from('arquivos')
+                                        .uploadBinary(path, arquivo.bytes!);
+
+                                    // Pegar URL pública do arquivo
+                                    final urlPublica = SupaFlow.client.storage
+                                        .from('arquivos')
+                                        .getPublicUrl(path);
+
+                                    // Salvar referência na tabela arquivos
+                                    await ArquivosTable().insert({
+                                      'link_arquivo': urlPublica,
+                                      'id_escala': novaEscala.idEscala,
+                                      'nome_arquivo': '.${arquivo.extension ?? 'file'}',
+                                    });
+                                  }
+                                }
+                              }
+
+                              Navigator.pop(modalContext);
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Escala criada com sucesso!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+
+                              // Recarregar dados
+                              await _carregarDados();
+
+                              // Navegar para página de detalhes da escala criada
+                              context.pushNamed(
+                                'PageEscalaDetalhesLider',
+                                queryParameters: {
+                                  'idministerio': serializeParam(widget.idministerio, ParamType.int),
+                                  'idescala': serializeParam(novaEscala.idEscala, ParamType.int),
+                                },
+                              );
+                            } catch (e) {
+                              print('Erro ao criar escala: $e');
+                              setModalState(() => isLoading = false);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Erro ao criar escala: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: FlutterFlowTheme.of(context).primary,
@@ -1230,13 +1448,22 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                           ),
-                          child: Text(
-                            'Criar Escala',
-                            style: GoogleFonts.inter(
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          child: isLoading
+                              ? SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.0,
+                                  ),
+                                )
+                              : Text(
+                                  'Criar Escala',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16.0,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                         ),
                       ),
                     ),

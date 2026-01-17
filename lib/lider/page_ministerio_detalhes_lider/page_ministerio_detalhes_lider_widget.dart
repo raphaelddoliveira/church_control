@@ -4,7 +4,6 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/lider/menu_lider/menu_lider_widget.dart';
 import '/lider/menu_lider_mobile/menu_lider_mobile_widget.dart';
-import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'page_ministerio_detalhes_lider_model.dart';
@@ -108,6 +107,242 @@ class _PageMinisterioDetalhesLiderWidgetState
       if (membro == null) return false;
       return membro.nomeMembro.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
+  }
+
+  Future<void> _removerMembro(MembrosMinisteriosRow membroMinisterio) async {
+    try {
+      await MembrosMinisteriosTable().delete(
+        matchingRows: (q) => q.eq('id_membro_ministerio', membroMinisterio.idMembroMinisterio),
+      );
+      await _carregarDados();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Membro removido do ministério'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao remover membro'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _mostrarModalAdicionarMembro() {
+    final searchMembroController = TextEditingController();
+    List<MembrosRow> todosOsMembros = [];
+    List<MembrosRow> membrosFiltrados = [];
+    bool isLoadingMembros = true;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            // Carregar membros na primeira vez
+            if (isLoadingMembros && todosOsMembros.isEmpty) {
+              MembrosTable().queryRows(
+                queryFn: (q) => q.order('nome_membro'),
+              ).then((membros) {
+                // Filtrar membros que já estão no ministério
+                final idsNoMinisterio = _membrosMinisterio
+                    .map((mm) => mm.idMembro)
+                    .whereType<String>()
+                    .toSet();
+                final membrosDisponiveis = membros
+                    .where((m) => !idsNoMinisterio.contains(m.idMembro))
+                    .toList();
+                setModalState(() {
+                  todosOsMembros = membrosDisponiveis;
+                  membrosFiltrados = membrosDisponiveis;
+                  isLoadingMembros = false;
+                });
+              });
+            }
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: BoxDecoration(
+                color: Color(0xFF2A2A2A),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF666666),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+
+                  // Header
+                  Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Adicionar Membro',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(Icons.close, color: Color(0xFF999999)),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Campo de busca
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: TextField(
+                      controller: searchMembroController,
+                      onChanged: (value) {
+                        setModalState(() {
+                          membrosFiltrados = todosOsMembros
+                              .where((m) => m.nomeMembro
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Buscar membro...',
+                        hintStyle: GoogleFonts.inter(
+                          color: Color(0xFF666666),
+                          fontSize: 16,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: Color(0xFF666666),
+                        ),
+                        filled: true,
+                        fillColor: Color(0xFF3A3A3A),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // Lista de membros
+                  Expanded(
+                    child: isLoadingMembros
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                FlutterFlowTheme.of(context).primary,
+                              ),
+                            ),
+                          )
+                        : membrosFiltrados.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.person_search_rounded,
+                                      size: 48,
+                                      color: Color(0xFF666666),
+                                    ),
+                                    SizedBox(height: 12),
+                                    Text(
+                                      'Nenhum membro encontrado',
+                                      style: GoogleFonts.inter(
+                                        color: Color(0xFF999999),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
+                                padding: EdgeInsets.symmetric(horizontal: 20),
+                                itemCount: membrosFiltrados.length,
+                                itemBuilder: (context, index) {
+                                  final membro = membrosFiltrados[index];
+                                  return Container(
+                                    margin: EdgeInsets.only(bottom: 8),
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFF3A3A3A),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: ListTile(
+                                      leading: CircleAvatar(
+                                        backgroundColor: Color(0xFF9C27B0).withOpacity(0.2),
+                                        child: Icon(
+                                          Icons.person_rounded,
+                                          color: Color(0xFF9C27B0),
+                                        ),
+                                      ),
+                                      title: Text(
+                                        membro.nomeMembro,
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      trailing: Icon(
+                                        Icons.add_circle_outline_rounded,
+                                        color: FlutterFlowTheme.of(context).primary,
+                                      ),
+                                      onTap: () async {
+                                        try {
+                                          await MembrosMinisteriosTable().insert({
+                                            'id_membro': membro.idMembro,
+                                            'id_ministerio': widget.idministerio,
+                                          });
+                                          Navigator.pop(context);
+                                          await _carregarDados();
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Membro adicionado ao ministério'),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Erro ao adicionar membro'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -215,18 +450,8 @@ class _PageMinisterioDetalhesLiderWidgetState
                                             phone: false,
                                           ))
                                             FFButtonWidget(
-                                              onPressed: () {
-                                                context.pushNamed(
-                                                  PageMembroLiderMinWidget.routeName,
-                                                  queryParameters: {
-                                                    'idministerio': serializeParam(
-                                                      widget.idministerio,
-                                                      ParamType.int,
-                                                    ),
-                                                  }.withoutNulls,
-                                                );
-                                              },
-                                              text: 'Novo Participante',
+                                              onPressed: _mostrarModalAdicionarMembro,
+                                              text: 'Adicionar Membro',
                                               icon: Icon(
                                                 Icons.person_add_rounded,
                                                 size: 20,
@@ -343,18 +568,8 @@ class _PageMinisterioDetalhesLiderWidgetState
                                     child: SizedBox(
                                       width: double.infinity,
                                       child: FFButtonWidget(
-                                        onPressed: () {
-                                          context.pushNamed(
-                                            PageMembroLiderMinWidget.routeName,
-                                            queryParameters: {
-                                              'idministerio': serializeParam(
-                                                widget.idministerio,
-                                                ParamType.int,
-                                              ),
-                                            }.withoutNulls,
-                                          );
-                                        },
-                                        text: 'Novo Participante',
+                                        onPressed: _mostrarModalAdicionarMembro,
+                                        text: 'Adicionar Membro',
                                         icon: Icon(
                                           Icons.person_add_rounded,
                                           size: 20,

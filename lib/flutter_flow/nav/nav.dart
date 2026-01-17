@@ -299,17 +299,6 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           ),
         ),
         FFRoute(
-          name: PageMembroLiderMinWidget.routeName,
-          path: PageMembroLiderMinWidget.routePath,
-          requireAuth: true,
-          builder: (context, params) => PageMembroLiderMinWidget(
-            idministerio: params.getParam(
-              'idministerio',
-              ParamType.int,
-            ),
-          ),
-        ),
-        FFRoute(
           name: PageEscalaLiderMembroWidget.routeName,
           path: PageEscalaLiderMembroWidget.routePath,
           requireAuth: true,

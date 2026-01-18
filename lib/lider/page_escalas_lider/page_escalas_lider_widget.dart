@@ -1385,8 +1385,28 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                               if (arquivosSelecionados.isNotEmpty) {
                                 for (var arquivo in arquivosSelecionados) {
                                   if (arquivo.bytes != null) {
+                                    // Sanitizar nome do arquivo (remover acentos e caracteres especiais)
+                                    String nomeOriginal = arquivo.name;
+                                    String nomeSanitizado = nomeOriginal
+                                        .replaceAll(RegExp(r'[áàâãäå]'), 'a')
+                                        .replaceAll(RegExp(r'[ÁÀÂÃÄÅ]'), 'A')
+                                        .replaceAll(RegExp(r'[éèêë]'), 'e')
+                                        .replaceAll(RegExp(r'[ÉÈÊË]'), 'E')
+                                        .replaceAll(RegExp(r'[íìîï]'), 'i')
+                                        .replaceAll(RegExp(r'[ÍÌÎÏ]'), 'I')
+                                        .replaceAll(RegExp(r'[óòôõö]'), 'o')
+                                        .replaceAll(RegExp(r'[ÓÒÔÕÖ]'), 'O')
+                                        .replaceAll(RegExp(r'[úùûü]'), 'u')
+                                        .replaceAll(RegExp(r'[ÚÙÛÜ]'), 'U')
+                                        .replaceAll(RegExp(r'[ç]'), 'c')
+                                        .replaceAll(RegExp(r'[Ç]'), 'C')
+                                        .replaceAll(RegExp(r'[ñ]'), 'n')
+                                        .replaceAll(RegExp(r'[Ñ]'), 'N')
+                                        .replaceAll(' ', '_')
+                                        .replaceAll(RegExp(r'[^a-zA-Z0-9_.-]'), '');
+
                                     // Gerar nome único para o arquivo
-                                    final nomeArquivo = '${DateTime.now().millisecondsSinceEpoch}_${arquivo.name}';
+                                    final nomeArquivo = '${DateTime.now().millisecondsSinceEpoch}_$nomeSanitizado';
                                     final path = 'escalas/${novaEscala.idEscala}/$nomeArquivo';
 
                                     // Upload para o Storage do Supabase
@@ -1403,7 +1423,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                                     await ArquivosTable().insert({
                                       'link_arquivo': urlPublica,
                                       'id_escala': novaEscala.idEscala,
-                                      'nome_arquivo': '.${arquivo.extension ?? 'file'}',
+                                      'nome_arquivo': nomeOriginal,
                                     });
                                   }
                                 }

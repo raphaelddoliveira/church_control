@@ -13,8 +13,11 @@ Future<User?> emailCreateAccountFunc(
   String email,
   String password,
 ) async {
-  final AuthResponse res =
-      await SupaFlow.client.auth.signUp(email: email, password: password);
+  final AuthResponse res = await SupaFlow.client.auth.signUp(
+    email: email,
+    password: password,
+    emailRedirectTo: 'https://church-control.vercel.app/loginTeste',
+  );
 
   // If the Supabase project is configured to not let users sign in until the
   // email has been confirmed, the user returned in the AuthResponse still has

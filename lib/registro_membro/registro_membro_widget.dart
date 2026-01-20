@@ -66,16 +66,6 @@ class _RegistroMembroWidgetState extends State<RegistroMembroWidget> {
       return;
     }
 
-    if (_model.cpfController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Por favor, informe seu CPF'),
-          backgroundColor: FlutterFlowTheme.of(context).error,
-        ),
-      );
-      return;
-    }
-
     if (_model.senhaController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -111,14 +101,9 @@ class _RegistroMembroWidgetState extends State<RegistroMembroWidget> {
     });
 
     try {
-      // Formatar CPF
-      final cpfFormatado = _formatarCPF(_model.cpfController.text);
-
-      // Buscar membro na base de dados
+      // Buscar membro na base de dados pelo email
       final membros = await MembrosTable().queryRows(
-        queryFn: (q) => q
-            .eqOrNull('email', _model.emailController.text.trim())
-            .eqOrNull('cpf', cpfFormatado),
+        queryFn: (q) => q.eqOrNull('email', _model.emailController.text.trim()),
       );
 
       if (membros.isEmpty) {
@@ -285,7 +270,7 @@ class _RegistroMembroWidgetState extends State<RegistroMembroWidget> {
                         children: [
                           // Instrução
                           Text(
-                            'Informe seu email e CPF cadastrados na igreja para criar sua conta',
+                            'Informe seu email cadastrado na igreja para criar sua conta',
                             textAlign: TextAlign.center,
                             style: FlutterFlowTheme.of(context)
                                 .bodyMedium
@@ -359,71 +344,6 @@ class _RegistroMembroWidgetState extends State<RegistroMembroWidget> {
                                   letterSpacing: 0.0,
                                 ),
                             keyboardType: TextInputType.emailAddress,
-                          ),
-                          SizedBox(height: 16.0),
-
-                          // Campo CPF
-                          TextFormField(
-                            controller: _model.cpfController,
-                            focusNode: _model.cpfFocusNode,
-                            autofocus: false,
-                            obscureText: false,
-                            decoration: InputDecoration(
-                              labelText: 'CPF',
-                              labelStyle: FlutterFlowTheme.of(context)
-                                  .labelMedium
-                                  .override(
-                                    font: GoogleFonts.inter(),
-                                    letterSpacing: 0.0,
-                                  ),
-                              hintText: '000.000.000-00',
-                              hintStyle: FlutterFlowTheme.of(context)
-                                  .bodyMedium
-                                  .override(
-                                    font: GoogleFonts.inter(),
-                                    color: Color(0xFF808080),
-                                    letterSpacing: 0.0,
-                                  ),
-                              enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: FlutterFlowTheme.of(context).alternate,
-                                  width: 2.0,
-                                ),
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: FlutterFlowTheme.of(context).primary,
-                                  width: 2.0,
-                                ),
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: FlutterFlowTheme.of(context).error,
-                                  width: 2.0,
-                                ),
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              focusedErrorBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: FlutterFlowTheme.of(context).error,
-                                  width: 2.0,
-                                ),
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              filled: true,
-                              fillColor: Color(0xFF0D0C0C),
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  font: GoogleFonts.inter(),
-                                  color: FlutterFlowTheme.of(context)
-                                      .primaryBackground,
-                                  letterSpacing: 0.0,
-                                ),
-                            keyboardType: TextInputType.number,
                           ),
                           SizedBox(height: 16.0),
 

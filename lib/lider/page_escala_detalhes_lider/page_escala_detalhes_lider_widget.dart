@@ -37,6 +37,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
   List<MembrosEscalasRow> _membrosEscala = [];
   Map<String, MembrosRow> _membrosData = {};
   List<MembrosRow> _membrosDisponiveis = [];
+  List<ArquivosRow> _arquivos = [];
   bool _isLoading = true;
 
   @override
@@ -109,12 +110,18 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
         }
       }
 
+      // Carregar arquivos da escala
+      final arquivos = await ArquivosTable().queryRows(
+        queryFn: (q) => q.eq('id_escala', widget.idescala!),
+      );
+
       setState(() {
         _escala = escala;
         _ministerio = ministerio;
         _membrosEscala = membrosEscala;
         _membrosData = membrosData;
         _membrosDisponiveis = membrosDisponiveis;
+        _arquivos = arquivos;
         _isLoading = false;
       });
     } catch (e) {
@@ -422,6 +429,99 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                               color: Colors.white,
                                               fontSize: 14.0,
                                             ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+
+                                // Seção de Arquivos
+                                if (_arquivos.isNotEmpty)
+                                  Padding(
+                                    padding: EdgeInsets.fromLTRB(32.0, 24.0, 32.0, 0.0),
+                                    child: Container(
+                                      width: double.infinity,
+                                      padding: EdgeInsets.all(20.0),
+                                      decoration: BoxDecoration(
+                                        color: Color(0xFF2A2A2A),
+                                        borderRadius: BorderRadius.circular(12.0),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.attach_file_rounded,
+                                                color: Color(0xFF666666),
+                                                size: 18.0,
+                                              ),
+                                              SizedBox(width: 8.0),
+                                              Text(
+                                                'Arquivos (${_arquivos.length})',
+                                                style: GoogleFonts.inter(
+                                                  color: Color(0xFF999999),
+                                                  fontSize: 13.0,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(height: 12.0),
+                                          Wrap(
+                                            spacing: 8.0,
+                                            runSpacing: 8.0,
+                                            children: _arquivos.map((arquivo) {
+                                              return InkWell(
+                                                onTap: () async {
+                                                  if (arquivo.linkArquivo != null) {
+                                                    await launchURL(arquivo.linkArquivo!);
+                                                  }
+                                                },
+                                                borderRadius: BorderRadius.circular(8.0),
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 12.0,
+                                                    vertical: 8.0,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Color(0xFF3C3D3E),
+                                                    borderRadius: BorderRadius.circular(8.0),
+                                                    border: Border.all(
+                                                      color: FlutterFlowTheme.of(context).primary.withOpacity(0.3),
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        _getIconForFile(arquivo.nomeArquivo ?? ''),
+                                                        color: FlutterFlowTheme.of(context).primary,
+                                                        size: 16.0,
+                                                      ),
+                                                      SizedBox(width: 8.0),
+                                                      ConstrainedBox(
+                                                        constraints: BoxConstraints(maxWidth: 200),
+                                                        child: Text(
+                                                          arquivo.nomeArquivo ?? 'Arquivo',
+                                                          style: GoogleFonts.inter(
+                                                            color: Colors.white,
+                                                            fontSize: 13.0,
+                                                          ),
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 8.0),
+                                                      Icon(
+                                                        Icons.download_rounded,
+                                                        color: Color(0xFF666666),
+                                                        size: 16.0,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
                                           ),
                                         ],
                                       ),
@@ -1557,5 +1657,38 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
         );
       },
     );
+  }
+
+  IconData _getIconForFile(String fileName) {
+    final extension = fileName.toLowerCase().split('.').last;
+    switch (extension) {
+      case 'pdf':
+        return Icons.picture_as_pdf_rounded;
+      case 'doc':
+      case 'docx':
+        return Icons.description_rounded;
+      case 'xls':
+      case 'xlsx':
+        return Icons.table_chart_rounded;
+      case 'ppt':
+      case 'pptx':
+        return Icons.slideshow_rounded;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'webp':
+        return Icons.image_rounded;
+      case 'mp3':
+      case 'wav':
+      case 'aac':
+        return Icons.audio_file_rounded;
+      case 'mp4':
+      case 'avi':
+      case 'mov':
+        return Icons.video_file_rounded;
+      default:
+        return Icons.insert_drive_file_rounded;
+    }
   }
 }

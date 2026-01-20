@@ -636,12 +636,18 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
             }
           }
 
+          // Buscar os arquivos da escala
+          final arquivos = await ArquivosTable().queryRows(
+            queryFn: (q) => q.eq('id_escala', escala.idEscala),
+          );
+
           escalasCompletas.add({
             'escala': escala,
             'funcao': membroEscala.funcaoEscala,
             'aceitou': membroEscala.aceitouEscala,
             'nomeMinisterio': nomeMinisterio,
             'idMembroEscala': membroEscala.idMembroEscala,
+            'arquivos': arquivos,
           });
         }
       }
@@ -660,7 +666,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
     return escalasCompletas;
   }
 
-  void _mostrarModalEscala(BuildContext context, EscalasRow escala, String? funcao, String? aceitou, int idMembroEscala, String? nomeMinisterio) {
+  void _mostrarModalEscala(BuildContext context, EscalasRow escala, String? funcao, String? aceitou, int idMembroEscala, String? nomeMinisterio, List<ArquivosRow> arquivos) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -766,7 +772,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                       ],
 
                       // Arquivos
-                      if (escala.arquivos != null && escala.arquivos.isNotEmpty) ...[
+                      if (arquivos.isNotEmpty) ...[
                         Row(
                           children: [
                             Icon(
@@ -776,7 +782,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                             ),
                             SizedBox(width: 8.0),
                             Text(
-                              'Arquivos',
+                              'Arquivos (${arquivos.length})',
                               style: GoogleFonts.inter(
                                 color: Color(0xFF999999),
                                 fontSize: 14.0,
@@ -786,10 +792,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                           ],
                         ),
                         SizedBox(height: 12.0),
-                        ...escala.arquivos.map((arquivo) {
-                          // Extrair nome do arquivo da URL
-                          final nomeArquivo = arquivo.split('/').last.split('?').first;
-
+                        ...arquivos.map((arquivo) {
                           return Container(
                             margin: EdgeInsets.only(bottom: 8.0),
                             decoration: BoxDecoration(
@@ -804,7 +807,9 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: () async {
-                                  await launchURL(arquivo);
+                                  if (arquivo.linkArquivo != null) {
+                                    await launchURL(arquivo.linkArquivo!);
+                                  }
                                 },
                                 borderRadius: BorderRadius.circular(12.0),
                                 child: Padding(
@@ -812,7 +817,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                                   child: Row(
                                     children: [
                                       Icon(
-                                        Icons.insert_drive_file_rounded,
+                                        _getIconForFile(arquivo.nomeArquivo ?? ''),
                                         color: FlutterFlowTheme.of(context).primary,
                                         size: 24.0,
                                       ),
@@ -822,7 +827,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              nomeArquivo,
+                                              arquivo.nomeArquivo ?? 'Arquivo',
                                               style: GoogleFonts.inter(
                                                 color: Colors.white,
                                                 fontSize: 14.0,
@@ -1104,10 +1109,11 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                   final aceitou = item['aceitou'] as String?;
                   final nomeMinisterio = item['nomeMinisterio'] as String?;
                   final idMembroEscala = item['idMembroEscala'] as int;
+                  final arquivos = item['arquivos'] as List<ArquivosRow>? ?? [];
 
                   return InkWell(
                     onTap: () {
-                      _mostrarModalEscala(context, escala, funcao, aceitou, idMembroEscala, nomeMinisterio);
+                      _mostrarModalEscala(context, escala, funcao, aceitou, idMembroEscala, nomeMinisterio, arquivos);
                     },
                     child: Container(
                       margin: EdgeInsets.only(bottom: 16.0),
@@ -1327,5 +1333,38 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
         ),
       ),
     );
+  }
+
+  IconData _getIconForFile(String fileName) {
+    final extension = fileName.toLowerCase().split('.').last;
+    switch (extension) {
+      case 'pdf':
+        return Icons.picture_as_pdf_rounded;
+      case 'doc':
+      case 'docx':
+        return Icons.description_rounded;
+      case 'xls':
+      case 'xlsx':
+        return Icons.table_chart_rounded;
+      case 'ppt':
+      case 'pptx':
+        return Icons.slideshow_rounded;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'webp':
+        return Icons.image_rounded;
+      case 'mp3':
+      case 'wav':
+      case 'aac':
+        return Icons.audio_file_rounded;
+      case 'mp4':
+      case 'avi':
+      case 'mov':
+        return Icons.video_file_rounded;
+      default:
+        return Icons.insert_drive_file_rounded;
+    }
   }
 }

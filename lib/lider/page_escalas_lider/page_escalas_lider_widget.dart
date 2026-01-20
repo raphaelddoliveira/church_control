@@ -1337,14 +1337,14 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                             setModalState(() => isLoading = true);
 
                             try {
-                              // Combinar data e hora
+                              // Combinar data e hora e adicionar 3h para compensar fuso horário
                               final dataHora = DateTime(
                                 dataSelecionada!.year,
                                 dataSelecionada!.month,
                                 dataSelecionada!.day,
                                 horaSelecionada!.hour,
                                 horaSelecionada!.minute,
-                              );
+                              ).add(Duration(hours: 3));
 
                               // Buscar o id_membro do usuário logado pelo id_auth
                               String? idMembroResponsavel;

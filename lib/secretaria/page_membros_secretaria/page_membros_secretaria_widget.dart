@@ -26,7 +26,14 @@ class _PageMembrosSecretariaWidgetState
     extends State<PageMembrosSecretariaWidget> {
   late PageMembrosSecretariaModel _model;
   final scaffoldKey = GlobalKey<ScaffoldState>();
+
+  List<MembrosRow> _membros = [];
   Map<String, TelefoneRow?> _telefonesCache = {};
+  Map<String, EnderecoRow?> _enderecosCache = {};
+  Map<String, List<int>> _membrosMinisteriosCache = {};
+  bool _isLoading = true;
+  int _totalAtivos = 0;
+  int _totalInativos = 0;
 
   @override
   void initState() {
@@ -34,7 +41,7 @@ class _PageMembrosSecretariaWidgetState
     _model = createModel(context, () => PageMembrosSecretariaModel());
     _model.textController ??= TextEditingController();
     _model.textFieldFocusNode ??= FocusNode();
-    _carregarTelefones();
+    _carregarDados();
   }
 
   @override
@@ -43,70 +50,105 @@ class _PageMembrosSecretariaWidgetState
     super.dispose();
   }
 
-  Future<void> _carregarTelefones() async {
-    final telefones = await TelefoneTable().queryRows(queryFn: (q) => q);
-    setState(() {
-      _telefonesCache = {
+  Future<void> _carregarDados() async {
+    try {
+      // Buscar membros
+      final membros = await MembrosTable().queryRows(
+        queryFn: (q) => q.order('nome_membro'),
+      );
+
+      // Buscar telefones
+      final telefones = await TelefoneTable().queryRows(queryFn: (q) => q);
+      final telefonesMap = <String, TelefoneRow?>{
         for (var t in telefones)
           if (t.idMembro != null) t.idMembro!: t
       };
-    });
+
+      // Buscar enderecos
+      final enderecos = await EnderecoTable().queryRows(queryFn: (q) => q);
+      final enderecosMap = <int, EnderecoRow>{
+        for (var e in enderecos) e.idEndereco: e
+      };
+      final membrosEnderecosMap = <String, EnderecoRow?>{};
+      for (var m in membros) {
+        if (m.idEndereco != null) {
+          membrosEnderecosMap[m.idMembro] = enderecosMap[m.idEndereco];
+        }
+      }
+
+      // Buscar membros ministerios
+      final membrosMinisterios = await MembrosMinisteriosTable().queryRows(queryFn: (q) => q);
+      final membrosMinisteriosMap = <String, List<int>>{};
+      for (var mm in membrosMinisterios) {
+        if (mm.idMembro != null && mm.idMinisterio != null) {
+          membrosMinisteriosMap.putIfAbsent(mm.idMembro!, () => []);
+          membrosMinisteriosMap[mm.idMembro!]!.add(mm.idMinisterio!);
+        }
+      }
+
+      // Contar ativos e inativos
+      int ativos = 0;
+      int inativos = 0;
+      for (var m in membros) {
+        if (m.ativo == true) {
+          ativos++;
+        } else {
+          inativos++;
+        }
+      }
+
+      setState(() {
+        _membros = membros;
+        _telefonesCache = telefonesMap;
+        _enderecosCache = membrosEnderecosMap;
+        _membrosMinisteriosCache = membrosMinisteriosMap;
+        _totalAtivos = ativos;
+        _totalInativos = inativos;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Erro ao carregar dados: $e');
+      setState(() => _isLoading = false);
+    }
   }
 
-  Future<List<Map<String, dynamic>>> _getMembrosComDetalhes() async {
-    final membros = await MembrosTable().queryRows(
-      queryFn: (q) => q.ilike('nome_membro', '%${_model.textController.text}%'),
-    );
+  List<MembrosRow> get _membrosFiltrados {
+    final query = _model.textController!.text.toLowerCase();
 
-    final enderecos = await EnderecoTable().queryRows(queryFn: (q) => q);
-    final membrosMinisterios = await MembrosMinisteriosTable().queryRows(queryFn: (q) => q);
-
-    final enderecosMap = {for (var e in enderecos) e.idEndereco: e};
-    final membrosMinisteriosMap = <String, List<int>>{};
-    for (var mm in membrosMinisterios) {
-      if (mm.idMembro != null && mm.idMinisterio != null) {
-        membrosMinisteriosMap.putIfAbsent(mm.idMembro!, () => []);
-        membrosMinisteriosMap[mm.idMembro!]!.add(mm.idMinisterio!);
+    return _membros.where((membro) {
+      // Filtro de busca por nome
+      if (query.isNotEmpty && !membro.nomeMembro.toLowerCase().contains(query)) {
+        return false;
       }
-    }
 
-    final resultado = <Map<String, dynamic>>[];
-    for (var membro in membros) {
-      final endereco = membro.idEndereco != null ? enderecosMap[membro.idEndereco!] : null;
-      final ministeriosDoMembro = membrosMinisteriosMap[membro.idMembro] ?? [];
-
-      bool passaFiltros = true;
-
+      // Filtro de status
       if (_model.filtroStatus != null) {
-        if (_model.filtroStatus == 'ativo' && membro.ativo != true) passaFiltros = false;
-        else if (_model.filtroStatus == 'inativo' && membro.ativo != false) passaFiltros = false;
+        if (_model.filtroStatus == 'ativo' && membro.ativo != true) return false;
+        if (_model.filtroStatus == 'inativo' && membro.ativo != false) return false;
       }
 
-      if (_model.filtroBairro != null && _model.filtroBairro!.isNotEmpty && endereco?.bairro != _model.filtroBairro) {
-        passaFiltros = false;
+      // Filtro de bairro
+      if (_model.filtroBairro != null && _model.filtroBairro!.isNotEmpty) {
+        final endereco = _enderecosCache[membro.idMembro];
+        if (endereco?.bairro != _model.filtroBairro) return false;
       }
 
-      if (_model.filtroMinisterio != null && !ministeriosDoMembro.contains(_model.filtroMinisterio)) {
-        passaFiltros = false;
+      // Filtro de ministerio
+      if (_model.filtroMinisterio != null) {
+        final ministerios = _membrosMinisteriosCache[membro.idMembro] ?? [];
+        if (!ministerios.contains(_model.filtroMinisterio)) return false;
       }
 
+      // Filtro de data nascimento
       if (_model.filtroDataNascimentoInicio != null && membro.dataNascimento != null) {
-        if (membro.dataNascimento!.isBefore(_model.filtroDataNascimentoInicio!)) passaFiltros = false;
+        if (membro.dataNascimento!.isBefore(_model.filtroDataNascimentoInicio!)) return false;
       }
       if (_model.filtroDataNascimentoFim != null && membro.dataNascimento != null) {
-        if (membro.dataNascimento!.isAfter(_model.filtroDataNascimentoFim!)) passaFiltros = false;
+        if (membro.dataNascimento!.isAfter(_model.filtroDataNascimentoFim!)) return false;
       }
 
-      if (passaFiltros) {
-        resultado.add({
-          'membro': membro,
-          'endereco': endereco,
-          'ministerios': ministeriosDoMembro,
-        });
-      }
-    }
-
-    return resultado;
+      return true;
+    }).toList();
   }
 
   void _mostrarFiltros() {
@@ -295,368 +337,540 @@ class _PageMembrosSecretariaWidgetState
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _getMembrosComDetalhes(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return Scaffold(
-            backgroundColor: Color(0xFF0D0D0D),
-            body: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(FlutterFlowTheme.of(context).primary),
-              ),
+  Widget _buildStatCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(12.0),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12.0),
             ),
-          );
-        }
-
-        final dadosCompletos = snapshot.data!;
-        final membros = dadosCompletos.map((d) => d['membro'] as MembrosRow).toList();
-
-        return GestureDetector(
-          onTap: () => FocusScope.of(context).unfocus(),
-          child: Scaffold(
-            key: scaffoldKey,
-            backgroundColor: Color(0xFF0D0D0D),
-            drawer: Drawer(
-              backgroundColor: Color(0xFF1A1A1A),
-              child: MenuSecretariaWidget(),
+            child: Icon(
+              icon,
+              size: 32.0,
+              color: color,
             ),
-            body: Row(
+          ),
+          SizedBox(height: 16.0),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: Color(0xFF999999),
+              fontSize: 14.0,
+            ),
+          ),
+          SizedBox(height: 8.0),
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 32.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMembroItem(MembrosRow membro) {
+    final telefone = _telefonesCache[membro.idMembro];
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            context.pushNamed(
+              PageMembrosDetalhesSecretariaWidget.routeName,
+              queryParameters: {
+                'idmembro': serializeParam(membro.idMembro, ParamType.String),
+                'idendereco': serializeParam(membro.idEndereco, ParamType.int),
+              }.withoutNulls,
+            );
+          },
+          borderRadius: BorderRadius.circular(16.0),
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Row(
               children: [
-                // Menu lateral (desktop)
-                if (responsiveVisibility(context: context, phone: false, tablet: false, tabletLandscape: false))
-                  Container(
-                    width: 250.0,
-                    margin: EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: Color(0xFF1A1A1A),
-                      borderRadius: BorderRadius.circular(16.0),
-                    ),
-                    child: wrapWithModel(
-                      model: _model.menuSecretariaModel,
-                      updateCallback: () => setState(() {}),
-                      child: MenuSecretariaWidget(),
-                    ),
+                // Avatar
+                Container(
+                  width: 50.0,
+                  height: 50.0,
+                  decoration: BoxDecoration(
+                    color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
                   ),
-                // Conteúdo principal
+                  child: membro.fotoUrl != null && membro.fotoUrl!.isNotEmpty
+                      ? ClipOval(
+                          child: Image.network(
+                            membro.fotoUrl!,
+                            fit: BoxFit.cover,
+                            width: 50.0,
+                            height: 50.0,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.person_rounded,
+                              color: FlutterFlowTheme.of(context).primary,
+                              size: 26.0,
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          Icons.person_rounded,
+                          color: FlutterFlowTheme.of(context).primary,
+                          size: 26.0,
+                        ),
+                ),
+                SizedBox(width: 16.0),
+                // Info
                 Expanded(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
-                      Container(
-                        padding: EdgeInsets.all(20.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    if (!responsiveVisibility(context: context, phone: false, tablet: false, tabletLandscape: false))
-                                      IconButton(
-                                        onPressed: () => scaffoldKey.currentState?.openDrawer(),
-                                        icon: Icon(Icons.menu_rounded, color: Colors.white, size: 28.0),
-                                      ),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Membros',
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontSize: 28.0,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          '${membros.length} membros cadastrados',
-                                          style: GoogleFonts.inter(
-                                            color: Color(0xFF666666),
-                                            fontSize: 14.0,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    // Botão Exportar PDF
-                                    OutlinedButton.icon(
-                                      onPressed: () async {
-                                        final pdfBytes = await functions.exportarMembrosPDF(membros);
-                                        await FileSaver.instance.saveFile(
-                                          name: 'lista_membros_${DateTime.now().millisecondsSinceEpoch}',
-                                          bytes: pdfBytes,
-                                          ext: 'pdf',
-                                          mimeType: MimeType.pdf,
-                                        );
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('PDF exportado com sucesso!'),
-                                            backgroundColor: FlutterFlowTheme.of(context).success,
-                                          ),
-                                        );
-                                      },
-                                      icon: Icon(Icons.picture_as_pdf_rounded, size: 18.0),
-                                      label: Text('Exportar PDF'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: FlutterFlowTheme.of(context).primary,
-                                        side: BorderSide(color: FlutterFlowTheme.of(context).primary),
-                                        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                                      ),
-                                    ),
-                                    SizedBox(width: 12.0),
-                                    // Botão Novo Membro
-                                    ElevatedButton.icon(
-                                      onPressed: () => context.pushNamed(PageMembrosNovoSecretariaWidget.routeName),
-                                      icon: Icon(Icons.add_rounded, size: 20.0),
-                                      label: Text('Novo Membro'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: FlutterFlowTheme.of(context).primary,
-                                        foregroundColor: Colors.white,
-                                        padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-                                        elevation: 0,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              membro.nomeMembro,
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            SizedBox(height: 20.0),
-                            // Barra de pesquisa e filtro
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Color(0xFF1A1A1A),
-                                      borderRadius: BorderRadius.circular(12.0),
-                                      border: Border.all(color: Color(0xFF2A2A2A)),
-                                    ),
-                                    child: TextField(
-                                      controller: _model.textController,
-                                      focusNode: _model.textFieldFocusNode,
-                                      onChanged: (_) => EasyDebounce.debounce(
-                                        '_model.textController',
-                                        Duration(milliseconds: 500),
-                                        () => setState(() {}),
-                                      ),
-                                      style: GoogleFonts.inter(color: Colors.white, fontSize: 15.0),
-                                      decoration: InputDecoration(
-                                        hintText: 'Buscar membro por nome...',
-                                        hintStyle: GoogleFonts.inter(color: Color(0xFF666666), fontSize: 15.0),
-                                        prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF666666), size: 22.0),
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 12.0),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Color(0xFF1A1A1A),
-                                    borderRadius: BorderRadius.circular(12.0),
-                                    border: Border.all(color: Color(0xFF2A2A2A)),
-                                  ),
-                                  child: IconButton(
-                                    onPressed: _mostrarFiltros,
-                                    icon: Icon(
-                                      Icons.filter_list_rounded,
-                                      color: (_model.filtroStatus != null || _model.filtroBairro != null || _model.filtroMinisterio != null)
-                                          ? FlutterFlowTheme.of(context).primary
-                                          : Color(0xFF666666),
-                                      size: 24.0,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                          ),
+                          SizedBox(width: 8.0),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                            decoration: BoxDecoration(
+                              color: membro.ativo == true
+                                  ? Color(0xFF027941).withOpacity(0.2)
+                                  : Color(0xFFFF4444).withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(6.0),
+                            ),
+                            child: Text(
+                              membro.ativo == true ? 'Ativo' : 'Inativo',
+                              style: GoogleFonts.inter(
+                                color: membro.ativo == true ? Color(0xFF027941) : Color(0xFFFF4444),
+                                fontSize: 12.0,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 4.0),
+                      Row(
+                        children: [
+                          if (telefone?.numeroTelefone != null) ...[
+                            Icon(Icons.phone_rounded, color: Color(0xFF666666), size: 14.0),
+                            SizedBox(width: 4.0),
+                            Text(
+                              telefone!.numeroTelefone!,
+                              style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 13.0),
+                            ),
+                            SizedBox(width: 16.0),
+                          ],
+                          if (membro.email != null && membro.email!.isNotEmpty) ...[
+                            Icon(Icons.email_outlined, color: Color(0xFF666666), size: 14.0),
+                            SizedBox(width: 4.0),
+                            Expanded(
+                              child: Text(
+                                membro.email!,
+                                style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 13.0),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
-                        ),
-                      ),
-                      // Lista de membros em cards
-                      Expanded(
-                        child: membros.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.people_outline_rounded, size: 64.0, color: Color(0xFF444444)),
-                                    SizedBox(height: 16.0),
-                                    Text(
-                                      'Nenhum membro encontrado',
-                                      style: GoogleFonts.inter(color: Color(0xFF666666), fontSize: 16.0),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : GridView.builder(
-                                padding: EdgeInsets.all(20.0),
-                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: MediaQuery.of(context).size.width > 1200 ? 4 : (MediaQuery.of(context).size.width > 800 ? 3 : (MediaQuery.of(context).size.width > 500 ? 2 : 1)),
-                                  crossAxisSpacing: 16.0,
-                                  mainAxisSpacing: 16.0,
-                                  childAspectRatio: 1.3,
-                                ),
-                                itemCount: membros.length,
-                                itemBuilder: (context, index) {
-                                  final membro = membros[index];
-                                  final telefone = _telefonesCache[membro.idMembro];
-
-                                  return InkWell(
-                                    onTap: () {
-                                      context.pushNamed(
-                                        PageMembrosDetalhesSecretariaWidget.routeName,
-                                        queryParameters: {
-                                          'idmembro': serializeParam(membro.idMembro, ParamType.String),
-                                          'idendereco': serializeParam(membro.idEndereco, ParamType.int),
-                                        }.withoutNulls,
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(16.0),
-                                    child: Container(
-                                      padding: EdgeInsets.all(20.0),
-                                      decoration: BoxDecoration(
-                                        color: Color(0xFF1A1A1A),
-                                        borderRadius: BorderRadius.circular(16.0),
-                                        border: Border.all(color: Color(0xFF2A2A2A)),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Container(
-                                                width: 50.0,
-                                                height: 50.0,
-                                                decoration: BoxDecoration(
-                                                  color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: membro.fotoUrl != null && membro.fotoUrl!.isNotEmpty
-                                                    ? ClipOval(
-                                                        child: Image.network(
-                                                          membro.fotoUrl!,
-                                                          fit: BoxFit.cover,
-                                                          errorBuilder: (_, __, ___) => Icon(
-                                                            Icons.person_rounded,
-                                                            color: FlutterFlowTheme.of(context).primary,
-                                                            size: 28.0,
-                                                          ),
-                                                        ),
-                                                      )
-                                                    : Icon(
-                                                        Icons.person_rounded,
-                                                        color: FlutterFlowTheme.of(context).primary,
-                                                        size: 28.0,
-                                                      ),
-                                              ),
-                                              SizedBox(width: 12.0),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      membro.nomeMembro,
-                                                      style: GoogleFonts.inter(
-                                                        color: Colors.white,
-                                                        fontSize: 15.0,
-                                                        fontWeight: FontWeight.w600,
-                                                      ),
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                    SizedBox(height: 4.0),
-                                                    Container(
-                                                      padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-                                                      decoration: BoxDecoration(
-                                                        color: membro.ativo == true
-                                                            ? Color(0xFF027941).withOpacity(0.2)
-                                                            : Color(0xFFFF4444).withOpacity(0.2),
-                                                        borderRadius: BorderRadius.circular(6.0),
-                                                      ),
-                                                      child: Text(
-                                                        membro.ativo == true ? 'Ativo' : 'Inativo',
-                                                        style: GoogleFonts.inter(
-                                                          color: membro.ativo == true ? Color(0xFF027941) : Color(0xFFFF4444),
-                                                          fontSize: 11.0,
-                                                          fontWeight: FontWeight.w500,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Spacer(),
-                                          // Informações
-                                          if (telefone?.numeroTelefone != null) ...[
-                                            Row(
-                                              children: [
-                                                Icon(Icons.phone_rounded, color: Color(0xFF666666), size: 16.0),
-                                                SizedBox(width: 8.0),
-                                                Expanded(
-                                                  child: Text(
-                                                    telefone!.numeroTelefone!,
-                                                    style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 13.0),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(height: 8.0),
-                                          ],
-                                          if (membro.email != null && membro.email!.isNotEmpty) ...[
-                                            Row(
-                                              children: [
-                                                Icon(Icons.email_outlined, color: Color(0xFF666666), size: 16.0),
-                                                SizedBox(width: 8.0),
-                                                Expanded(
-                                                  child: Text(
-                                                    membro.email!,
-                                                    style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 13.0),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                          if (telefone?.numeroTelefone == null && (membro.email == null || membro.email!.isEmpty))
-                                            Row(
-                                              children: [
-                                                Icon(Icons.info_outline_rounded, color: Color(0xFF444444), size: 16.0),
-                                                SizedBox(width: 8.0),
-                                                Text(
-                                                  'Sem informações de contato',
-                                                  style: GoogleFonts.inter(color: Color(0xFF444444), fontSize: 13.0),
-                                                ),
-                                              ],
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
+                          if (telefone?.numeroTelefone == null && (membro.email == null || membro.email!.isEmpty))
+                            Text(
+                              'Sem informações de contato',
+                              style: GoogleFonts.inter(color: Color(0xFF666666), fontSize: 13.0),
+                            ),
+                        ],
                       ),
                     ],
                   ),
                 ),
+                SizedBox(width: 8.0),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFF666666),
+                  size: 24.0,
+                ),
               ],
             ),
           ),
-        );
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+        FocusManager.instance.primaryFocus?.unfocus();
       },
+      child: Scaffold(
+        key: scaffoldKey,
+        backgroundColor: Color(0xFF14181B),
+        drawer: Drawer(
+          backgroundColor: Color(0xFF1A1A1A),
+          child: MenuSecretariaWidget(),
+        ),
+        body: Container(
+          width: MediaQuery.sizeOf(context).width * 1.0,
+          height: MediaQuery.sizeOf(context).height * 1.0,
+          decoration: BoxDecoration(
+            color: Color(0xFF14181B),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              // Menu lateral
+              if (responsiveVisibility(
+                context: context,
+                phone: false,
+                tablet: false,
+                tabletLandscape: false,
+              ))
+                Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
+                  child: Container(
+                    width: 250.0,
+                    height: MediaQuery.sizeOf(context).height * 1.0,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3C3D3E),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: wrapWithModel(
+                      model: _model.menuSecretariaModel,
+                      updateCallback: () => safeSetState(() {}),
+                      child: MenuSecretariaWidget(),
+                    ),
+                  ),
+                ),
+
+              // Conteudo principal
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
+                  child: Container(
+                    width: 100.0,
+                    height: MediaQuery.sizeOf(context).height * 1.0,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3C3D3E),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: _isLoading
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                FlutterFlowTheme.of(context).primary,
+                              ),
+                            ),
+                          )
+                        : SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.max,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Header
+                                Padding(
+                                  padding: EdgeInsets.all(32.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          if (!responsiveVisibility(context: context, phone: false, tablet: false, tabletLandscape: false))
+                                            Padding(
+                                              padding: EdgeInsets.only(right: 12.0),
+                                              child: IconButton(
+                                                onPressed: () => scaffoldKey.currentState?.openDrawer(),
+                                                icon: Icon(Icons.menu_rounded, color: Colors.white, size: 28.0),
+                                              ),
+                                            ),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Membros',
+                                                style: GoogleFonts.poppins(
+                                                  color: Colors.white,
+                                                  fontSize: 32.0,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              SizedBox(height: 8.0),
+                                              Text(
+                                                'Gerencie os membros da igreja',
+                                                style: GoogleFonts.inter(
+                                                  color: Color(0xFF999999),
+                                                  fontSize: 16.0,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          // Botão Exportar PDF
+                                          OutlinedButton.icon(
+                                            onPressed: () async {
+                                              final pdfBytes = await functions.exportarMembrosPDF(_membrosFiltrados);
+                                              await FileSaver.instance.saveFile(
+                                                name: 'lista_membros_${DateTime.now().millisecondsSinceEpoch}',
+                                                bytes: pdfBytes,
+                                                ext: 'pdf',
+                                                mimeType: MimeType.pdf,
+                                              );
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('PDF exportado com sucesso!'),
+                                                  backgroundColor: FlutterFlowTheme.of(context).success,
+                                                ),
+                                              );
+                                            },
+                                            icon: Icon(Icons.picture_as_pdf_rounded, size: 18.0),
+                                            label: Text('Exportar PDF'),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: FlutterFlowTheme.of(context).primary,
+                                              side: BorderSide(color: FlutterFlowTheme.of(context).primary),
+                                              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                            ),
+                                          ),
+                                          SizedBox(width: 12.0),
+                                          // Botão Novo Membro
+                                          ElevatedButton.icon(
+                                            onPressed: () => context.pushNamed(PageMembrosNovoSecretariaWidget.routeName),
+                                            icon: Icon(Icons.add_rounded, size: 20.0),
+                                            label: Text('Novo Membro'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: FlutterFlowTheme.of(context).primary,
+                                              foregroundColor: Colors.white,
+                                              padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                                              elevation: 0,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Cards de estatisticas
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildStatCard(
+                                          icon: Icons.people_rounded,
+                                          title: 'Total de Membros',
+                                          value: _membros.length.toString(),
+                                          color: Color(0xFF2196F3),
+                                        ),
+                                      ),
+                                      SizedBox(width: 24.0),
+                                      Expanded(
+                                        child: _buildStatCard(
+                                          icon: Icons.check_circle_rounded,
+                                          title: 'Membros Ativos',
+                                          value: _totalAtivos.toString(),
+                                          color: Color(0xFF027941),
+                                        ),
+                                      ),
+                                      SizedBox(width: 24.0),
+                                      Expanded(
+                                        child: _buildStatCard(
+                                          icon: Icons.cancel_rounded,
+                                          title: 'Membros Inativos',
+                                          value: _totalInativos.toString(),
+                                          color: Color(0xFFFF9800),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                SizedBox(height: 32.0),
+
+                                // Campo de busca e filtros
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _model.textController,
+                                          focusNode: _model.textFieldFocusNode,
+                                          onChanged: (_) => EasyDebounce.debounce(
+                                            '_model.textController',
+                                            Duration(milliseconds: 300),
+                                            () => safeSetState(() {}),
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: 'Buscar membro por nome...',
+                                            hintStyle: GoogleFonts.inter(
+                                              color: Color(0xFF666666),
+                                              fontSize: 16.0,
+                                            ),
+                                            prefixIcon: Icon(
+                                              Icons.search_rounded,
+                                              color: Color(0xFF666666),
+                                            ),
+                                            filled: true,
+                                            fillColor: Color(0xFF2A2A2A),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12.0),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12.0),
+                                              borderSide: BorderSide(
+                                                color: Color(0xFF3A3A3A),
+                                                width: 1.0,
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12.0),
+                                              borderSide: BorderSide(
+                                                color: FlutterFlowTheme.of(context).primary,
+                                                width: 2.0,
+                                              ),
+                                            ),
+                                            contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 16.0,
+                                              vertical: 16.0,
+                                            ),
+                                          ),
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white,
+                                            fontSize: 16.0,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 12.0),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFF2A2A2A),
+                                          borderRadius: BorderRadius.circular(12.0),
+                                          border: Border.all(color: Color(0xFF3A3A3A)),
+                                        ),
+                                        child: IconButton(
+                                          onPressed: _mostrarFiltros,
+                                          icon: Icon(
+                                            Icons.filter_list_rounded,
+                                            color: (_model.filtroStatus != null || _model.filtroBairro != null || _model.filtroMinisterio != null)
+                                                ? FlutterFlowTheme.of(context).primary
+                                                : Color(0xFF666666),
+                                            size: 24.0,
+                                          ),
+                                          padding: EdgeInsets.all(12.0),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                SizedBox(height: 24.0),
+
+                                // Lista de membros
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Todos os Membros',
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: 20.0,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      SizedBox(height: 16.0),
+
+                                      if (_membrosFiltrados.isEmpty)
+                                        Container(
+                                          padding: EdgeInsets.all(48.0),
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFF2A2A2A),
+                                            borderRadius: BorderRadius.circular(16.0),
+                                          ),
+                                          child: Center(
+                                            child: Column(
+                                              children: [
+                                                Icon(
+                                                  Icons.people_outline_rounded,
+                                                  size: 64.0,
+                                                  color: Color(0xFF666666),
+                                                ),
+                                                SizedBox(height: 16.0),
+                                                Text(
+                                                  'Nenhum membro encontrado',
+                                                  style: GoogleFonts.inter(
+                                                    color: Color(0xFF999999),
+                                                    fontSize: 16.0,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      else
+                                        ListView.builder(
+                                          shrinkWrap: true,
+                                          physics: NeverScrollableScrollPhysics(),
+                                          itemCount: _membrosFiltrados.length,
+                                          itemBuilder: (context, index) {
+                                            return _buildMembroItem(_membrosFiltrados[index]);
+                                          },
+                                        ),
+                                    ],
+                                  ),
+                                ),
+
+                                SizedBox(height: 32.0),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

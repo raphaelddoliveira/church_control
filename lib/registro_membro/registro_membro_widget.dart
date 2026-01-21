@@ -197,19 +197,23 @@ class _RegistroMembroWidgetState extends State<RegistroMembroWidget> {
         matchingRows: (rows) => rows.eq('id_membro', membro.idMembro),
       );
 
+      // Fazer logout para que o usuário faça login manualmente
+      await authManager.signOut();
+
       // Mostrar mensagem de sucesso
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Conta criada com sucesso! Bem-vindo(a)!',
+            'Conta criada com sucesso! Faça login para continuar.',
             style: TextStyle(color: Colors.white),
           ),
+          duration: Duration(seconds: 4),
           backgroundColor: FlutterFlowTheme.of(context).success,
         ),
       );
 
-      // Redirecionar para área de membro
-      context.goNamedAuth(PageMembroWidget.routeName, context.mounted);
+      // Redirecionar para página de login
+      context.goNamed(LoginTesteWidget.routeName);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

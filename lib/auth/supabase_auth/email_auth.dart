@@ -16,12 +16,8 @@ Future<User?> emailCreateAccountFunc(
   final AuthResponse res = await SupaFlow.client.auth.signUp(
     email: email,
     password: password,
-    emailRedirectTo: 'https://church-control.vercel.app/',
   );
 
-  // If the Supabase project is configured to not let users sign in until the
-  // email has been confirmed, the user returned in the AuthResponse still has
-  // all the user info. But since the user shouldn't be able to sign in without
-  // their email verified, return a null User.
-  return res.user?.lastSignInAt == null ? null : res.user;
+  // Retorna o usuário diretamente, sem exigir confirmação de email
+  return res.user;
 }

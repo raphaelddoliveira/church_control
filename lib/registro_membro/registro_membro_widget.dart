@@ -152,6 +152,34 @@ class _RegistroMembroWidgetState extends State<RegistroMembroWidget> {
       );
 
       if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Erro ao criar conta. Tente novamente.',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: FlutterFlowTheme.of(context).error,
+          ),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Pegar o UID do usuário criado
+      final userUid = user.uid;
+
+      if (userUid == null || userUid.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Erro ao obter dados do usuário. Tente novamente.',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: FlutterFlowTheme.of(context).error,
+          ),
+        );
         setState(() {
           _isLoading = false;
         });
@@ -161,7 +189,7 @@ class _RegistroMembroWidgetState extends State<RegistroMembroWidget> {
       // Atualizar membro com id_auth e ativar área de membro
       await MembrosTable().update(
         data: {
-          'id_auth': currentUserUid,
+          'id_auth': userUid,
           'pode_acessar_area_membro': true,
           'id_nivel_acesso': 5, // Nível de acesso de membro
         },

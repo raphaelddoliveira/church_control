@@ -1557,18 +1557,27 @@ class _PageAvisosSecretariaWidgetState
                                                                                               ) ?? false;
 
                                                                                               if (confirmDelete) {
-                                                                                                await AvisoTable().delete(
-                                                                                                  matchingRows: (rows) => rows.eq('id', aviso.id),
-                                                                                                );
-                                                                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                                                                  SnackBar(
-                                                                                                    content: Text('Aviso excluído com sucesso!'),
-                                                                                                    backgroundColor: FlutterFlowTheme.of(context).success,
-                                                                                                  ),
-                                                                                                );
-                                                                                                setState(() {
-                                                                                                  _model.refreshKey++;
-                                                                                                });
+                                                                                                try {
+                                                                                                  await AvisoTable().delete(
+                                                                                                    matchingRows: (rows) => rows.eq('id', aviso.id),
+                                                                                                  );
+                                                                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                                                                    SnackBar(
+                                                                                                      content: Text('Aviso excluído com sucesso!'),
+                                                                                                      backgroundColor: FlutterFlowTheme.of(context).success,
+                                                                                                    ),
+                                                                                                  );
+                                                                                                  setState(() {
+                                                                                                    _model.refreshKey++;
+                                                                                                  });
+                                                                                                } catch (e) {
+                                                                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                                                                    SnackBar(
+                                                                                                      content: Text('Erro ao excluir: $e'),
+                                                                                                      backgroundColor: Colors.red,
+                                                                                                    ),
+                                                                                                  );
+                                                                                                }
                                                                                               }
                                                                                             },
                                                                                           ),

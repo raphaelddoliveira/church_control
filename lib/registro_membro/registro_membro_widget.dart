@@ -152,7 +152,7 @@ class _RegistroMembroWidgetState extends State<RegistroMembroWidget> {
         _model.senhaController.text,
       );
 
-      if (user == null || user.uid == null || user.uid!.isEmpty) {
+      if (user == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -169,7 +169,23 @@ class _RegistroMembroWidgetState extends State<RegistroMembroWidget> {
       }
 
       // Pegar o UID do usuário criado
-      final userUid = user.uid!;
+      final userUid = user.uid;
+
+      if (userUid == null || userUid.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Erro ao obter ID do usuário. Tente novamente.',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: FlutterFlowTheme.of(context).error,
+          ),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
 
       // Atualizar membro com id_auth e ativar área de membro
       await MembrosTable().update(
@@ -178,7 +194,7 @@ class _RegistroMembroWidgetState extends State<RegistroMembroWidget> {
           'pode_acessar_area_membro': true,
           'id_nivel_acesso': 5, // Nível de acesso de membro
         },
-        matchingRows: (rows) => rows.eq('id', membro.id),
+        matchingRows: (rows) => rows.eq('id_membro', membro.idMembro),
       );
 
       // Mostrar mensagem de sucesso

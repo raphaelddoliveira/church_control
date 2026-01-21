@@ -1,15 +1,11 @@
-// v2 - Force rebuild
 import '/backend/supabase/supabase.dart';
-import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/secretaria/menu_secretaria/menu_secretaria_widget.dart';
 import '/secretaria/page_novo_aviso_secretaria/page_novo_aviso_secretaria_widget.dart';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'page_avisos_secretaria_model.dart';
 export 'page_avisos_secretaria_model.dart';
 
@@ -34,14 +30,11 @@ class _PageAvisosSecretariaWidgetState
   void initState() {
     super.initState();
     _model = createModel(context, () => PageAvisosSecretariaModel());
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
 
   @override
   void dispose() {
     _model.dispose();
-
     super.dispose();
   }
 
@@ -64,6 +57,7 @@ class _PageAvisosSecretariaWidgetState
           child: Row(
             mainAxisSize: MainAxisSize.max,
             children: [
+              // Menu lateral
               if (responsiveVisibility(
                 context: context,
                 phone: false,
@@ -71,8 +65,7 @@ class _PageAvisosSecretariaWidgetState
                 tabletLandscape: false,
               ))
                 Padding(
-                  padding:
-                      EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
+                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
                   child: Container(
                     width: 250.0,
                     height: MediaQuery.sizeOf(context).height * 1.0,
@@ -87,10 +80,11 @@ class _PageAvisosSecretariaWidgetState
                     ),
                   ),
                 ),
+
+              // Conteudo principal
               Expanded(
                 child: Padding(
-                  padding:
-                      EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
+                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
                   child: Container(
                     width: 100.0,
                     height: MediaQuery.sizeOf(context).height * 1.0,
@@ -98,1519 +92,348 @@ class _PageAvisosSecretariaWidgetState
                       color: Color(0xFF3C3D3E),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(
-                                24.0, 0.0, 24.0, 0.0),
-                            child: SingleChildScrollView(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Column(
-                                        mainAxisSize: MainAxisSize.max,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Avisos – PIB Santa Fé do Sul',
-                                            style: FlutterFlowTheme.of(context)
-                                                .displaySmall
-                                                .override(
-                                                  font: GoogleFonts.interTight(
-                                                    fontWeight:
-                                                        FlutterFlowTheme.of(
-                                                                context)
-                                                            .displaySmall
-                                                            .fontWeight,
-                                                    fontStyle:
-                                                        FlutterFlowTheme.of(
-                                                                context)
-                                                            .displaySmall
-                                                            .fontStyle,
-                                                  ),
-                                                  color: FlutterFlowTheme.of(
-                                                          context)
-                                                      .primaryBackground,
-                                                  letterSpacing: 0.0,
-                                                  fontWeight:
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .displaySmall
-                                                          .fontWeight,
-                                                  fontStyle:
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .displaySmall
-                                                          .fontStyle,
-                                                ),
-                                          ),
-                                          Padding(
-                                            padding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                    0.0, 4.0, 0.0, 0.0),
-                                            child: Text(
-                                              'Gestão de Avisos da Igreja',
-                                              style:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .override(
-                                                        font: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyMedium
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyMedium
-                                                                  .fontStyle,
-                                                        ),
-                                                        color:
-                                                            Color(0xFFB0B0B0),
-                                                        fontSize: 20.0,
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyMedium
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodyMedium
-                                                                .fontStyle,
-                                                      ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Column(
-                                        mainAxisSize: MainAxisSize.max,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          Padding(
-                                            padding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                    0.0, 8.0, 0.0, 0.0),
-                                            child: FFButtonWidget(
-                                              onPressed: () {
-                                                context.pushNamed(
-                                                  PageNovoAvisoSecretariaWidget
-                                                      .routeName,
-                                                  extra: <String, dynamic>{
-                                                    kTransitionInfoKey:
-                                                        TransitionInfo(
-                                                      hasTransition: true,
-                                                      transitionType:
-                                                          PageTransitionType.fade,
-                                                    ),
-                                                  },
-                                                );
-                                              },
-                                              text: 'Novo Aviso',
-                                              icon: Icon(
-                                                Icons.add,
-                                                size: 18.0,
-                                              ),
-                                              options: FFButtonOptions(
-                                                height: 44.0,
-                                                padding: EdgeInsetsDirectional
-                                                    .fromSTEB(
-                                                        20.0, 0.0, 20.0, 0.0),
-                                                iconPadding:
-                                                    EdgeInsetsDirectional
-                                                        .fromSTEB(
-                                                            0.0, 0.0, 0.0, 0.0),
-                                                iconColor: Colors.white,
-                                                color:
-                                                    FlutterFlowTheme.of(context)
-                                                        .success,
-                                                textStyle:
-                                                    FlutterFlowTheme.of(context)
-                                                        .titleSmall
-                                                        .override(
-                                                          font: GoogleFonts
-                                                              .interTight(
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                            fontStyle:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .titleSmall
-                                                                    .fontStyle,
-                                                          ),
-                                                          color: Colors.white,
-                                                          letterSpacing: 0.0,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .titleSmall
-                                                                  .fontStyle,
-                                                        ),
-                                                elevation: 0.0,
-                                                borderSide: BorderSide(
-                                                  color: Colors.transparent,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(12.0),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  FutureBuilder<List<AvisoRow>>(
-                                    key: ValueKey(_model.refreshKey),
-                                    future: AvisoTable().queryRows(
-                                      queryFn: (q) => q.order('created_at', ascending: false),
-                                    ),
-                                    builder: (context, snapshot) {
-                                      // Customize what your widget looks like when it's loading.
-                                      if (!snapshot.hasData) {
-                                        return Center(
-                                          child: SizedBox(
-                                            width: 50.0,
-                                            height: 50.0,
-                                            child: CircularProgressIndicator(
-                                              valueColor: AlwaysStoppedAnimation<Color>(
-                                                FlutterFlowTheme.of(context).primary,
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                      List<AvisoRow> avisos = snapshot.data!;
-
-                                      // Calcular estatísticas
-                                      final now = DateTime.now();
-                                      final avisosAtivos = avisos.where((a) =>
-                                        a.expiraEm != null && a.expiraEm!.isAfter(now)
-                                      ).length;
-                                      final avisosExpirados = avisos.where((a) =>
-                                        a.expiraEm != null && a.expiraEm!.isBefore(now)
-                                      ).length;
-                                      final avisosFixados = avisos.where((a) =>
-                                        (a.fixado ?? false) && a.expiraEm != null && a.expiraEm!.isAfter(now)
-                                      ).length;
-
-                                      return Column(
-                                        mainAxisSize: MainAxisSize.max,
-                                        children: [
-                                          GridView(
-                                            padding: EdgeInsets.zero,
-                                            gridDelegate:
-                                                SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 4,
-                                              crossAxisSpacing: 1.0,
-                                              childAspectRatio: 1.0,
-                                            ),
-                                            primary: false,
-                                            shrinkWrap: true,
-                                            scrollDirection: Axis.vertical,
-                                            children: [
-                                      Padding(
-                                        padding: EdgeInsets.all(16.0),
-                                        child: Container(
-                                          width: 100.0,
-                                          decoration: BoxDecoration(
-                                            color: Color(0xFF14181B),
-                                            borderRadius:
-                                                BorderRadius.circular(16.0),
-                                            border: Border.all(
-                                              color: Color(0xFF333333),
-                                              width: 1.0,
-                                            ),
-                                          ),
-                                          child: Padding(
-                                            padding: EdgeInsets.all(16.0),
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.max,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Container(
-                                                  width: 60.0,
-                                                  height: 60.0,
-                                                  decoration: BoxDecoration(
-                                                    color: Color(0xFF1976D2),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10.0),
-                                                  ),
-                                                  child: Align(
-                                                    alignment:
-                                                        AlignmentDirectional(
-                                                            0.0, 0.0),
-                                                    child: Icon(
-                                                      Icons.visibility,
-                                                      color: Colors.white,
-                                                      size: 30.0,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Text(
-                                                  '$avisosAtivos',
-                                                  textAlign: TextAlign.center,
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .headlineSmall
-                                                      .override(
-                                                        font: GoogleFonts
-                                                            .interTight(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .headlineSmall
-                                                                  .fontStyle,
-                                                        ),
-                                                        color: Colors.white,
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .headlineSmall
-                                                                .fontStyle,
-                                                      ),
-                                                ),
-                                                Text(
-                                                  'Avisos Ativos',
-                                                  textAlign: TextAlign.center,
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .bodySmall
-                                                      .override(
-                                                        font: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodySmall
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodySmall
-                                                                  .fontStyle,
-                                                        ),
-                                                        color:
-                                                            Color(0xFFB0B0B0),
-                                                        fontSize: 20.0,
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodySmall
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodySmall
-                                                                .fontStyle,
-                                                      ),
-                                                ),
-                                              ].divide(SizedBox(height: 12.0)),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.all(16.0),
-                                        child: Container(
-                                          width: 69.9,
-                                          decoration: BoxDecoration(
-                                            color: Color(0xFF14181B),
-                                            borderRadius:
-                                                BorderRadius.circular(16.0),
-                                            border: Border.all(
-                                              color: Color(0xFF333333),
-                                              width: 1.0,
-                                            ),
-                                          ),
-                                          child: Padding(
-                                            padding: EdgeInsets.all(16.0),
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.max,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Container(
-                                                  width: 60.0,
-                                                  height: 60.0,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.red,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10.0),
-                                                  ),
-                                                  child: Align(
-                                                    alignment:
-                                                        AlignmentDirectional(
-                                                            0.0, 0.0),
-                                                    child: Icon(
-                                                      Icons.event_busy,
-                                                      color: Colors.white,
-                                                      size: 30.0,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Text(
-                                                  '$avisosExpirados',
-                                                  textAlign: TextAlign.center,
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .headlineSmall
-                                                      .override(
-                                                        font: GoogleFonts
-                                                            .interTight(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .headlineSmall
-                                                                  .fontStyle,
-                                                        ),
-                                                        color: Colors.white,
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .headlineSmall
-                                                                .fontStyle,
-                                                      ),
-                                                ),
-                                                Text(
-                                                  'Expirados',
-                                                  textAlign: TextAlign.center,
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .bodySmall
-                                                      .override(
-                                                        font: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodySmall
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodySmall
-                                                                  .fontStyle,
-                                                        ),
-                                                        color:
-                                                            Color(0xFFB0B0B0),
-                                                        fontSize: 20.0,
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodySmall
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodySmall
-                                                                .fontStyle,
-                                                      ),
-                                                ),
-                                              ].divide(SizedBox(height: 12.0)),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.all(16.0),
-                                        child: Container(
-                                          width: 48.72,
-                                          height: 0.0,
-                                          decoration: BoxDecoration(
-                                            color: Color(0xFF14181B),
-                                            borderRadius:
-                                                BorderRadius.circular(16.0),
-                                            border: Border.all(
-                                              color: Color(0xFF333333),
-                                              width: 1.0,
-                                            ),
-                                          ),
-                                          child: Padding(
-                                            padding: EdgeInsets.all(16.0),
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.max,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Container(
-                                                  width: 60.0,
-                                                  height: 60.0,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.green,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10.0),
-                                                  ),
-                                                  child: Align(
-                                                    alignment:
-                                                        AlignmentDirectional(
-                                                            0.0, 0.0),
-                                                    child: Icon(
-                                                      Icons.push_pin,
-                                                      color: Colors.white,
-                                                      size: 30.0,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Text(
-                                                  '$avisosFixados',
-                                                  textAlign: TextAlign.center,
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .headlineSmall
-                                                      .override(
-                                                        font: GoogleFonts
-                                                            .interTight(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .headlineSmall
-                                                                  .fontStyle,
-                                                        ),
-                                                        color: Colors.white,
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .headlineSmall
-                                                                .fontStyle,
-                                                      ),
-                                                ),
-                                                Text(
-                                                  'Fixados',
-                                                  textAlign: TextAlign.center,
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .bodySmall
-                                                      .override(
-                                                        font: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodySmall
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodySmall
-                                                                  .fontStyle,
-                                                        ),
-                                                        color:
-                                                            Color(0xFFB0B0B0),
-                                                        fontSize: 20.0,
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodySmall
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodySmall
-                                                                .fontStyle,
-                                                      ),
-                                                ),
-                                              ].divide(SizedBox(height: 12.0)),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.all(16.0),
-                                        child: Container(
-                                          width: 48.7,
-                                          height: 10.03,
-                                          decoration: BoxDecoration(
-                                            color: Color(0xFF14181B),
-                                            borderRadius:
-                                                BorderRadius.circular(16.0),
-                                            border: Border.all(
-                                              color: Color(0xFF333333),
-                                              width: 1.0,
-                                            ),
-                                          ),
-                                          child: Padding(
-                                            padding: EdgeInsets.all(16.0),
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.max,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Container(
-                                                  width: 60.0,
-                                                  height: 60.0,
-                                                  decoration: BoxDecoration(
-                                                    color: Color(0xFFDE0E52),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10.0),
-                                                  ),
-                                                  child: Align(
-                                                    alignment:
-                                                        AlignmentDirectional(
-                                                            0.0, 0.0),
-                                                    child: Icon(
-                                                      Icons.favorite,
-                                                      color: Colors.white,
-                                                      size: 30.0,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Text(
-                                                  '3',
-                                                  textAlign: TextAlign.center,
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .headlineSmall
-                                                      .override(
-                                                        font: GoogleFonts
-                                                            .interTight(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .headlineSmall
-                                                                  .fontStyle,
-                                                        ),
-                                                        color: Colors.white,
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .headlineSmall
-                                                                .fontStyle,
-                                                      ),
-                                                ),
-                                                Text(
-                                                  'Média de curtidas',
-                                                  textAlign: TextAlign.center,
-                                                  style: FlutterFlowTheme.of(
-                                                          context)
-                                                      .bodySmall
-                                                      .override(
-                                                        font: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodySmall
-                                                                  .fontWeight,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodySmall
-                                                                  .fontStyle,
-                                                        ),
-                                                        color:
-                                                            Color(0xFFB0B0B0),
-                                                        fontSize: 20.0,
-                                                        letterSpacing: 0.0,
-                                                        fontWeight:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodySmall
-                                                                .fontWeight,
-                                                        fontStyle:
-                                                            FlutterFlowTheme.of(
-                                                                    context)
-                                                                .bodySmall
-                                                                .fontStyle,
-                                                      ),
-                                                ),
-                                              ].divide(SizedBox(height: 12.0)),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                                          Padding(
-                                                            padding: EdgeInsets.all(20.0),
-                                                            child: Container(
-                                                              width: double.infinity,
-                                                              decoration: BoxDecoration(
-                                                                color: Color(0xFF14181B),
-                                                                borderRadius:
-                                                                    BorderRadius.circular(16.0),
-                                                                border: Border.all(
-                                                                  color: Color(0xFF333333),
-                                                                  width: 1.0,
-                                                                ),
-                                                              ),
-                                                              child: Padding(
-                                                                padding: EdgeInsets.all(16.0),
-                                                                child: Column(
-                                                                  mainAxisSize: MainAxisSize.max,
-                                                                  crossAxisAlignment:
-                                                                      CrossAxisAlignment.start,
-                                                                  children: [
-                                                                    Row(
-                                                                      mainAxisSize: MainAxisSize.max,
-                                                                      children: [
-                                                                        Text(
-                                                                          'Lista de Avisos',
-                                                                          style: FlutterFlowTheme.of(
-                                                                                  context)
-                                                                              .titleMedium
-                                                                              .override(
-                                                                                font: GoogleFonts
-                                                                                    .interTight(
-                                                                                  fontWeight:
-                                                                                      FontWeight.w600,
-                                                                                  fontStyle:
-                                                                                      FlutterFlowTheme.of(
-                                                                                              context)
-                                                                                          .titleMedium
-                                                                                          .fontStyle,
-                                                                                ),
-                                                                                color: Colors.white,
-                                                                                fontSize: 24.0,
-                                                                                letterSpacing: 0.0,
-                                                                                fontWeight:
-                                                                                    FontWeight.w600,
-                                                                                fontStyle:
-                                                                                    FlutterFlowTheme.of(
-                                                                                            context)
-                                                                                        .titleMedium
-                                                                                        .fontStyle,
-                                                                              ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                    // Campo de pesquisa (sempre visível)
-                                                                    Padding(
-                                                                      padding: EdgeInsets.only(top: 16.0),
-                                                                      child: TextFormField(
-                                                                        controller: _model.searchController,
-                                                                        focusNode: _model.searchFocusNode,
-                                                                        onChanged: (value) => setState(() {}),
-                                                                        decoration: InputDecoration(
-                                                                          hintText: 'Buscar avisos...',
-                                                                          prefixIcon: Icon(Icons.search, color: Color(0xFFB0B0B0)),
-                                                                          suffixIcon: _model.searchController!.text.isNotEmpty
-                                                                            ? IconButton(
-                                                                                icon: Icon(Icons.clear, color: Color(0xFFB0B0B0)),
-                                                                                onPressed: () {
-                                                                                  _model.searchController?.clear();
-                                                                                  setState(() {});
-                                                                                },
-                                                                              )
-                                                                            : null,
-                                                                          filled: true,
-                                                                          fillColor: Color(0xFF3C3D3E),
-                                                                          border: OutlineInputBorder(
-                                                                            borderRadius: BorderRadius.circular(8.0),
-                                                                            borderSide: BorderSide.none,
-                                                                          ),
-                                                                          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                                                                        ),
-                                                                        style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                                                          font: GoogleFonts.inter(),
-                                                                          color: Colors.white,
-                                                                          letterSpacing: 0.0,
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                    // Chips de filtro
-                                                                    Padding(
-                                                                      padding: EdgeInsets.only(top: 16.0),
-                                                                      child: SingleChildScrollView(
-                                                                        scrollDirection: Axis.horizontal,
-                                                                        child: Row(
-                                                                          children: [
-                                                                            // Botão Todos
-                                                                            InkWell(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  _model.filtroStatus = null;
-                                                                                });
-                                                                              },
-                                                                              child: Container(
-                                                                                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-                                                                                decoration: BoxDecoration(
-                                                                                  color: _model.filtroStatus == null
-                                                                                    ? FlutterFlowTheme.of(context).primary
-                                                                                    : Color(0xFF3C3D3E),
-                                                                                  borderRadius: BorderRadius.circular(20.0),
-                                                                                ),
-                                                                                child: Text(
-                                                                                  'Todos',
-                                                                                  style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                                                                    font: GoogleFonts.inter(),
-                                                                                    color: Colors.white,
-                                                                                    letterSpacing: 0.0,
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                            SizedBox(width: 8.0),
-                                                                            // Botão Ativos
-                                                                            InkWell(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  _model.filtroStatus = _model.filtroStatus == 'ativo' ? null : 'ativo';
-                                                                                });
-                                                                              },
-                                                                              child: Container(
-                                                                                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-                                                                                decoration: BoxDecoration(
-                                                                                  color: _model.filtroStatus == 'ativo'
-                                                                                    ? FlutterFlowTheme.of(context).primary
-                                                                                    : Color(0xFF3C3D3E),
-                                                                                  borderRadius: BorderRadius.circular(20.0),
-                                                                                ),
-                                                                                child: Row(
-                                                                                  mainAxisSize: MainAxisSize.min,
-                                                                                  children: [
-                                                                                    Icon(Icons.visibility, color: Colors.white, size: 16.0),
-                                                                                    SizedBox(width: 6.0),
-                                                                                    Text(
-                                                                                      'Ativos',
-                                                                                      style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                                                                        font: GoogleFonts.inter(),
-                                                                                        color: Colors.white,
-                                                                                        letterSpacing: 0.0,
-                                                                                      ),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                            SizedBox(width: 8.0),
-                                                                            // Botão Expirados
-                                                                            InkWell(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  _model.filtroStatus = _model.filtroStatus == 'expirado' ? null : 'expirado';
-                                                                                });
-                                                                              },
-                                                                              child: Container(
-                                                                                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-                                                                                decoration: BoxDecoration(
-                                                                                  color: _model.filtroStatus == 'expirado'
-                                                                                    ? FlutterFlowTheme.of(context).primary
-                                                                                    : Color(0xFF3C3D3E),
-                                                                                  borderRadius: BorderRadius.circular(20.0),
-                                                                                ),
-                                                                                child: Row(
-                                                                                  mainAxisSize: MainAxisSize.min,
-                                                                                  children: [
-                                                                                    Icon(Icons.event_busy, color: Colors.white, size: 16.0),
-                                                                                    SizedBox(width: 6.0),
-                                                                                    Text(
-                                                                                      'Expirados',
-                                                                                      style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                                                                        font: GoogleFonts.inter(),
-                                                                                        color: Colors.white,
-                                                                                        letterSpacing: 0.0,
-                                                                                      ),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                            SizedBox(width: 8.0),
-                                                                            // Botão Fixados
-                                                                            InkWell(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  _model.filtroStatus = _model.filtroStatus == 'fixado' ? null : 'fixado';
-                                                                                });
-                                                                              },
-                                                                              child: Container(
-                                                                                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-                                                                                decoration: BoxDecoration(
-                                                                                  color: _model.filtroStatus == 'fixado'
-                                                                                    ? FlutterFlowTheme.of(context).primary
-                                                                                    : Color(0xFF3C3D3E),
-                                                                                  borderRadius: BorderRadius.circular(20.0),
-                                                                                ),
-                                                                                child: Row(
-                                                                                  mainAxisSize: MainAxisSize.min,
-                                                                                  children: [
-                                                                                    Icon(Icons.push_pin, color: Colors.white, size: 16.0),
-                                                                                    SizedBox(width: 6.0),
-                                                                                    Text(
-                                                                                      'Fixados',
-                                                                                      style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                                                                        font: GoogleFonts.inter(),
-                                                                                        color: Colors.white,
-                                                                                        letterSpacing: 0.0,
-                                                                                      ),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                    Builder(
-                                                                      builder: (context) {
-                                                                        // Aplicar filtros
-                                                                        List<AvisoRow> avisosFiltrados = avisos.where((aviso) {
-                                                                          final now = DateTime.now();
-                                                                          final isAtivo = aviso.expiraEm != null && aviso.expiraEm!.isAfter(now);
-
-                                                                          // Filtro de busca
-                                                                          if (_model.searchController!.text.isNotEmpty) {
-                                                                            final searchLower = _model.searchController!.text.toLowerCase();
-                                                                            final nomeAviso = (aviso.nomeAviso ?? '').toLowerCase();
-                                                                            if (!nomeAviso.contains(searchLower)) {
-                                                                              return false;
-                                                                            }
-                                                                          }
-
-                                                                          // Filtro de status
-                                                                          if (_model.filtroStatus != null) {
-                                                                            if (_model.filtroStatus == 'ativo' && !isAtivo) {
-                                                                              return false;
-                                                                            }
-                                                                            if (_model.filtroStatus == 'expirado' && isAtivo) {
-                                                                              return false;
-                                                                            }
-                                                                            // Por enquanto fixados = ativos (poderia ter um campo separado no futuro)
-                                                                            if (_model.filtroStatus == 'fixado' && !isAtivo) {
-                                                                              return false;
-                                                                            }
-                                                                          }
-
-                                                                          // Filtro de categoria
-                                                                          if (_model.filtroCategoria != null && aviso.categoria != _model.filtroCategoria) {
-                                                                            return false;
-                                                                          }
-
-                                                                          return true;
-                                                                        }).toList();
-
-                                                                        return avisosFiltrados.isEmpty
-                                                                      ? Center(
-                                                                          child: Padding(
-                                                                            padding: EdgeInsets.all(32.0),
-                                                                            child: Text(
-                                                                              'Nenhum aviso encontrado',
-                                                                              style: FlutterFlowTheme.of(context)
-                                                                                  .bodyMedium
-                                                                                  .override(
-                                                                                    font: GoogleFonts.inter(),
-                                                                                    color: Color(0xFFB0B0B0),
-                                                                                    fontSize: 16.0,
-                                                                                    letterSpacing: 0.0,
-                                                                                  ),
-                                                                            ),
-                                                                          ),
-                                                                        )
-                                                                      : ListView.separated(
-                                                                          padding: EdgeInsets.zero,
-                                                                          primary: false,
-                                                                          shrinkWrap: true,
-                                                                          scrollDirection: Axis.vertical,
-                                                                          itemCount: avisosFiltrados.length,
-                                                                          separatorBuilder: (context, index) => SizedBox(height: 12.0),
-                                                                          itemBuilder: (context, index) {
-                                                                            final aviso = avisosFiltrados[index];
-                                                                            final isAtivo = aviso.expiraEm != null && aviso.expiraEm!.isAfter(DateTime.now());
-
-                                                                            // Se o aviso está expirado e fixado, desfixar automaticamente
-                                                                            if (!isAtivo && (aviso.fixado ?? false)) {
-                                                                              WidgetsBinding.instance.addPostFrameCallback((_) async {
-                                                                                await AvisoTable().update(
-                                                                                  data: {'fixado': false},
-                                                                                  matchingRows: (rows) => rows.eq('id', aviso.id),
-                                                                                );
-                                                                              });
-                                                                            }
-
-                                                                            return Padding(
-                                                                              padding: EdgeInsets.all(16.0),
-                                                                              child: Container(
-                                                                                width: double.infinity,
-                                                                                decoration: BoxDecoration(
-                                                                                  color: Color(0xFF3C3D3E),
-                                                                                  borderRadius:
-                                                                                      BorderRadius.circular(
-                                                                                          12.0),
-                                                                                  border: Border.all(
-                                                                                    color:
-                                                                                        Color(0xFF333333),
-                                                                                    width: 1.0,
-                                                                                  ),
-                                                                                ),
-                                                                                child: Padding(
-                                                                                  padding:
-                                                                                      EdgeInsets.all(12.0),
-                                                                                  child: Row(
-                                                                                    mainAxisSize:
-                                                                                        MainAxisSize.max,
-                                                                                    mainAxisAlignment:
-                                                                                        MainAxisAlignment
-                                                                                            .spaceBetween,
-                                                                                    crossAxisAlignment:
-                                                                                        CrossAxisAlignment
-                                                                                            .center,
-                                                                                    children: [
-                                                                                      Expanded(
-                                                                                        child: Column(
-                                                                                          mainAxisSize:
-                                                                                              MainAxisSize
-                                                                                                  .max,
-                                                                                          crossAxisAlignment:
-                                                                                              CrossAxisAlignment
-                                                                                                  .start,
-                                                                                          children: [
-                                                                                            Row(
-                                                                                              mainAxisSize:
-                                                                                                  MainAxisSize
-                                                                                                      .max,
-                                                                                              children: [
-                                                                                                Text(
-                                                                                                  aviso.nomeAviso ?? 'Sem título',
-                                                                                                  style: FlutterFlowTheme.of(
-                                                                                                          context)
-                                                                                                      .titleSmall
-                                                                                                      .override(
-                                                                                                        font:
-                                                                                                            GoogleFonts.interTight(
-                                                                                                          fontWeight: FontWeight.w600,
-                                                                                                          fontStyle: FlutterFlowTheme.of(context).titleSmall.fontStyle,
-                                                                                                        ),
-                                                                                                        color:
-                                                                                                            Colors.white,
-                                                                                                        letterSpacing:
-                                                                                                            0.0,
-                                                                                                        fontWeight:
-                                                                                                            FontWeight.w600,
-                                                                                                        fontStyle:
-                                                                                                            FlutterFlowTheme.of(context).titleSmall.fontStyle,
-                                                                                                      ),
-                                                                                                ),
-                                                                                                Container(
-                                                                                                  decoration:
-                                                                                                      BoxDecoration(
-                                                                                                    color: isAtivo ? Colors.green : Colors.red,
-                                                                                                    borderRadius:
-                                                                                                        BorderRadius.circular(10.0),
-                                                                                                  ),
-                                                                                                  child:
-                                                                                                      Padding(
-                                                                                                    padding:
-                                                                                                        EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-                                                                                                    child:
-                                                                                                        Text(
-                                                                                                      isAtivo ? 'ATIVO' : 'EXPIRADO',
-                                                                                                      textAlign:
-                                                                                                          TextAlign.center,
-                                                                                                      style: FlutterFlowTheme.of(context).bodySmall.override(
-                                                                                                            font: GoogleFonts.inter(
-                                                                                                              fontWeight: FontWeight.bold,
-                                                                                                              fontStyle: FlutterFlowTheme.of(context).bodySmall.fontStyle,
-                                                                                                            ),
-                                                                                                            color: Colors.white,
-                                                                                                            fontSize: 11.0,
-                                                                                                            letterSpacing: 0.0,
-                                                                                                            fontWeight: FontWeight.bold,
-                                                                                                            fontStyle: FlutterFlowTheme.of(context).bodySmall.fontStyle,
-                                                                                                          ),
-                                                                                                    ),
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ].divide(SizedBox(
-                                                                                                  width:
-                                                                                                      12.0)),
-                                                                                            ),
-                                                                                            Text(
-                                                                                              'Tipo: ${aviso.categoria ?? 'N/A'} • Criado: ${aviso.createdAt != null ? dateTimeFormat('dd/MM/yyyy', aviso.createdAt) : 'N/A'} • Expira: ${aviso.expiraEm != null ? dateTimeFormat('dd/MM/yyyy', aviso.expiraEm) : 'N/A'}',
-                                                                                              style: FlutterFlowTheme.of(
-                                                                                                      context)
-                                                                                                  .bodySmall
-                                                                                                  .override(
-                                                                                                    font: GoogleFonts
-                                                                                                        .inter(
-                                                                                                      fontWeight: FlutterFlowTheme.of(context)
-                                                                                                          .bodySmall
-                                                                                                          .fontWeight,
-                                                                                                      fontStyle: FlutterFlowTheme.of(context)
-                                                                                                          .bodySmall
-                                                                                                          .fontStyle,
-                                                                                                    ),
-                                                                                                    color: Color(
-                                                                                                        0xFFB0B0B0),
-                                                                                                    fontSize:
-                                                                                                        12.0,
-                                                                                                    letterSpacing:
-                                                                                                        0.0,
-                                                                                                    fontWeight: FlutterFlowTheme.of(context)
-                                                                                                        .bodySmall
-                                                                                                        .fontWeight,
-                                                                                                    fontStyle: FlutterFlowTheme.of(context)
-                                                                                                        .bodySmall
-                                                                                                        .fontStyle,
-                                                                                                  ),
-                                                                                            ),
-                                                                                          ].divide(SizedBox(
-                                                                                              height: 8.0)),
-                                                                                        ),
-                                                                                      ),
-                                                                                      Row(
-                                                                                        mainAxisSize:
-                                                                                            MainAxisSize
-                                                                                                .max,
-                                                                                        children: [
-                                                                                          FlutterFlowIconButton(
-                                                                                            borderRadius:
-                                                                                                6.0,
-                                                                                            buttonSize:
-                                                                                                32.0,
-                                                                                            fillColor: Color(
-                                                                                                0xFF1976D2),
-                                                                                            icon: Icon(
-                                                                                              Icons
-                                                                                                  .visibility,
-                                                                                              color: Colors
-                                                                                                  .white,
-                                                                                              size: 16.0,
-                                                                                            ),
-                                                                                            onPressed: () async {
-                                                                                              await showDialog(
-                                                                                                context: context,
-                                                                                                builder: (dialogContext) {
-                                                                                                  return Dialog(
-                                                                                                    backgroundColor: Colors.transparent,
-                                                                                                    child: Container(
-                                                                                                      constraints: BoxConstraints(
-                                                                                                        maxWidth: 600.0,
-                                                                                                        maxHeight: MediaQuery.of(dialogContext).size.height * 0.9,
-                                                                                                      ),
-                                                                                                      decoration: BoxDecoration(
-                                                                                                        color: Color(0xFF14181B),
-                                                                                                        borderRadius: BorderRadius.circular(16.0),
-                                                                                                        border: Border.all(
-                                                                                                          color: Color(0xFF333333),
-                                                                                                          width: 2.0,
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                      child: SingleChildScrollView(
-                                                                                                        child: Column(
-                                                                                                          mainAxisSize: MainAxisSize.min,
-                                                                                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                                          children: [
-                                                                                                            // Header com botão fechar
-                                                                                                            Padding(
-                                                                                                              padding: EdgeInsets.all(16.0),
-                                                                                                              child: Row(
-                                                                                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                                                children: [
-                                                                                                                  Expanded(
-                                                                                                                    child: Text(
-                                                                                                                      aviso.nomeAviso ?? 'Sem título',
-                                                                                                                      style: FlutterFlowTheme.of(dialogContext)
-                                                                                                                          .headlineSmall
-                                                                                                                          .override(
-                                                                                                                            font: GoogleFonts.interTight(
-                                                                                                                              fontWeight: FontWeight.bold,
-                                                                                                                            ),
-                                                                                                                            color: Colors.white,
-                                                                                                                            letterSpacing: 0.0,
-                                                                                                                          ),
-                                                                                                                    ),
-                                                                                                                  ),
-                                                                                                                  IconButton(
-                                                                                                                    icon: Icon(Icons.close, color: Color(0xFFB0B0B0)),
-                                                                                                                    onPressed: () => Navigator.pop(dialogContext),
-                                                                                                                  ),
-                                                                                                                ],
-                                                                                                              ),
-                                                                                                            ),
-                                                                                                            // Imagem
-                                                                                                            if (aviso.imagem != null && aviso.imagem!.isNotEmpty)
-                                                                                                              Container(
-                                                                                                                width: double.infinity,
-                                                                                                                height: 300.0,
-                                                                                                                child: Image.network(
-                                                                                                                  aviso.imagem!,
-                                                                                                                  width: double.infinity,
-                                                                                                                  height: 300.0,
-                                                                                                                  fit: BoxFit.contain,
-                                                                                                                  errorBuilder: (context, error, stackTrace) {
-                                                                                                                    return Container(
-                                                                                                                      color: Color(0xFF3C3D3E),
-                                                                                                                      child: Center(
-                                                                                                                        child: Icon(
-                                                                                                                          Icons.image_not_supported,
-                                                                                                                          color: Color(0xFFB0B0B0),
-                                                                                                                          size: 48.0,
-                                                                                                                        ),
-                                                                                                                      ),
-                                                                                                                    );
-                                                                                                                  },
-                                                                                                                ),
-                                                                                                              ),
-                                                                                                            // Conteúdo
-                                                                                                            Padding(
-                                                                                                              padding: EdgeInsets.all(16.0),
-                                                                                                              child: Column(
-                                                                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                                                children: [
-                                                                                                                  // Badge de status
-                                                                                                                  Container(
-                                                                                                                    padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                                                                                                                    decoration: BoxDecoration(
-                                                                                                                      color: isAtivo ? Colors.green : Colors.red,
-                                                                                                                      borderRadius: BorderRadius.circular(20.0),
-                                                                                                                    ),
-                                                                                                                    child: Text(
-                                                                                                                      isAtivo ? 'ATIVO' : 'EXPIRADO',
-                                                                                                                      style: FlutterFlowTheme.of(dialogContext)
-                                                                                                                          .bodySmall
-                                                                                                                          .override(
-                                                                                                                            font: GoogleFonts.inter(
-                                                                                                                              fontWeight: FontWeight.bold,
-                                                                                                                            ),
-                                                                                                                            color: Colors.white,
-                                                                                                                            fontSize: 12.0,
-                                                                                                                            letterSpacing: 0.0,
-                                                                                                                          ),
-                                                                                                                    ),
-                                                                                                                  ),
-                                                                                                                  SizedBox(height: 16.0),
-                                                                                                                  // Categoria
-                                                                                                                  Row(
-                                                                                                                    children: [
-                                                                                                                      Icon(Icons.category, color: Color(0xFFB0B0B0), size: 16.0),
-                                                                                                                      SizedBox(width: 8.0),
-                                                                                                                      Text(
-                                                                                                                        'Categoria: ${aviso.categoria ?? 'N/A'}',
-                                                                                                                        style: FlutterFlowTheme.of(dialogContext)
-                                                                                                                            .bodyMedium
-                                                                                                                            .override(
-                                                                                                                              font: GoogleFonts.inter(),
-                                                                                                                              color: Color(0xFFB0B0B0),
-                                                                                                                              fontSize: 14.0,
-                                                                                                                              letterSpacing: 0.0,
-                                                                                                                            ),
-                                                                                                                      ),
-                                                                                                                    ],
-                                                                                                                  ),
-                                                                                                                  SizedBox(height: 8.0),
-                                                                                                                  // Data de criação
-                                                                                                                  Row(
-                                                                                                                    children: [
-                                                                                                                      Icon(Icons.calendar_today, color: Color(0xFFB0B0B0), size: 16.0),
-                                                                                                                      SizedBox(width: 8.0),
-                                                                                                                      Text(
-                                                                                                                        'Criado em: ${aviso.createdAt != null ? dateTimeFormat('dd/MM/yyyy HH:mm', aviso.createdAt) : 'N/A'}',
-                                                                                                                        style: FlutterFlowTheme.of(dialogContext)
-                                                                                                                            .bodyMedium
-                                                                                                                            .override(
-                                                                                                                              font: GoogleFonts.inter(),
-                                                                                                                              color: Color(0xFFB0B0B0),
-                                                                                                                              fontSize: 14.0,
-                                                                                                                              letterSpacing: 0.0,
-                                                                                                                            ),
-                                                                                                                      ),
-                                                                                                                    ],
-                                                                                                                  ),
-                                                                                                                  SizedBox(height: 8.0),
-                                                                                                                  // Data de expiração
-                                                                                                                  Row(
-                                                                                                                    children: [
-                                                                                                                      Icon(Icons.event_busy, color: Color(0xFFB0B0B0), size: 16.0),
-                                                                                                                      SizedBox(width: 8.0),
-                                                                                                                      Text(
-                                                                                                                        'Expira em: ${aviso.expiraEm != null ? dateTimeFormat('dd/MM/yyyy HH:mm', aviso.expiraEm) : 'N/A'}',
-                                                                                                                        style: FlutterFlowTheme.of(dialogContext)
-                                                                                                                            .bodyMedium
-                                                                                                                            .override(
-                                                                                                                              font: GoogleFonts.inter(),
-                                                                                                                              color: Color(0xFFB0B0B0),
-                                                                                                                              fontSize: 14.0,
-                                                                                                                              letterSpacing: 0.0,
-                                                                                                                            ),
-                                                                                                                      ),
-                                                                                                                    ],
-                                                                                                                  ),
-                                                                                                                  SizedBox(height: 24.0),
-                                                                                                                  // Descrição resumida
-                                                                                                                  if (aviso.descricaoResumida != null && aviso.descricaoResumida!.isNotEmpty)
-                                                                                                                    Column(
-                                                                                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                                                      children: [
-                                                                                                                        Text(
-                                                                                                                          'Resumo',
-                                                                                                                          style: FlutterFlowTheme.of(dialogContext)
-                                                                                                                              .titleSmall
-                                                                                                                              .override(
-                                                                                                                                font: GoogleFonts.interTight(
-                                                                                                                                  fontWeight: FontWeight.w600,
-                                                                                                                                ),
-                                                                                                                                color: Colors.white,
-                                                                                                                                letterSpacing: 0.0,
-                                                                                                                              ),
-                                                                                                                        ),
-                                                                                                                        SizedBox(height: 8.0),
-                                                                                                                        Text(
-                                                                                                                          aviso.descricaoResumida!,
-                                                                                                                          style: FlutterFlowTheme.of(dialogContext)
-                                                                                                                              .bodyMedium
-                                                                                                                              .override(
-                                                                                                                                font: GoogleFonts.inter(),
-                                                                                                                                color: Color(0xFFD0D0D0),
-                                                                                                                                fontSize: 14.0,
-                                                                                                                                letterSpacing: 0.0,
-                                                                                                                              ),
-                                                                                                                        ),
-                                                                                                                        SizedBox(height: 16.0),
-                                                                                                                      ],
-                                                                                                                    ),
-                                                                                                                  // Descrição completa
-                                                                                                                  if (aviso.descricao != null && aviso.descricao!.isNotEmpty)
-                                                                                                                    Column(
-                                                                                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                                                      children: [
-                                                                                                                        Text(
-                                                                                                                          'Descrição Completa',
-                                                                                                                          style: FlutterFlowTheme.of(dialogContext)
-                                                                                                                              .titleSmall
-                                                                                                                              .override(
-                                                                                                                                font: GoogleFonts.interTight(
-                                                                                                                                  fontWeight: FontWeight.w600,
-                                                                                                                                ),
-                                                                                                                                color: Colors.white,
-                                                                                                                                letterSpacing: 0.0,
-                                                                                                                              ),
-                                                                                                                        ),
-                                                                                                                        SizedBox(height: 8.0),
-                                                                                                                        Text(
-                                                                                                                          aviso.descricao!,
-                                                                                                                          style: FlutterFlowTheme.of(dialogContext)
-                                                                                                                              .bodyMedium
-                                                                                                                              .override(
-                                                                                                                                font: GoogleFonts.inter(),
-                                                                                                                                color: Color(0xFFD0D0D0),
-                                                                                                                                fontSize: 14.0,
-                                                                                                                                letterSpacing: 0.0,
-                                                                                                                              ),
-                                                                                                                        ),
-                                                                                                                      ],
-                                                                                                                    ),
-                                                                                                                ],
-                                                                                                              ),
-                                                                                                            ),
-                                                                                                          ],
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                  );
-                                                                                                },
-                                                                                              );
-                                                                                            },
-                                                                                          ),
-                                                                                          FlutterFlowIconButton(
-                                                                                            borderRadius:
-                                                                                                6.0,
-                                                                                            buttonSize:
-                                                                                                32.0,
-                                                                                            fillColor:
-                                                                                                Colors
-                                                                                                    .orange,
-                                                                                            icon: Icon(
-                                                                                              Icons.edit,
-                                                                                              color: Colors
-                                                                                                  .white,
-                                                                                              size: 16.0,
-                                                                                            ),
-                                                                                            onPressed: () {
-                                                                                              context.pushNamed(
-                                                                                                PageNovoAvisoSecretariaWidget.routeName,
-                                                                                                queryParameters: {
-                                                                                                  'avisoId': serializeParam(aviso.id, ParamType.int),
-                                                                                                }.withoutNulls,
-                                                                                                extra: <String, dynamic>{
-                                                                                                  kTransitionInfoKey: TransitionInfo(
-                                                                                                    hasTransition: true,
-                                                                                                    transitionType: PageTransitionType.fade,
-                                                                                                  ),
-                                                                                                },
-                                                                                              );
-                                                                                            },
-                                                                                          ),
-                                                                                          FlutterFlowIconButton(
-                                                                                            borderRadius:
-                                                                                                6.0,
-                                                                                            buttonSize:
-                                                                                                32.0,
-                                                                                            fillColor:
-                                                                                                (aviso.fixado ?? false) ? Colors.green : Color(0xFF555555),
-                                                                                            icon: Icon(
-                                                                                              Icons.push_pin,
-                                                                                              color: Colors
-                                                                                                  .white,
-                                                                                              size: 16.0,
-                                                                                            ),
-                                                                                            onPressed: () async {
-                                                                                              // Se o aviso está expirado, não permite fixar
-                                                                                              if (!isAtivo) {
-                                                                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                                                                  SnackBar(
-                                                                                                    content: Text('Não é possível fixar um aviso expirado!'),
-                                                                                                    backgroundColor: Colors.orange,
-                                                                                                  ),
-                                                                                                );
-                                                                                                return;
-                                                                                              }
-
-                                                                                              // Alternar o estado de fixado
-                                                                                              final novoEstadoFixado = !(aviso.fixado ?? false);
-
-                                                                                              await AvisoTable().update(
-                                                                                                data: {
-                                                                                                  'fixado': novoEstadoFixado,
-                                                                                                },
-                                                                                                matchingRows: (rows) => rows.eq('id', aviso.id),
-                                                                                              );
-
-                                                                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                                                                SnackBar(
-                                                                                                  content: Text(
-                                                                                                    novoEstadoFixado
-                                                                                                      ? 'Aviso fixado com sucesso!'
-                                                                                                      : 'Aviso desfixado com sucesso!'
-                                                                                                  ),
-                                                                                                  backgroundColor: FlutterFlowTheme.of(context).success,
-                                                                                                ),
-                                                                                              );
-                                                                                              setState(() {
-                                                                                                _model.refreshKey++;
-                                                                                              });
-                                                                                            },
-                                                                                          ),
-                                                                                          FlutterFlowIconButton(
-                                                                                            borderRadius:
-                                                                                                6.0,
-                                                                                            buttonSize:
-                                                                                                32.0,
-                                                                                            fillColor:
-                                                                                                Colors.red,
-                                                                                            icon: Icon(
-                                                                                              Icons.delete,
-                                                                                              color: Colors
-                                                                                                  .white,
-                                                                                              size: 16.0,
-                                                                                            ),
-                                                                                            onPressed: () async {
-                                                                                              final confirmDelete = await showDialog<bool>(
-                                                                                                context: context,
-                                                                                                builder: (alertDialogContext) {
-                                                                                                  return AlertDialog(
-                                                                                                    title: Text('Confirmar exclusão'),
-                                                                                                    content: Text('Deseja realmente excluir este aviso?'),
-                                                                                                    actions: [
-                                                                                                      TextButton(
-                                                                                                        onPressed: () => Navigator.pop(
-                                                                                                            alertDialogContext, false),
-                                                                                                        child: Text('Cancelar'),
-                                                                                                      ),
-                                                                                                      TextButton(
-                                                                                                        onPressed: () => Navigator.pop(
-                                                                                                            alertDialogContext, true),
-                                                                                                        child: Text('Excluir'),
-                                                                                                      ),
-                                                                                                    ],
-                                                                                                  );
-                                                                                                },
-                                                                                              ) ?? false;
-
-                                                                                              if (confirmDelete) {
-                                                                                                try {
-                                                                                                  await AvisoTable().delete(
-                                                                                                    matchingRows: (rows) => rows.eq('id', aviso.id),
-                                                                                                  );
-                                                                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                                                                    SnackBar(
-                                                                                                      content: Text('Aviso excluído com sucesso!'),
-                                                                                                      backgroundColor: FlutterFlowTheme.of(context).success,
-                                                                                                    ),
-                                                                                                  );
-                                                                                                  setState(() {
-                                                                                                    _model.refreshKey++;
-                                                                                                  });
-                                                                                                } catch (e) {
-                                                                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                                                                    SnackBar(
-                                                                                                      content: Text('Erro ao excluir: $e'),
-                                                                                                      backgroundColor: Colors.red,
-                                                                                                    ),
-                                                                                                  );
-                                                                                                }
-                                                                                              }
-                                                                                            },
-                                                                                          ),
-                                                                                        ].divide(SizedBox(
-                                                                                            width: 8.0)),
-                                                                                      ),
-                                                                                    ],
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                            );
-                                                                          },
-                                                                        );
-                                                                      },
-                                                                    ),
-                                                                  ].divide(SizedBox(height: 16.0)),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      );
-                                                    },
-                                                  ),
-                                ]
-                                    .divide(SizedBox(height: 24.0))
-                                    .addToStart(SizedBox(height: 24.0))
-                                    .addToEnd(SizedBox(height: 24.0)),
+                    child: FutureBuilder<List<AvisoRow>>(
+                      key: ValueKey(_model.refreshKey),
+                      future: AvisoTable().queryRows(
+                        queryFn: (q) => q.order('created_at', ascending: false),
+                      ),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                FlutterFlowTheme.of(context).primary,
                               ),
                             ),
+                          );
+                        }
+
+                        List<AvisoRow> avisos = snapshot.data!;
+
+                        // Calcular estatisticas
+                        final now = DateTime.now();
+                        final avisosAtivos = avisos.where((a) =>
+                          a.expiraEm != null && a.expiraEm!.isAfter(now)
+                        ).length;
+                        final avisosExpirados = avisos.where((a) =>
+                          a.expiraEm != null && a.expiraEm!.isBefore(now)
+                        ).length;
+                        final avisosFixados = avisos.where((a) =>
+                          (a.fixado ?? false) && a.expiraEm != null && a.expiraEm!.isAfter(now)
+                        ).length;
+
+                        // Aplicar filtros
+                        List<AvisoRow> avisosFiltrados = avisos.where((aviso) {
+                          final isAtivo = aviso.expiraEm != null && aviso.expiraEm!.isAfter(now);
+
+                          // Filtro de busca
+                          if (_model.searchController!.text.isNotEmpty) {
+                            final searchLower = _model.searchController!.text.toLowerCase();
+                            final nomeAviso = (aviso.nomeAviso ?? '').toLowerCase();
+                            if (!nomeAviso.contains(searchLower)) {
+                              return false;
+                            }
+                          }
+
+                          // Filtro de status
+                          if (_model.filtroStatus != null) {
+                            if (_model.filtroStatus == 'ativo' && !isAtivo) {
+                              return false;
+                            }
+                            if (_model.filtroStatus == 'expirado' && isAtivo) {
+                              return false;
+                            }
+                            if (_model.filtroStatus == 'fixado' && !(aviso.fixado ?? false)) {
+                              return false;
+                            }
+                          }
+
+                          return true;
+                        }).toList();
+
+                        return SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.max,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header
+                              Padding(
+                                padding: EdgeInsets.all(32.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Avisos',
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.white,
+                                            fontSize: 32.0,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(height: 8.0),
+                                        Text(
+                                          'Gerencie os avisos da igreja',
+                                          style: GoogleFonts.inter(
+                                            color: Color(0xFF999999),
+                                            fontSize: 16.0,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    FFButtonWidget(
+                                      onPressed: () {
+                                        context.pushNamed(
+                                          PageNovoAvisoSecretariaWidget.routeName,
+                                          extra: <String, dynamic>{
+                                            kTransitionInfoKey: TransitionInfo(
+                                              hasTransition: true,
+                                              transitionType: PageTransitionType.fade,
+                                            ),
+                                          },
+                                        );
+                                      },
+                                      text: 'Novo Aviso',
+                                      icon: Icon(
+                                        Icons.add_rounded,
+                                        size: 20.0,
+                                      ),
+                                      options: FFButtonOptions(
+                                        height: 48.0,
+                                        padding: EdgeInsets.symmetric(horizontal: 24.0),
+                                        color: FlutterFlowTheme.of(context).primary,
+                                        textStyle: GoogleFonts.inter(
+                                          color: Colors.white,
+                                          fontSize: 16.0,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        elevation: 0.0,
+                                        borderRadius: BorderRadius.circular(12.0),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Cards de estatisticas
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildStatCard(
+                                        icon: Icons.visibility_rounded,
+                                        title: 'Ativos',
+                                        value: avisosAtivos.toString(),
+                                        color: Color(0xFF4CAF50),
+                                      ),
+                                    ),
+                                    SizedBox(width: 24.0),
+                                    Expanded(
+                                      child: _buildStatCard(
+                                        icon: Icons.event_busy_rounded,
+                                        title: 'Expirados',
+                                        value: avisosExpirados.toString(),
+                                        color: Color(0xFFF44336),
+                                      ),
+                                    ),
+                                    SizedBox(width: 24.0),
+                                    Expanded(
+                                      child: _buildStatCard(
+                                        icon: Icons.push_pin_rounded,
+                                        title: 'Fixados',
+                                        value: avisosFixados.toString(),
+                                        color: Color(0xFF2196F3),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              SizedBox(height: 32.0),
+
+                              // Campo de busca e filtros
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Campo de busca
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Color(0xFF1A1A1A),
+                                        borderRadius: BorderRadius.circular(12.0),
+                                        border: Border.all(
+                                          color: Color(0xFF2A2A2A),
+                                          width: 1.0,
+                                        ),
+                                      ),
+                                      child: TextFormField(
+                                        controller: _model.searchController,
+                                        focusNode: _model.searchFocusNode,
+                                        onChanged: (value) => setState(() {}),
+                                        decoration: InputDecoration(
+                                          hintText: 'Buscar avisos...',
+                                          hintStyle: GoogleFonts.inter(
+                                            color: Color(0xFF666666),
+                                            fontSize: 14.0,
+                                          ),
+                                          prefixIcon: Icon(
+                                            Icons.search_rounded,
+                                            color: Color(0xFF666666),
+                                          ),
+                                          suffixIcon: _model.searchController!.text.isNotEmpty
+                                            ? IconButton(
+                                                icon: Icon(Icons.clear_rounded, color: Color(0xFF666666)),
+                                                onPressed: () {
+                                                  _model.searchController?.clear();
+                                                  setState(() {});
+                                                },
+                                              )
+                                            : null,
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                                        ),
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white,
+                                          fontSize: 14.0,
+                                        ),
+                                      ),
+                                    ),
+
+                                    SizedBox(height: 16.0),
+
+                                    // Chips de filtro
+                                    SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Row(
+                                        children: [
+                                          _buildFilterChip(
+                                            label: 'Todos',
+                                            isSelected: _model.filtroStatus == null,
+                                            onTap: () {
+                                              setState(() {
+                                                _model.filtroStatus = null;
+                                              });
+                                            },
+                                          ),
+                                          SizedBox(width: 12.0),
+                                          _buildFilterChip(
+                                            label: 'Ativos',
+                                            icon: Icons.visibility_rounded,
+                                            isSelected: _model.filtroStatus == 'ativo',
+                                            onTap: () {
+                                              setState(() {
+                                                _model.filtroStatus = _model.filtroStatus == 'ativo' ? null : 'ativo';
+                                              });
+                                            },
+                                          ),
+                                          SizedBox(width: 12.0),
+                                          _buildFilterChip(
+                                            label: 'Expirados',
+                                            icon: Icons.event_busy_rounded,
+                                            isSelected: _model.filtroStatus == 'expirado',
+                                            onTap: () {
+                                              setState(() {
+                                                _model.filtroStatus = _model.filtroStatus == 'expirado' ? null : 'expirado';
+                                              });
+                                            },
+                                          ),
+                                          SizedBox(width: 12.0),
+                                          _buildFilterChip(
+                                            label: 'Fixados',
+                                            icon: Icons.push_pin_rounded,
+                                            isSelected: _model.filtroStatus == 'fixado',
+                                            onTap: () {
+                                              setState(() {
+                                                _model.filtroStatus = _model.filtroStatus == 'fixado' ? null : 'fixado';
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              SizedBox(height: 24.0),
+
+                              // Lista de avisos
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Todos os Avisos',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontSize: 20.0,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(height: 16.0),
+
+                                    avisosFiltrados.isEmpty
+                                      ? Container(
+                                          padding: EdgeInsets.all(48.0),
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFF1A1A1A),
+                                            borderRadius: BorderRadius.circular(16.0),
+                                            border: Border.all(
+                                              color: Color(0xFF2A2A2A),
+                                              width: 1.0,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Column(
+                                              children: [
+                                                Icon(
+                                                  Icons.campaign_rounded,
+                                                  size: 64.0,
+                                                  color: Color(0xFF666666),
+                                                ),
+                                                SizedBox(height: 16.0),
+                                                Text(
+                                                  'Nenhum aviso encontrado',
+                                                  style: GoogleFonts.inter(
+                                                    color: Color(0xFF999999),
+                                                    fontSize: 16.0,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 8.0),
+                                                Text(
+                                                  'Clique em "Novo Aviso" para criar',
+                                                  style: GoogleFonts.inter(
+                                                    color: Color(0xFF666666),
+                                                    fontSize: 14.0,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      : ListView.builder(
+                                          shrinkWrap: true,
+                                          physics: NeverScrollableScrollPhysics(),
+                                          itemCount: avisosFiltrados.length,
+                                          itemBuilder: (context, index) {
+                                            final aviso = avisosFiltrados[index];
+                                            return _buildAvisoCard(context, aviso);
+                                          },
+                                        ),
+                                  ],
+                                ),
+                              ),
+
+                              SizedBox(height: 32.0),
+                            ],
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -1620,5 +443,611 @@ class _PageAvisosSecretariaWidgetState
         ),
       ),
     );
+  }
+
+  Widget _buildStatCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(16.0),
+        border: Border.all(
+          color: Color(0xFF2A2A2A),
+          width: 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(12.0),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: Icon(
+              icon,
+              size: 32.0,
+              color: color,
+            ),
+          ),
+          SizedBox(height: 16.0),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: Color(0xFF999999),
+              fontSize: 14.0,
+            ),
+          ),
+          SizedBox(height: 8.0),
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 32.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    IconData? icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+        decoration: BoxDecoration(
+          color: isSelected ? FlutterFlowTheme.of(context).primary : Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(20.0),
+          border: Border.all(
+            color: isSelected ? FlutterFlowTheme.of(context).primary : Color(0xFF2A2A2A),
+            width: 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: Colors.white, size: 16.0),
+              SizedBox(width: 6.0),
+            ],
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 14.0,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvisoCard(BuildContext context, AvisoRow aviso) {
+    final now = DateTime.now();
+    final isAtivo = aviso.expiraEm != null && aviso.expiraEm!.isAfter(now);
+    final isFixado = aviso.fixado ?? false;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(16.0),
+        border: Border.all(
+          color: isFixado ? FlutterFlowTheme.of(context).primary.withOpacity(0.5) : Color(0xFF2A2A2A),
+          width: isFixado ? 2.0 : 1.0,
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(20.0),
+        child: Row(
+          children: [
+            // Icone
+            Container(
+              width: 56.0,
+              height: 56.0,
+              decoration: BoxDecoration(
+                color: isAtivo
+                  ? Color(0xFF4CAF50).withOpacity(0.1)
+                  : Color(0xFFF44336).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isFixado ? Icons.push_pin_rounded : Icons.campaign_rounded,
+                color: isAtivo ? Color(0xFF4CAF50) : Color(0xFFF44336),
+                size: 28.0,
+              ),
+            ),
+            SizedBox(width: 16.0),
+
+            // Informacoes
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          aviso.nomeAviso ?? 'Sem titulo',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      SizedBox(width: 12.0),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                        decoration: BoxDecoration(
+                          color: isAtivo ? Color(0xFF4CAF50) : Color(0xFFF44336),
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: Text(
+                          isAtivo ? 'ATIVO' : 'EXPIRADO',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 11.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      Icon(Icons.category_rounded, color: Color(0xFF666666), size: 14.0),
+                      SizedBox(width: 6.0),
+                      Text(
+                        aviso.categoria ?? 'Geral',
+                        style: GoogleFonts.inter(
+                          color: Color(0xFF999999),
+                          fontSize: 13.0,
+                        ),
+                      ),
+                      SizedBox(width: 16.0),
+                      Icon(Icons.event_rounded, color: Color(0xFF666666), size: 14.0),
+                      SizedBox(width: 6.0),
+                      Text(
+                        aviso.expiraEm != null
+                          ? dateTimeFormat('dd/MM/yyyy', aviso.expiraEm!)
+                          : 'Sem data',
+                        style: GoogleFonts.inter(
+                          color: Color(0xFF999999),
+                          fontSize: 13.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(width: 16.0),
+
+            // Botoes de acao
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Botao Visualizar
+                _buildActionButton(
+                  icon: Icons.visibility_rounded,
+                  color: Color(0xFF2196F3),
+                  onPressed: () => _showAvisoDetails(context, aviso, isAtivo),
+                ),
+                SizedBox(width: 8.0),
+                // Botao Editar
+                _buildActionButton(
+                  icon: Icons.edit_rounded,
+                  color: Color(0xFFFF9800),
+                  onPressed: () {
+                    context.pushNamed(
+                      PageNovoAvisoSecretariaWidget.routeName,
+                      queryParameters: {
+                        'avisoId': serializeParam(aviso.id, ParamType.int),
+                      }.withoutNulls,
+                      extra: <String, dynamic>{
+                        kTransitionInfoKey: TransitionInfo(
+                          hasTransition: true,
+                          transitionType: PageTransitionType.fade,
+                        ),
+                      },
+                    );
+                  },
+                ),
+                SizedBox(width: 8.0),
+                // Botao Fixar
+                _buildActionButton(
+                  icon: Icons.push_pin_rounded,
+                  color: isFixado ? Color(0xFF4CAF50) : Color(0xFF666666),
+                  onPressed: () => _toggleFixado(context, aviso, isAtivo),
+                ),
+                SizedBox(width: 8.0),
+                // Botao Excluir
+                _buildActionButton(
+                  icon: Icons.delete_rounded,
+                  color: Color(0xFFF44336),
+                  onPressed: () => _confirmDelete(context, aviso),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8.0),
+        child: Container(
+          width: 36.0,
+          height: 36.0,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: Icon(
+            icon,
+            color: color,
+            size: 18.0,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showAvisoDetails(BuildContext context, AvisoRow aviso, bool isAtivo) async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: 600.0,
+              maxHeight: MediaQuery.of(dialogContext).size.height * 0.9,
+            ),
+            decoration: BoxDecoration(
+              color: Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.circular(16.0),
+              border: Border.all(
+                color: Color(0xFF2A2A2A),
+                width: 1.0,
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            aviso.nomeAviso ?? 'Sem titulo',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 24.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close_rounded, color: Color(0xFF666666)),
+                          onPressed: () => Navigator.pop(dialogContext),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Imagem
+                  if (aviso.imagem != null && aviso.imagem!.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Container(
+                        width: double.infinity,
+                        constraints: BoxConstraints(
+                          maxHeight: 350.0,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12.0),
+                          border: Border.all(
+                            color: Color(0xFF2A2A2A),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(11.0),
+                          child: Image.network(
+                            aviso.imagem!,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 200.0,
+                                color: Color(0xFF2A2A2A),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.image_not_supported_rounded,
+                                        color: Color(0xFF666666),
+                                        size: 48.0,
+                                      ),
+                                      SizedBox(height: 8.0),
+                                      Text(
+                                        'Imagem indisponivel',
+                                        style: GoogleFonts.inter(
+                                          color: Color(0xFF666666),
+                                          fontSize: 14.0,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // Conteudo
+                  Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Badge de status
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                          decoration: BoxDecoration(
+                            color: isAtivo ? Color(0xFF4CAF50) : Color(0xFFF44336),
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                          child: Text(
+                            isAtivo ? 'ATIVO' : 'EXPIRADO',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 12.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 20.0),
+
+                        // Informacoes
+                        _buildDetailRow(Icons.category_rounded, 'Categoria', aviso.categoria ?? 'N/A'),
+                        SizedBox(height: 12.0),
+                        _buildDetailRow(Icons.calendar_today_rounded, 'Criado em',
+                          dateTimeFormat('dd/MM/yyyy HH:mm', aviso.createdAt)),
+                        SizedBox(height: 12.0),
+                        _buildDetailRow(Icons.event_busy_rounded, 'Expira em',
+                          aviso.expiraEm != null ? dateTimeFormat('dd/MM/yyyy HH:mm', aviso.expiraEm!) : 'N/A'),
+
+                        // Descricao resumida
+                        if (aviso.descricaoResumida != null && aviso.descricaoResumida!.isNotEmpty) ...[
+                          SizedBox(height: 24.0),
+                          Text(
+                            'Resumo',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            aviso.descricaoResumida!,
+                            style: GoogleFonts.inter(
+                              color: Color(0xFFCCCCCC),
+                              fontSize: 14.0,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+
+                        // Descricao completa
+                        if (aviso.descricao != null && aviso.descricao!.isNotEmpty) ...[
+                          SizedBox(height: 24.0),
+                          Text(
+                            'Descricao Completa',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            aviso.descricao!,
+                            style: GoogleFonts.inter(
+                              color: Color(0xFFCCCCCC),
+                              fontSize: 14.0,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: Color(0xFF666666), size: 18.0),
+        SizedBox(width: 12.0),
+        Text(
+          '$label: ',
+          style: GoogleFonts.inter(
+            color: Color(0xFF999999),
+            fontSize: 14.0,
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontSize: 14.0,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _toggleFixado(BuildContext context, AvisoRow aviso, bool isAtivo) async {
+    // Se o aviso esta expirado, nao permite fixar
+    if (!isAtivo) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Nao e possivel fixar um aviso expirado!'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Alternar o estado de fixado
+    final novoEstadoFixado = !(aviso.fixado ?? false);
+
+    await AvisoTable().update(
+      data: {'fixado': novoEstadoFixado},
+      matchingRows: (rows) => rows.eq('id', aviso.id),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          novoEstadoFixado
+            ? 'Aviso fixado com sucesso!'
+            : 'Aviso desfixado com sucesso!'
+        ),
+        backgroundColor: FlutterFlowTheme.of(context).success,
+      ),
+    );
+
+    setState(() {
+      _model.refreshKey++;
+    });
+  }
+
+  Future<void> _confirmDelete(BuildContext context, AvisoRow aviso) async {
+    final confirmDelete = await showDialog<bool>(
+      context: context,
+      builder: (alertDialogContext) {
+        return AlertDialog(
+          backgroundColor: Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          title: Text(
+            'Confirmar exclusao',
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'Deseja realmente excluir este aviso?',
+            style: GoogleFonts.inter(
+              color: Color(0xFF999999),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(alertDialogContext, false),
+              child: Text(
+                'Cancelar',
+                style: GoogleFonts.inter(
+                  color: Color(0xFF999999),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(alertDialogContext, true),
+              style: TextButton.styleFrom(
+                backgroundColor: Color(0xFFF44336).withOpacity(0.1),
+              ),
+              child: Text(
+                'Excluir',
+                style: GoogleFonts.inter(
+                  color: Color(0xFFF44336),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    ) ?? false;
+
+    if (confirmDelete) {
+      try {
+        // Primeiro, deletar as curtidas relacionadas
+        await CurtidasTable().delete(
+          matchingRows: (rows) => rows.eq('aviso_id', aviso.id),
+        );
+        // Depois, deletar o aviso
+        await AvisoTable().delete(
+          matchingRows: (rows) => rows.eq('id', aviso.id),
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Aviso excluido com sucesso!'),
+            backgroundColor: FlutterFlowTheme.of(context).success,
+          ),
+        );
+
+        setState(() {
+          _model.refreshKey++;
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao excluir: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

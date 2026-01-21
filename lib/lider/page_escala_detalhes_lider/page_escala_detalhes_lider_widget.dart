@@ -38,6 +38,8 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
   Map<String, MembrosRow> _membrosData = {};
   List<MembrosRow> _membrosDisponiveis = [];
   List<ArquivosRow> _arquivos = [];
+  List<Map<String, dynamic>> _musicasEscala = [];
+  List<MusicasRow> _todasMusicas = [];
   bool _isLoading = true;
 
   @override
@@ -115,6 +117,35 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
         queryFn: (q) => q.eq('id_escala', widget.idescala!),
       );
 
+      // Carregar músicas da escala (se for ministério de louvor - id 1)
+      List<Map<String, dynamic>> musicasEscala = [];
+      List<MusicasRow> todasMusicas = [];
+      if (widget.idministerio == 1) {
+        final escalaMusicasRows = await EscalaMusicasTable().queryRows(
+          queryFn: (q) => q.eq('id_escala', widget.idescala!).order('ordem'),
+        );
+
+        for (var em in escalaMusicasRows) {
+          if (em.idMusica != null) {
+            final musicaRows = await MusicasTable().queryRows(
+              queryFn: (q) => q.eq('id', em.idMusica!),
+            );
+            if (musicaRows.isNotEmpty) {
+              final musica = musicaRows.first;
+              musicasEscala.add({
+                'escala_musica': em,
+                'musica': musica,
+              });
+            }
+          }
+        }
+
+        // Carregar todas as músicas para o modal de adicionar
+        todasMusicas = await MusicasTable().queryRows(
+          queryFn: (q) => q.order('nome'),
+        );
+      }
+
       setState(() {
         _escala = escala;
         _ministerio = ministerio;
@@ -122,6 +153,8 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
         _membrosData = membrosData;
         _membrosDisponiveis = membrosDisponiveis;
         _arquivos = arquivos;
+        _musicasEscala = musicasEscala;
+        _todasMusicas = todasMusicas;
         _isLoading = false;
       });
     } catch (e) {
@@ -525,6 +558,261 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                           ),
                                         ],
                                       ),
+                                    ),
+                                  ),
+
+                                // Seção de Repertório (apenas para ministério de louvor - id 1)
+                                if (widget.idministerio == 1)
+                                  Padding(
+                                    padding: EdgeInsets.fromLTRB(32.0, 24.0, 32.0, 0.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.music_note_rounded,
+                                                  color: Color(0xFFFF5722),
+                                                  size: 24.0,
+                                                ),
+                                                SizedBox(width: 8.0),
+                                                Text(
+                                                  'Repertório',
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontSize: 20.0,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 8.0),
+                                                Container(
+                                                  padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                                                  decoration: BoxDecoration(
+                                                    color: Color(0xFFFF5722).withOpacity(0.2),
+                                                    borderRadius: BorderRadius.circular(12.0),
+                                                  ),
+                                                  child: Text(
+                                                    '${_musicasEscala.length}',
+                                                    style: GoogleFonts.inter(
+                                                      color: Color(0xFFFF5722),
+                                                      fontSize: 12.0,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            InkWell(
+                                              onTap: () => _mostrarModalAdicionarMusica(context),
+                                              borderRadius: BorderRadius.circular(8.0),
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                                decoration: BoxDecoration(
+                                                  color: Color(0xFFFF5722),
+                                                  borderRadius: BorderRadius.circular(8.0),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.add_rounded, color: Colors.white, size: 18.0),
+                                                    SizedBox(width: 6.0),
+                                                    Text(
+                                                      'Adicionar',
+                                                      style: GoogleFonts.inter(
+                                                        color: Colors.white,
+                                                        fontSize: 13.0,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 16.0),
+                                        if (_musicasEscala.isEmpty)
+                                          Container(
+                                            width: double.infinity,
+                                            padding: EdgeInsets.all(32.0),
+                                            decoration: BoxDecoration(
+                                              color: Color(0xFF2A2A2A),
+                                              borderRadius: BorderRadius.circular(12.0),
+                                            ),
+                                            child: Column(
+                                              children: [
+                                                Icon(
+                                                  Icons.music_off_rounded,
+                                                  size: 48.0,
+                                                  color: Color(0xFF666666),
+                                                ),
+                                                SizedBox(height: 12.0),
+                                                Text(
+                                                  'Nenhuma música adicionada',
+                                                  style: GoogleFonts.inter(
+                                                    color: Color(0xFF999999),
+                                                    fontSize: 14.0,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        else
+                                          ...List.generate(_musicasEscala.length, (index) {
+                                            final item = _musicasEscala[index];
+                                            final EscalaMusicasRow escalaMusicaRow = item['escala_musica'];
+                                            final MusicasRow musica = item['musica'];
+
+                                            return Container(
+                                              margin: EdgeInsets.only(bottom: 12.0),
+                                              padding: EdgeInsets.all(16.0),
+                                              decoration: BoxDecoration(
+                                                color: Color(0xFF2A2A2A),
+                                                borderRadius: BorderRadius.circular(12.0),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  // Número da ordem
+                                                  Container(
+                                                    width: 32.0,
+                                                    height: 32.0,
+                                                    decoration: BoxDecoration(
+                                                      color: Color(0xFFFF5722).withOpacity(0.2),
+                                                      borderRadius: BorderRadius.circular(8.0),
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        '${index + 1}',
+                                                        style: GoogleFonts.inter(
+                                                          color: Color(0xFFFF5722),
+                                                          fontSize: 14.0,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 12.0),
+                                                  // Informações da música
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Text(
+                                                          musica.nome ?? 'Música',
+                                                          style: GoogleFonts.poppins(
+                                                            color: Colors.white,
+                                                            fontSize: 15.0,
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                        SizedBox(height: 4.0),
+                                                        Row(
+                                                          children: [
+                                                            Text(
+                                                              musica.artista ?? 'Artista desconhecido',
+                                                              style: GoogleFonts.inter(
+                                                                color: Color(0xFF999999),
+                                                                fontSize: 13.0,
+                                                              ),
+                                                            ),
+                                                            if (escalaMusicaRow.tomEscala != null) ...[
+                                                              SizedBox(width: 8.0),
+                                                              Container(
+                                                                padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                                                                decoration: BoxDecoration(
+                                                                  color: Color(0xFF4CAF50).withOpacity(0.2),
+                                                                  borderRadius: BorderRadius.circular(4.0),
+                                                                ),
+                                                                child: Text(
+                                                                  escalaMusicaRow.tomEscala!,
+                                                                  style: GoogleFonts.inter(
+                                                                    color: Color(0xFF4CAF50),
+                                                                    fontSize: 11.0,
+                                                                    fontWeight: FontWeight.w600,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  // Botões YouTube e Cifra
+                                                  if (musica.youtubeLink != null && musica.youtubeLink!.isNotEmpty)
+                                                    Padding(
+                                                      padding: EdgeInsets.only(right: 8.0),
+                                                      child: InkWell(
+                                                        onTap: () => launchURL(musica.youtubeLink!),
+                                                        borderRadius: BorderRadius.circular(8.0),
+                                                        child: Container(
+                                                          padding: EdgeInsets.all(8.0),
+                                                          decoration: BoxDecoration(
+                                                            color: Color(0xFFFF0000).withOpacity(0.1),
+                                                            borderRadius: BorderRadius.circular(8.0),
+                                                          ),
+                                                          child: Icon(
+                                                            Icons.play_circle_filled_rounded,
+                                                            color: Color(0xFFFF0000),
+                                                            size: 20.0,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  if (musica.cifraLink != null && musica.cifraLink!.isNotEmpty)
+                                                    Padding(
+                                                      padding: EdgeInsets.only(right: 8.0),
+                                                      child: InkWell(
+                                                        onTap: () => launchURL(musica.cifraLink!),
+                                                        borderRadius: BorderRadius.circular(8.0),
+                                                        child: Container(
+                                                          padding: EdgeInsets.all(8.0),
+                                                          decoration: BoxDecoration(
+                                                            color: Color(0xFF2196F3).withOpacity(0.1),
+                                                            borderRadius: BorderRadius.circular(8.0),
+                                                          ),
+                                                          child: Icon(
+                                                            Icons.library_music_rounded,
+                                                            color: Color(0xFF2196F3),
+                                                            size: 20.0,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  // Botão editar tom
+                                                  InkWell(
+                                                    onTap: () => _mostrarModalEditarTom(context, escalaMusicaRow, musica),
+                                                    borderRadius: BorderRadius.circular(8.0),
+                                                    child: Container(
+                                                      padding: EdgeInsets.all(8.0),
+                                                      child: Icon(
+                                                        Icons.edit_rounded,
+                                                        color: Color(0xFF666666),
+                                                        size: 18.0,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  // Botão remover
+                                                  InkWell(
+                                                    onTap: () => _removerMusica(escalaMusicaRow),
+                                                    borderRadius: BorderRadius.circular(8.0),
+                                                    child: Container(
+                                                      padding: EdgeInsets.all(8.0),
+                                                      child: Icon(
+                                                        Icons.close_rounded,
+                                                        color: Colors.red.withOpacity(0.7),
+                                                        size: 18.0,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }),
+                                      ],
                                     ),
                                   ),
 
@@ -1690,5 +1978,448 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
       default:
         return Icons.insert_drive_file_rounded;
     }
+  }
+
+  void _mostrarModalAdicionarMusica(BuildContext context) {
+    String searchQuery = '';
+    MusicasRow? musicaSelecionada;
+    String? tomSelecionado;
+
+    final tons = [
+      'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B',
+      'Cm', 'C#m', 'Dm', 'D#m', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'A#m', 'Bm'
+    ];
+
+    // Filtrar músicas que já estão na escala
+    final musicasJaNaEscala = _musicasEscala.map((m) => (m['musica'] as MusicasRow).id).toSet();
+    final musicasDisponiveis = _todasMusicas.where((m) => !musicasJaNaEscala.contains(m.id)).toList();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final musicasFiltradas = musicasDisponiveis.where((m) {
+              final nome = m.nome?.toLowerCase() ?? '';
+              final artista = m.artista?.toLowerCase() ?? '';
+              final query = searchQuery.toLowerCase();
+              return nome.contains(query) || artista.contains(query);
+            }).toList();
+
+            return Dialog(
+              backgroundColor: Color(0xFF1A1A1A),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.9,
+                constraints: BoxConstraints(maxWidth: 500, maxHeight: 600),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Container(
+                      padding: EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFFF5722).withOpacity(0.1),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(16.0),
+                          topRight: Radius.circular(16.0),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.music_note_rounded, color: Color(0xFFFF5722), size: 24.0),
+                          SizedBox(width: 12.0),
+                          Expanded(
+                            child: Text(
+                              'Adicionar Música',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(dialogContext),
+                            icon: Icon(Icons.close_rounded),
+                            color: Color(0xFF999999),
+                            padding: EdgeInsets.zero,
+                            constraints: BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Campo de busca
+                    Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: TextField(
+                        onChanged: (value) {
+                          setDialogState(() => searchQuery = value);
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Buscar música...',
+                          hintStyle: GoogleFonts.inter(color: Color(0xFF666666)),
+                          prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF666666), size: 20.0),
+                          filled: true,
+                          fillColor: Color(0xFF2A2A2A),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                        ),
+                        style: GoogleFonts.inter(color: Colors.white, fontSize: 14.0),
+                      ),
+                    ),
+
+                    // Lista de músicas
+                    Expanded(
+                      child: musicasFiltradas.isEmpty
+                          ? Center(
+                              child: Text(
+                                'Nenhuma música encontrada',
+                                style: GoogleFonts.inter(color: Color(0xFF666666)),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: EdgeInsets.symmetric(horizontal: 16.0),
+                              itemCount: musicasFiltradas.length,
+                              itemBuilder: (context, index) {
+                                final musica = musicasFiltradas[index];
+                                final isSelected = musicaSelecionada?.id == musica.id;
+
+                                return InkWell(
+                                  onTap: () {
+                                    setDialogState(() {
+                                      musicaSelecionada = isSelected ? null : musica;
+                                    });
+                                  },
+                                  child: Container(
+                                    margin: EdgeInsets.only(bottom: 8.0),
+                                    padding: EdgeInsets.all(12.0),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? Color(0xFFFF5722).withOpacity(0.1)
+                                          : Color(0xFF2A2A2A),
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      border: Border.all(
+                                        color: isSelected ? Color(0xFFFF5722) : Color(0xFF3A3A3A),
+                                        width: isSelected ? 2.0 : 1.0,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.music_note_rounded,
+                                          color: isSelected ? Color(0xFFFF5722) : Color(0xFF666666),
+                                          size: 20.0,
+                                        ),
+                                        SizedBox(width: 12.0),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                musica.nome ?? 'Música',
+                                                style: GoogleFonts.inter(
+                                                  color: Colors.white,
+                                                  fontSize: 14.0,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              Text(
+                                                musica.artista ?? 'Artista',
+                                                style: GoogleFonts.inter(
+                                                  color: Color(0xFF999999),
+                                                  fontSize: 12.0,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (isSelected)
+                                          Icon(Icons.check_circle_rounded, color: Color(0xFFFF5722), size: 20.0),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+
+                    // Seleção de tom e botão
+                    if (musicaSelecionada != null)
+                      Container(
+                        padding: EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          border: Border(top: BorderSide(color: Color(0xFF2A2A2A))),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Tom',
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 14.0,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(height: 8.0),
+                            Wrap(
+                              spacing: 6.0,
+                              runSpacing: 6.0,
+                              children: tons.map((tom) {
+                                final isSelected = tomSelecionado == tom;
+                                return InkWell(
+                                  onTap: () {
+                                    setDialogState(() => tomSelecionado = isSelected ? null : tom);
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? Color(0xFF4CAF50)
+                                          : Color(0xFF2A2A2A),
+                                      borderRadius: BorderRadius.circular(6.0),
+                                      border: Border.all(
+                                        color: isSelected ? Color(0xFF4CAF50) : Color(0xFF3A3A3A),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      tom,
+                                      style: GoogleFonts.inter(
+                                        color: isSelected ? Colors.white : Color(0xFF999999),
+                                        fontSize: 12.0,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            SizedBox(height: 16.0),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  final novaOrdem = _musicasEscala.length + 1;
+
+                                  await EscalaMusicasTable().insert({
+                                    'id_escala': widget.idescala,
+                                    'id_musica': musicaSelecionada!.id,
+                                    'tom_escala': tomSelecionado,
+                                    'ordem': novaOrdem,
+                                  });
+
+                                  Navigator.pop(dialogContext);
+                                  _carregarDados();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFFFF5722),
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(vertical: 14.0),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10.0),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Adicionar',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14.0,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _mostrarModalEditarTom(BuildContext context, EscalaMusicasRow escalaMusicaRow, MusicasRow musica) {
+    String? tomSelecionado = escalaMusicaRow.tomEscala;
+
+    final tons = [
+      'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B',
+      'Cm', 'C#m', 'Dm', 'D#m', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'A#m', 'Bm'
+    ];
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              backgroundColor: Color(0xFF1A1A1A),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.9,
+                constraints: BoxConstraints(maxWidth: 400),
+                padding: EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Editar Tom',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 4.0),
+                    Text(
+                      musica.nome ?? 'Música',
+                      style: GoogleFonts.inter(
+                        color: Color(0xFF999999),
+                        fontSize: 14.0,
+                      ),
+                    ),
+                    SizedBox(height: 20.0),
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: tons.map((tom) {
+                        final isSelected = tomSelecionado == tom;
+                        return InkWell(
+                          onTap: () {
+                            setDialogState(() => tomSelecionado = isSelected ? null : tom);
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Color(0xFF4CAF50)
+                                  : Color(0xFF2A2A2A),
+                              borderRadius: BorderRadius.circular(8.0),
+                              border: Border.all(
+                                color: isSelected ? Color(0xFF4CAF50) : Color(0xFF3A3A3A),
+                              ),
+                            ),
+                            child: Text(
+                              tom,
+                              style: GoogleFonts.inter(
+                                color: isSelected ? Colors.white : Color(0xFF999999),
+                                fontSize: 14.0,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    SizedBox(height: 24.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          child: Text(
+                            'Cancelar',
+                            style: GoogleFonts.inter(color: Color(0xFF999999)),
+                          ),
+                        ),
+                        SizedBox(width: 12.0),
+                        ElevatedButton(
+                          onPressed: () async {
+                            await EscalaMusicasTable().update(
+                              data: {'tom_escala': tomSelecionado},
+                              matchingRows: (rows) =>
+                                  rows.eq('id', escalaMusicaRow.id),
+                            );
+
+                            Navigator.pop(dialogContext);
+                            _carregarDados();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF4CAF50),
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                          child: Text(
+                            'Salvar',
+                            style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _removerMusica(EscalaMusicasRow escalaMusicaRow) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          title: Text(
+            'Remover música?',
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'A música será removida do repertório desta escala.',
+            style: GoogleFonts.inter(
+              color: Color(0xFF999999),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Cancelar',
+                style: GoogleFonts.inter(
+                  color: Color(0xFF999999),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                await EscalaMusicasTable().delete(
+                  matchingRows: (rows) =>
+                      rows.eq('id', escalaMusicaRow.id),
+                );
+
+                Navigator.pop(dialogContext);
+                _carregarDados();
+              },
+              child: Text(
+                'Remover',
+                style: GoogleFonts.inter(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

@@ -449,6 +449,14 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
             idministerio: params.getParam('idministerio', ParamType.int),
             idescala: params.getParam('idescala', ParamType.int),
           ),
+        ),
+        FFRoute(
+          name: PageCriaEscalaLouvorWidget.routeName,
+          path: PageCriaEscalaLouvorWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageCriaEscalaLouvorWidget(
+            idministerio: params.getParam('idministerio', ParamType.int),
+          ),
         )
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );

@@ -81,3 +81,5 @@ export '/lider/page_escalas_lider/page_escalas_lider_widget.dart'
     show PageEscalasLiderWidget;
 export '/lider/page_escala_detalhes_lider/page_escala_detalhes_lider_widget.dart'
     show PageEscalaDetalhesLiderWidget;
+export '/lider/page_cria_escala_louvor/page_cria_escala_louvor_widget.dart'
+    show PageCriaEscalaLouvorWidget;

@@ -38,3 +38,6 @@ export 'tables/aviso.dart';
 export 'tables/curtidas.dart';
 export 'tables/celula.dart';
 export 'tables/membros_celula.dart';
+export 'tables/musicas.dart';
+export 'tables/escala_musicas.dart';
+export 'tables/funcoes_louvor.dart';

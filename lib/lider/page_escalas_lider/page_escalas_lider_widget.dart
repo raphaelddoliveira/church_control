@@ -60,9 +60,16 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
         ministerio = ministerioRows.first;
       }
 
-      // Carregar escalas do ministério
+      // Carregar escalas do ministério (apenas do mês atual)
+      final now = DateTime.now();
+      final primeiroDiaMes = DateTime(now.year, now.month, 1);
+      final primeiroDiaProximoMes = DateTime(now.year, now.month + 1, 1);
+
       final escalas = await EscalasTable().queryRows(
-        queryFn: (q) => q.eq('id_ministerio', widget.idministerio!),
+        queryFn: (q) => q
+            .eq('id_ministerio', widget.idministerio!)
+            .gte('data_hora_escala', primeiroDiaMes.toIso8601String())
+            .lt('data_hora_escala', primeiroDiaProximoMes.toIso8601String()),
       );
 
       // Ordenar por data (mais recentes primeiro)
@@ -259,7 +266,17 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                                               // Botão Nova Escala
                                               InkWell(
                                                 onTap: () {
-                                                  _mostrarModalNovaEscala(context);
+                                                  // Se for Ministério de Louvor (id = 1), usa a página especializada
+                                                  if (widget.idministerio == 1) {
+                                                    context.pushNamed(
+                                                      'PageCriaEscala_Louvor',
+                                                      queryParameters: {
+                                                        'idministerio': serializeParam(widget.idministerio, ParamType.int),
+                                                      },
+                                                    );
+                                                  } else {
+                                                    _mostrarModalNovaEscala(context);
+                                                  }
                                                 },
                                                 borderRadius: BorderRadius.circular(12.0),
                                                 child: Container(

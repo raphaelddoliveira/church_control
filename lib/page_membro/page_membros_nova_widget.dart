@@ -404,10 +404,10 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                                                 aviso.descricaoResumida ?? aviso.categoria ?? 'Aviso',
                                                 style: GoogleFonts.poppins(
                                                   color: Colors.white,
-                                                  fontSize: 16.0,
+                                                  fontSize: 14.0,
                                                   fontWeight: FontWeight.w600,
                                                 ),
-                                                maxLines: 1,
+                                                maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                               SizedBox(height: 2.0),
@@ -532,9 +532,11 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                                       padding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
                                       child: Text(
                                         aviso.descricao!,
+                                        textAlign: TextAlign.justify,
                                         style: GoogleFonts.inter(
                                           color: Color(0xFFE0E0E0),
                                           fontSize: 14.5,
+                                          height: 1.5,
                                         ),
                                       ),
                                     ),
@@ -626,9 +628,10 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
 
           // Buscar o nome do ministério
           String? nomeMinisterio;
-          if (escala.idMinisterio != null) {
+          int? idMinisterio = escala.idMinisterio;
+          if (idMinisterio != null) {
             final ministerios = await MinisterioTable().queryRows(
-              queryFn: (q) => q.eq('id_ministerio', escala.idMinisterio!),
+              queryFn: (q) => q.eq('id_ministerio', idMinisterio),
             );
             if (ministerios.isNotEmpty) {
               nomeMinisterio = ministerios.first.nomeMinisterio;
@@ -640,13 +643,61 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
             queryFn: (q) => q.eq('id_escala', escala.idEscala),
           );
 
+          // Buscar as músicas da escala (se for ministério de louvor - id 1)
+          List<Map<String, dynamic>> musicasEscala = [];
+          if (idMinisterio == 1) {
+            final escalaMusicasRows = await EscalaMusicasTable().queryRows(
+              queryFn: (q) => q.eq('id_escala', escala.idEscala).order('ordem'),
+            );
+
+            for (var em in escalaMusicasRows) {
+              if (em.idMusica != null) {
+                final musicasRows = await MusicasTable().queryRows(
+                  queryFn: (q) => q.eq('id', em.idMusica!),
+                );
+                if (musicasRows.isNotEmpty) {
+                  final musica = musicasRows.first;
+                  musicasEscala.add({
+                    'musica': musica,
+                    'tomEscala': em.tomEscala,
+                    'ordem': em.ordem,
+                    'observacoes': em.observacoes,
+                  });
+                }
+              }
+            }
+          }
+
+          // Buscar todos os membros da escala (para mostrar a equipe no modal)
+          List<Map<String, dynamic>> membrosEscalaCompletos = [];
+          final todosMembrosDaEscala = await MembrosEscalasTable().queryRows(
+            queryFn: (q) => q.eq('id_escala', escala.idEscala),
+          );
+          for (var me in todosMembrosDaEscala) {
+            if (me.idMembro != null) {
+              final membroRows = await MembrosTable().queryRows(
+                queryFn: (q) => q.eq('id_membro', me.idMembro!),
+              );
+              if (membroRows.isNotEmpty) {
+                membrosEscalaCompletos.add({
+                  'membro': membroRows.first,
+                  'funcao': me.funcaoEscala,
+                  'aceitou': me.aceitouEscala,
+                });
+              }
+            }
+          }
+
           escalasCompletas.add({
             'escala': escala,
             'funcao': membroEscala.funcaoEscala,
             'aceitou': membroEscala.aceitouEscala,
             'nomeMinisterio': nomeMinisterio,
+            'idMinisterio': idMinisterio,
             'idMembroEscala': membroEscala.idMembroEscala,
             'arquivos': arquivos,
+            'musicas': musicasEscala,
+            'membrosEscala': membrosEscalaCompletos,
           });
         }
       }
@@ -665,14 +716,27 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
     return escalasCompletas;
   }
 
-  void _mostrarModalEscala(BuildContext context, EscalasRow escala, String? funcao, String? aceitou, int idMembroEscala, String? nomeMinisterio, List<ArquivosRow> arquivos) {
+  void _mostrarModalEscala(
+    BuildContext context,
+    EscalasRow escala,
+    String? funcao,
+    String? aceitou,
+    int idMembroEscala,
+    String? nomeMinisterio,
+    List<ArquivosRow> arquivos,
+    {int? idMinisterio,
+    List<Map<String, dynamic>>? musicas,
+    List<Map<String, dynamic>>? membrosEscala}
+  ) {
+    final bool isMinisterioLouvor = idMinisterio == 1;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (modalContext) {
         return Container(
-          height: MediaQuery.of(context).size.height * 0.85,
+          height: MediaQuery.of(context).size.height * 0.9,
           decoration: BoxDecoration(
             color: Color(0xFF0D0D0D),
             borderRadius: BorderRadius.only(
@@ -701,19 +765,32 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                 child: Row(
                   children: [
                     Icon(
-                      Icons.event_rounded,
+                      isMinisterioLouvor ? Icons.music_note_rounded : Icons.event_rounded,
                       color: FlutterFlowTheme.of(context).primary,
                       size: 28.0,
                     ),
                     SizedBox(width: 12.0),
                     Expanded(
-                      child: Text(
-                        escala.nomeEscala ?? 'Detalhes da Escala',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            escala.nomeEscala ?? 'Detalhes da Escala',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 18.0,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (nomeMinisterio != null)
+                            Text(
+                              nomeMinisterio,
+                              style: GoogleFonts.inter(
+                                color: FlutterFlowTheme.of(context).primary,
+                                fontSize: 13.0,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     IconButton(
@@ -732,40 +809,248 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Nome da escala
-                      _buildModalInfoSection(
-                        icon: Icons.event_rounded,
-                        label: 'Escala',
-                        value: escala.nomeEscala ?? '-',
+                      // Função e Data/Hora
+                      Row(
+                        children: [
+                          if (funcao != null && funcao.isNotEmpty)
+                            Expanded(
+                              child: _buildCompactInfoCard(
+                                icon: isMinisterioLouvor ? _getIconForFuncaoLouvor(funcao) : Icons.work_outline_rounded,
+                                label: 'Sua Função',
+                                value: funcao,
+                              ),
+                            ),
+                          if (funcao != null && funcao.isNotEmpty)
+                            SizedBox(width: 12.0),
+                          Expanded(
+                            child: _buildCompactInfoCard(
+                              icon: Icons.calendar_today_rounded,
+                              label: 'Data e Hora',
+                              value: escala.dataHoraEscala != null
+                                  ? dateTimeFormat('dd/MM - HH:mm', escala.dataHoraEscala)
+                                  : '-',
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 20.0),
-
-                      // Função
-                      if (funcao != null && funcao.isNotEmpty) ...[
-                        _buildModalInfoSection(
-                          icon: Icons.work_outline_rounded,
-                          label: 'Função',
-                          value: funcao,
-                        ),
-                        SizedBox(height: 20.0),
-                      ],
-
-                      // Data e hora
-                      _buildModalInfoSection(
-                        icon: Icons.calendar_today_rounded,
-                        label: 'Data e Hora',
-                        value: escala.dataHoraEscala != null
-                            ? dateTimeFormat('dd/MM/yyyy - HH:mm', escala.dataHoraEscala)
-                            : 'Data não informada',
-                      ),
-                      SizedBox(height: 20.0),
+                      SizedBox(height: 16.0),
 
                       // Informações adicionais
                       if (escala.descricao != null && escala.descricao!.isNotEmpty) ...[
                         _buildModalInfoSection(
                           icon: Icons.info_outline_rounded,
-                          label: 'Informações',
+                          label: 'Observações',
                           value: escala.descricao!,
+                        ),
+                        SizedBox(height: 20.0),
+                      ],
+
+                      // === SEÇÃO DE MÚSICAS (apenas para ministério de louvor) ===
+                      if (isMinisterioLouvor && musicas != null && musicas.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            Icon(Icons.queue_music_rounded, color: FlutterFlowTheme.of(context).primary, size: 22.0),
+                            SizedBox(width: 8.0),
+                            Text(
+                              'Repertório (${musicas.length} música${musicas.length > 1 ? 's' : ''})',
+                              style: GoogleFonts.poppins(color: Colors.white, fontSize: 16.0, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12.0),
+                        ...musicas.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final item = entry.value;
+                          final musica = item['musica'] as MusicasRow;
+                          final tomEscala = item['tomEscala'] as String?;
+
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 10.0),
+                            decoration: BoxDecoration(
+                              color: Color(0xFF1A1A1A),
+                              borderRadius: BorderRadius.circular(14.0),
+                              border: Border.all(color: Color(0xFF2A2A2A)),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.all(14.0),
+                              child: Row(
+                                children: [
+                                  // Número da ordem
+                                  Container(
+                                    width: 32.0,
+                                    height: 32.0,
+                                    decoration: BoxDecoration(
+                                      color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: GoogleFonts.poppins(
+                                          color: FlutterFlowTheme.of(context).primary,
+                                          fontSize: 14.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.0),
+                                  // Info da música
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          musica.nome ?? 'Música',
+                                          style: GoogleFonts.inter(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.w600),
+                                        ),
+                                        SizedBox(height: 2.0),
+                                        Row(
+                                          children: [
+                                            if (musica.artista != null)
+                                              Flexible(
+                                                child: Text(
+                                                  musica.artista!,
+                                                  style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 12.0),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            if (tomEscala != null) ...[
+                                              SizedBox(width: 8.0),
+                                              Container(
+                                                padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                                                decoration: BoxDecoration(
+                                                  color: FlutterFlowTheme.of(context).primary.withOpacity(0.2),
+                                                  borderRadius: BorderRadius.circular(4.0),
+                                                ),
+                                                child: Text(
+                                                  'Tom: $tomEscala',
+                                                  style: GoogleFonts.inter(
+                                                    color: FlutterFlowTheme.of(context).primary,
+                                                    fontSize: 10.0,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Botões de ação
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (musica.youtubeLink != null && musica.youtubeLink!.isNotEmpty)
+                                        IconButton(
+                                          onPressed: () => launchURL(musica.youtubeLink!),
+                                          icon: Icon(Icons.play_circle_filled_rounded, color: Colors.red, size: 28.0),
+                                          padding: EdgeInsets.zero,
+                                          constraints: BoxConstraints(minWidth: 36.0),
+                                          tooltip: 'Abrir no YouTube',
+                                        ),
+                                      if (musica.cifraLink != null && musica.cifraLink!.isNotEmpty)
+                                        IconButton(
+                                          onPressed: () => launchURL(musica.cifraLink!),
+                                          icon: Icon(Icons.article_rounded, color: Colors.orange, size: 26.0),
+                                          padding: EdgeInsets.zero,
+                                          constraints: BoxConstraints(minWidth: 36.0),
+                                          tooltip: 'Ver Cifra',
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        SizedBox(height: 20.0),
+                      ],
+
+                      // === SEÇÃO DE EQUIPE ===
+                      if (membrosEscala != null && membrosEscala.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            Icon(Icons.group_rounded, color: FlutterFlowTheme.of(context).primary, size: 22.0),
+                            SizedBox(width: 8.0),
+                            Text(
+                              'Equipe (${membrosEscala.length})',
+                              style: GoogleFonts.poppins(color: Colors.white, fontSize: 16.0, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12.0),
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 8.0,
+                          children: membrosEscala.map((item) {
+                            final membro = item['membro'] as MembrosRow;
+                            final funcaoMembro = item['funcao'] as String?;
+                            final aceitouMembro = item['aceitou'] as String?;
+
+                            Color statusColor;
+                            IconData statusIcon;
+                            if (aceitouMembro == 'aceito') {
+                              statusColor = Colors.green;
+                              statusIcon = Icons.check_circle_rounded;
+                            } else if (aceitouMembro == 'recusado') {
+                              statusColor = Colors.red;
+                              statusIcon = Icons.cancel_rounded;
+                            } else {
+                              statusColor = Colors.orange;
+                              statusIcon = Icons.schedule_rounded;
+                            }
+
+                            return Container(
+                              padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF1A1A1A),
+                                borderRadius: BorderRadius.circular(10.0),
+                                border: Border.all(color: Color(0xFF2A2A2A)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 28.0,
+                                    height: 28.0,
+                                    decoration: BoxDecoration(
+                                      color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6.0),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        (membro.nomeMembro ?? 'M')[0].toUpperCase(),
+                                        style: GoogleFonts.poppins(
+                                          color: FlutterFlowTheme.of(context).primary,
+                                          fontSize: 12.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 8.0),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        membro.nomeMembro ?? '',
+                                        style: GoogleFonts.inter(color: Colors.white, fontSize: 12.0, fontWeight: FontWeight.w600),
+                                      ),
+                                      if (funcaoMembro != null)
+                                        Text(
+                                          funcaoMembro,
+                                          style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 10.0),
+                                        ),
+                                    ],
+                                  ),
+                                  SizedBox(width: 8.0),
+                                  Icon(statusIcon, color: statusColor, size: 16.0),
+                                ],
+                              ),
+                            );
+                          }).toList(),
                         ),
                         SizedBox(height: 20.0),
                       ],
@@ -983,6 +1268,62 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
     );
   }
 
+  Widget _buildCompactInfoCard({required IconData icon, required String label, required String value}) {
+    return Container(
+      padding: EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: Color(0xFF2A2A2A)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: FlutterFlowTheme.of(context).primary, size: 18.0),
+              SizedBox(width: 6.0),
+              Expanded(
+                child: Text(label, style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 11.0)),
+              ),
+            ],
+          ),
+          SizedBox(height: 6.0),
+          Text(value, style: GoogleFonts.inter(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  IconData _getIconForFuncaoLouvor(String funcao) {
+    switch (funcao.toLowerCase()) {
+      case 'voz principal':
+        return Icons.mic_rounded;
+      case 'backing vocal':
+        return Icons.mic_external_on_rounded;
+      case 'violao':
+        return Icons.music_note_rounded;
+      case 'guitarra':
+        return Icons.electric_bolt_rounded;
+      case 'baixo':
+        return Icons.graphic_eq_rounded;
+      case 'bateria':
+        return Icons.album_rounded;
+      case 'teclado':
+        return Icons.piano_rounded;
+      case 'cajon':
+        return Icons.sports_handball_rounded;
+      case 'percussao':
+        return Icons.music_video_rounded;
+      case 'saxofone':
+        return Icons.air_rounded;
+      case 'violino':
+        return Icons.settings_input_svideo_rounded;
+      default:
+        return Icons.music_note_rounded;
+    }
+  }
+
   Widget _buildModalInfoSection({
     required IconData icon,
     required String label,
@@ -1107,12 +1448,21 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                   final funcao = item['funcao'] as String?;
                   final aceitou = item['aceitou'] as String?;
                   final nomeMinisterio = item['nomeMinisterio'] as String?;
+                  final idMinisterio = item['idMinisterio'] as int?;
                   final idMembroEscala = item['idMembroEscala'] as int;
                   final arquivos = item['arquivos'] as List<ArquivosRow>? ?? [];
+                  final musicas = item['musicas'] as List<Map<String, dynamic>>? ?? [];
+                  final membrosEscala = item['membrosEscala'] as List<Map<String, dynamic>>? ?? [];
+                  final bool isLouvor = idMinisterio == 1;
 
                   return InkWell(
                     onTap: () {
-                      _mostrarModalEscala(context, escala, funcao, aceitou, idMembroEscala, nomeMinisterio, arquivos);
+                      _mostrarModalEscala(
+                        context, escala, funcao, aceitou, idMembroEscala, nomeMinisterio, arquivos,
+                        idMinisterio: idMinisterio,
+                        musicas: musicas,
+                        membrosEscala: membrosEscala,
+                      );
                     },
                     child: Container(
                       margin: EdgeInsets.only(bottom: 16.0),
@@ -1128,7 +1478,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                         padding: EdgeInsets.all(16.0),
                         child: Row(
                           children: [
-                            // Ícone
+                            // Ícone (diferente para ministério de louvor)
                             Container(
                               width: 48.0,
                               height: 48.0,
@@ -1137,7 +1487,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                Icons.event_rounded,
+                                isLouvor ? Icons.music_note_rounded : Icons.event_rounded,
                                 color: FlutterFlowTheme.of(context).primary,
                                 size: 24.0,
                               ),
@@ -1170,14 +1520,40 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                                     ),
                                     SizedBox(height: 2.0),
                                   ],
-                                  Text(
-                                    escala.dataHoraEscala != null
-                                        ? dateTimeFormat('dd/MM/yyyy - HH:mm', escala.dataHoraEscala)
-                                        : 'Data não informada',
-                                    style: GoogleFonts.inter(
-                                      color: Color(0xFF999999),
-                                      fontSize: 14.0,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        escala.dataHoraEscala != null
+                                            ? dateTimeFormat('dd/MM/yyyy - HH:mm', escala.dataHoraEscala)
+                                            : 'Data não informada',
+                                        style: GoogleFonts.inter(
+                                          color: Color(0xFF999999),
+                                          fontSize: 14.0,
+                                        ),
+                                      ),
+                                      // Indicador de músicas para ministério de louvor
+                                      if (isLouvor && musicas.isNotEmpty) ...[
+                                        SizedBox(width: 8.0),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange.withOpacity(0.15),
+                                            borderRadius: BorderRadius.circular(4.0),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.queue_music_rounded, color: Colors.orange, size: 12.0),
+                                              SizedBox(width: 4.0),
+                                              Text(
+                                                '${musicas.length}',
+                                                style: GoogleFonts.inter(color: Colors.orange, fontSize: 11.0, fontWeight: FontWeight.w600),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ],
                               ),

@@ -96,8 +96,8 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
         _totalMinisterios = ministerios.length;
         _totalAvisos = avisos.length;
         _totalCelulas = celulas.length;
-        _ultimosMinisterios = ministerios.take(5).toList();
-        _ultimosAvisos = avisos.take(5).toList();
+        _ultimosMinisterios = ministerios.take(4).toList();
+        _ultimosAvisos = avisos.take(4).toList();
         _membrosPorMes = membrosPorMesList;
         _isLoading = false;
       });
@@ -345,8 +345,9 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
                         return Text(
                           value.toInt().toString(),
                           style: GoogleFonts.inter(
-                            color: Color(0xFF666666),
+                            color: Colors.white,
                             fontSize: 12.0,
+                            fontWeight: FontWeight.w500,
                           ),
                         );
                       },
@@ -356,21 +357,24 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 30,
+                      interval: 1,
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
-                        if (index >= 0 && index < _membrosPorMes.length) {
+                        // Só mostra se for um índice exato (não interpolado)
+                        if (value == index.toDouble() && index >= 0 && index < _membrosPorMes.length) {
                           return Padding(
                             padding: EdgeInsets.only(top: 8.0),
                             child: Text(
                               _membrosPorMes[index].key,
                               style: GoogleFonts.inter(
-                                color: Color(0xFF666666),
+                                color: Colors.white,
                                 fontSize: 11.0,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           );
                         }
-                        return Text('');
+                        return SizedBox.shrink();
                       },
                     ),
                   ),
@@ -415,68 +419,54 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
   }
 
   Widget _buildMinisterioItem(MinisterioRow ministerio) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          // Navegar para detalhes do ministério
-          context.pushNamed(
-            PageMinisterioDetalhesSecretariaWidget.routeName,
-            queryParameters: {'idMinisterio': ministerio.idMinisterio.toString()},
-          );
-        },
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.0),
+      padding: EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12.0),
-        child: Container(
-          margin: EdgeInsets.only(bottom: 12.0),
-          padding: EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: Color(0xFF1A1A1A),
-            borderRadius: BorderRadius.circular(12.0),
-            border: Border.all(color: Color(0xFF333333)),
+        border: Border.all(color: Color(0xFF333333)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44.0,
+            height: 44.0,
+            decoration: BoxDecoration(
+              color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            child: Icon(
+              Icons.church_rounded,
+              color: FlutterFlowTheme.of(context).primary,
+              size: 22.0,
+            ),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 44.0,
-                height: 44.0,
-                decoration: BoxDecoration(
-                  color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10.0),
+          SizedBox(width: 12.0),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ministerio.nomeMinisterio,
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                child: Icon(
-                  Icons.church_rounded,
-                  color: FlutterFlowTheme.of(context).primary,
-                  size: 22.0,
-                ),
-              ),
-              SizedBox(width: 12.0),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      ministerio.nomeMinisterio,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 14.0,
-                        fontWeight: FontWeight.w500,
-                      ),
+                if (ministerio.criadoEm != null)
+                  Text(
+                    'Criado em: ${ministerio.criadoEm!.day.toString().padLeft(2, '0')}/${ministerio.criadoEm!.month.toString().padLeft(2, '0')}/${ministerio.criadoEm!.year}',
+                    style: GoogleFonts.inter(
+                      color: Color(0xFF666666),
+                      fontSize: 12.0,
                     ),
-                    if (ministerio.criadoEm != null)
-                      Text(
-                        'Criado em: ${ministerio.criadoEm!.day.toString().padLeft(2, '0')}/${ministerio.criadoEm!.month.toString().padLeft(2, '0')}/${ministerio.criadoEm!.year}',
-                        style: GoogleFonts.inter(
-                          color: Color(0xFF666666),
-                          fontSize: 12.0,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: Color(0xFF666666)),
-            ],
+                  ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -499,87 +489,76 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
 
     final categoriaColor = getCategoriaColor(aviso.categoria);
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          // Navegar para lista de avisos
-          context.pushNamed(PageAvisosSecretariaWidget.routeName);
-        },
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.0),
+      padding: EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12.0),
-        child: Container(
-          margin: EdgeInsets.only(bottom: 12.0),
-          padding: EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: Color(0xFF1A1A1A),
-            borderRadius: BorderRadius.circular(12.0),
-            border: Border.all(color: Color(0xFF333333)),
+        border: Border.all(color: Color(0xFF333333)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44.0,
+            height: 44.0,
+            decoration: BoxDecoration(
+              color: categoriaColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            child: Icon(
+              Icons.campaign_rounded,
+              color: categoriaColor,
+              size: 22.0,
+            ),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 44.0,
-                height: 44.0,
-                decoration: BoxDecoration(
-                  color: categoriaColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10.0),
+          SizedBox(width: 12.0),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  aviso.nomeAviso ?? '-',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                child: Icon(
-                  Icons.campaign_rounded,
-                  color: categoriaColor,
-                  size: 22.0,
-                ),
-              ),
-              SizedBox(width: 12.0),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                SizedBox(height: 4.0),
+                Row(
                   children: [
-                    Text(
-                      aviso.nomeAviso ?? '-',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 14.0,
-                        fontWeight: FontWeight.w500,
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                      decoration: BoxDecoration(
+                        color: categoriaColor.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(4.0),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      child: Text(
+                        aviso.categoria ?? 'Geral',
+                        style: GoogleFonts.inter(
+                          color: categoriaColor,
+                          fontSize: 10.0,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                    SizedBox(height: 4.0),
-                    Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-                          decoration: BoxDecoration(
-                            color: categoriaColor.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(4.0),
-                          ),
-                          child: Text(
-                            aviso.categoria ?? 'Geral',
-                            style: GoogleFonts.inter(
-                              color: categoriaColor,
-                              fontSize: 10.0,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 8.0),
-                        Text(
-                          '${aviso.createdAt.day.toString().padLeft(2, '0')}/${aviso.createdAt.month.toString().padLeft(2, '0')}',
-                          style: GoogleFonts.inter(
-                            color: Color(0xFF666666),
-                            fontSize: 11.0,
-                          ),
-                        ),
-                      ],
+                    SizedBox(width: 8.0),
+                    Text(
+                      '${aviso.createdAt.day.toString().padLeft(2, '0')}/${aviso.createdAt.month.toString().padLeft(2, '0')}',
+                      style: GoogleFonts.inter(
+                        color: Color(0xFF666666),
+                        fontSize: 11.0,
+                      ),
                     ),
                   ],
                 ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: Color(0xFF666666)),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

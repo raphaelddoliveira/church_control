@@ -4,6 +4,7 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/secretaria/menu_secretaria/menu_secretaria_widget.dart';
 import '/index.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'page_membros_novo_secretaria_model.dart';
@@ -75,18 +76,18 @@ class _PageMembrosNovoSecretariaWidgetState
     try {
       // Criar endereço
       final endereco = await EnderecoTable().insert({
-        'cep': _model.textFieldCEPTextController.text.trim(),
-        'rua': _model.textFieldRuaTextController.text.trim(),
-        'numero': _model.textFieldNumeroTextController.text.trim(),
-        'bairro': _model.textFieldBairroTextController.text.trim(),
+        'cep': _model.textFieldCEPTextController!.text.trim(),
+        'rua': _model.textFieldRuaTextController!.text.trim(),
+        'numero': _model.textFieldNumeroTextController!.text.trim(),
+        'bairro': _model.textFieldBairroTextController!.text.trim(),
         'id_cidade': _cidadeSelecionada,
       });
 
       // Parsear data de nascimento
       DateTime? dataNascimento;
-      if (_model.textController3.text.isNotEmpty) {
+      if (_model.textController3!.text.isNotEmpty) {
         try {
-          final parts = _model.textController3.text.split('/');
+          final parts = _model.textController3!.text.split('/');
           if (parts.length == 3) {
             dataNascimento = DateTime(
               int.parse(parts[2]),
@@ -99,9 +100,9 @@ class _PageMembrosNovoSecretariaWidgetState
 
       // Criar membro
       final membro = await MembrosTable().insert({
-        'nome_membro': _model.textFieldNomeTextController.text.trim(),
-        'email': _model.textFieldEmailTextController.text.trim().isNotEmpty
-            ? _model.textFieldEmailTextController.text.trim()
+        'nome_membro': _model.textFieldNomeTextController!.text.trim(),
+        'email': _model.textFieldEmailTextController!.text.trim().isNotEmpty
+            ? _model.textFieldEmailTextController!.text.trim()
             : null,
         'data_nascimento': dataNascimento?.toIso8601String(),
         'ativo': _ativo,
@@ -110,9 +111,9 @@ class _PageMembrosNovoSecretariaWidgetState
       });
 
       // Criar telefone se preenchido
-      if (_model.textFieldTelefoneTextController.text.trim().isNotEmpty) {
+      if (_model.textFieldTelefoneTextController!.text.trim().isNotEmpty) {
         await TelefoneTable().insert({
-          'numero_telefone': _model.textFieldTelefoneTextController.text.trim(),
+          'numero_telefone': _model.textFieldTelefoneTextController!.text.trim(),
           'id_membro': membro.idMembro,
         });
       }
@@ -138,8 +139,8 @@ class _PageMembrosNovoSecretariaWidgetState
   }
 
   Widget _buildTextField({
-    required TextEditingController controller,
-    required FocusNode focusNode,
+    required TextEditingController? controller,
+    required FocusNode? focusNode,
     required String label,
     String? hint,
     TextInputType? keyboardType,
@@ -166,8 +167,8 @@ class _PageMembrosNovoSecretariaWidgetState
         ),
         SizedBox(height: 8.0),
         TextFormField(
-          controller: controller,
-          focusNode: focusNode,
+          controller: controller!,
+          focusNode: focusNode!,
           keyboardType: keyboardType,
           inputFormatters: inputFormatters,
           style: GoogleFonts.inter(color: Colors.white, fontSize: 15.0),

@@ -102,8 +102,9 @@ class _RegistroMembroWidgetState extends State<RegistroMembroWidget> {
 
     try {
       // Buscar membro na base de dados pelo email
+      final emailBusca = _model.emailController.text.trim();
       final membros = await MembrosTable().queryRows(
-        queryFn: (q) => q.eqOrNull('email', _model.emailController.text.trim()),
+        queryFn: (q) => q.eq('email', emailBusca),
       );
 
       if (membros.isEmpty) {
@@ -151,7 +152,7 @@ class _RegistroMembroWidgetState extends State<RegistroMembroWidget> {
         _model.senhaController.text,
       );
 
-      if (user == null) {
+      if (user == null || user.uid == null || user.uid!.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -168,23 +169,7 @@ class _RegistroMembroWidgetState extends State<RegistroMembroWidget> {
       }
 
       // Pegar o UID do usuário criado
-      final userUid = user.uid;
-
-      if (userUid == null || userUid.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Erro ao obter dados do usuário. Tente novamente.',
-              style: TextStyle(color: Colors.white),
-            ),
-            backgroundColor: FlutterFlowTheme.of(context).error,
-          ),
-        );
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
+      final userUid = user.uid!;
 
       // Atualizar membro com id_auth e ativar área de membro
       await MembrosTable().update(

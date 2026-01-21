@@ -60,7 +60,7 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
 
       // Buscar avisos
       final avisos = await AvisoTable().queryRows(
-        queryFn: (q) => q.order('criado_em', ascending: false),
+        queryFn: (q) => q.order('created_at', ascending: false),
       );
 
       // Buscar células

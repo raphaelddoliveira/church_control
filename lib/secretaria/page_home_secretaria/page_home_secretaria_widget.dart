@@ -30,15 +30,10 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
   int _totalMinisterios = 0;
   int _totalAvisos = 0;
   int _totalCelulas = 0;
-  List<MembrosRow> _aniversariantes = [];
   List<MinisterioRow> _ultimosMinisterios = [];
   List<AvisoRow> _ultimosAvisos = [];
-  List<CelulaRow> _celulasAtivas = [];
-  Map<String, int> _membrosPorMes = {};
+  List<MapEntry<String, int>> _membrosPorMes = [];
   bool _isLoading = true;
-
-  // Filtro do gráfico
-  String _filtroGrafico = '6meses';
 
   @override
   void initState() {
@@ -53,43 +48,47 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
       final membros = await MembrosTable().queryRows(queryFn: (q) => q);
       final ativos = membros.where((m) => m.ativo == true).length;
 
-      // Buscar ministérios
-      final ministerios = await MinisterioTable().queryRows(
-        queryFn: (q) => q.order('criado_em', ascending: false),
-      );
+      // Buscar ministérios ordenados por data
+      final ministerios = await MinisterioTable().queryRows(queryFn: (q) => q);
+      ministerios.sort((a, b) {
+        if (a.criadoEm == null && b.criadoEm == null) return 0;
+        if (a.criadoEm == null) return 1;
+        if (b.criadoEm == null) return -1;
+        return b.criadoEm!.compareTo(a.criadoEm!);
+      });
 
-      // Buscar avisos
-      final avisos = await AvisoTable().queryRows(
-        queryFn: (q) => q.order('created_at', ascending: false),
-      );
+      // Buscar avisos ordenados por data
+      final avisos = await AvisoTable().queryRows(queryFn: (q) => q);
+      avisos.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
       // Buscar células
       final celulas = await CelulaTable().queryRows(queryFn: (q) => q);
 
-      // Aniversariantes do mês atual
-      final mesAtual = DateTime.now().month;
-      final aniversariantes = membros.where((m) {
-        if (m.dataNascimento == null) return false;
-        return m.dataNascimento!.month == mesAtual && m.ativo == true;
-      }).toList();
-      aniversariantes.sort((a, b) => a.dataNascimento!.day.compareTo(b.dataNascimento!.day));
-
-      // Calcular membros por mês (últimos 6 meses)
-      final membrosPorMes = <String, int>{};
-      final agora = DateTime.now();
-      for (int i = 5; i >= 0; i--) {
-        final mes = DateTime(agora.year, agora.month - i, 1);
-        final mesNome = _getNomeMes(mes.month);
-        final ano = mes.year;
-        final chave = '$mesNome $ano';
-
-        final count = membros.where((m) {
-          if (m.criadoEm == null) return false;
-          return m.criadoEm!.year == mes.year && m.criadoEm!.month == mes.month;
-        }).length;
-
-        membrosPorMes[chave] = count;
+      // Calcular membros por mês (agrupar por mês/ano onde há membros)
+      final membrosPorMesMap = <String, int>{};
+      for (var m in membros) {
+        if (m.criadoEm != null) {
+          final mesNome = _getNomeMes(m.criadoEm!.month);
+          final ano = m.criadoEm!.year.toString().substring(2); // Pega só os últimos 2 dígitos
+          final chave = '$mesNome/$ano';
+          membrosPorMesMap[chave] = (membrosPorMesMap[chave] ?? 0) + 1;
+        }
       }
+
+      // Converter para lista e ordenar por data
+      final membrosPorMesList = membrosPorMesMap.entries.toList();
+      membrosPorMesList.sort((a, b) {
+        // Extrair mês e ano para ordenação
+        final partsA = a.key.split('/');
+        final partsB = b.key.split('/');
+        final mesIndexA = _getMesIndex(partsA[0]);
+        final mesIndexB = _getMesIndex(partsB[0]);
+        final anoA = int.tryParse(partsA[1]) ?? 0;
+        final anoB = int.tryParse(partsB[1]) ?? 0;
+
+        if (anoA != anoB) return anoA.compareTo(anoB);
+        return mesIndexA.compareTo(mesIndexB);
+      });
 
       setState(() {
         _totalMembros = membros.length;
@@ -97,15 +96,14 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
         _totalMinisterios = ministerios.length;
         _totalAvisos = avisos.length;
         _totalCelulas = celulas.length;
-        _aniversariantes = aniversariantes.take(5).toList();
-        _ultimosMinisterios = ministerios.take(4).toList();
-        _ultimosAvisos = avisos.take(4).toList();
-        _celulasAtivas = celulas.take(4).toList();
-        _membrosPorMes = membrosPorMes;
+        _ultimosMinisterios = ministerios.take(5).toList();
+        _ultimosAvisos = avisos.take(5).toList();
+        _membrosPorMes = membrosPorMesList;
         _isLoading = false;
       });
-    } catch (e) {
-      print('Erro ao carregar dados: $e');
+    } catch (e, stackTrace) {
+      print('[Dashboard] ERRO ao carregar dados: $e');
+      print('[Dashboard] StackTrace: $stackTrace');
       setState(() => _isLoading = false);
     }
   }
@@ -113,6 +111,11 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
   String _getNomeMes(int mes) {
     const meses = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     return meses[mes];
+  }
+
+  int _getMesIndex(String mesNome) {
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    return meses.indexOf(mesNome);
   }
 
   String _getNomeMesCompleto(int mes) {
@@ -228,20 +231,59 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
   }
 
   Widget _buildGraficoMembros() {
-    final entries = _membrosPorMes.entries.toList();
-    if (entries.isEmpty) {
-      return Center(
-        child: Text(
-          'Sem dados para exibir',
-          style: GoogleFonts.inter(color: Color(0xFF666666)),
+    if (_membrosPorMes.isEmpty) {
+      return Container(
+        padding: EdgeInsets.all(24.0),
+        decoration: BoxDecoration(
+          color: Color(0xFF2D2D2D),
+          borderRadius: BorderRadius.circular(16.0),
+          border: Border.all(color: Color(0xFF404040)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(10.0),
+                  decoration: BoxDecoration(
+                    color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: Icon(
+                    Icons.trending_up_rounded,
+                    color: FlutterFlowTheme.of(context).primary,
+                    size: 24.0,
+                  ),
+                ),
+                SizedBox(width: 12.0),
+                Text(
+                  'Evolução de Membros',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 40.0),
+            Center(
+              child: Text(
+                'Sem dados para exibir',
+                style: GoogleFonts.inter(color: Color(0xFF666666)),
+              ),
+            ),
+            SizedBox(height: 40.0),
+          ],
         ),
       );
     }
 
-    final maxValue = entries.map((e) => e.value).reduce((a, b) => a > b ? a : b);
+    final maxValue = _membrosPorMes.map((e) => e.value).reduce((a, b) => a > b ? a : b);
     final spots = <FlSpot>[];
-    for (int i = 0; i < entries.length; i++) {
-      spots.add(FlSpot(i.toDouble(), entries[i].value.toDouble()));
+    for (int i = 0; i < _membrosPorMes.length; i++) {
+      spots.add(FlSpot(i.toDouble(), _membrosPorMes[i].value.toDouble()));
     }
 
     return Container(
@@ -255,46 +297,26 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(10.0),
-                    decoration: BoxDecoration(
-                      color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    child: Icon(
-                      Icons.trending_up_rounded,
-                      color: FlutterFlowTheme.of(context).primary,
-                      size: 24.0,
-                    ),
-                  ),
-                  SizedBox(width: 12.0),
-                  Text(
-                    'Evolução de Membros',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 4.0),
+                padding: EdgeInsets.all(10.0),
                 decoration: BoxDecoration(
-                  color: Color(0xFF1A1A1A),
-                  borderRadius: BorderRadius.circular(8.0),
+                  color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10.0),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildFilterChip('6M', '6meses'),
-                    _buildFilterChip('12M', '12meses'),
-                    _buildFilterChip('Ano', 'ano'),
-                  ],
+                child: Icon(
+                  Icons.trending_up_rounded,
+                  color: FlutterFlowTheme.of(context).primary,
+                  size: 24.0,
+                ),
+              ),
+              SizedBox(width: 12.0),
+              Text(
+                'Evolução de Membros',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -307,7 +329,7 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: maxValue > 0 ? (maxValue / 4).ceilToDouble() : 1,
+                  horizontalInterval: maxValue > 0 ? (maxValue / 4).ceilToDouble().clamp(1, double.infinity) : 1,
                   getDrawingHorizontalLine: (value) => FlLine(
                     color: Color(0xFF404040),
                     strokeWidth: 1,
@@ -336,11 +358,11 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
                       reservedSize: 30,
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
-                        if (index >= 0 && index < entries.length) {
+                        if (index >= 0 && index < _membrosPorMes.length) {
                           return Padding(
                             padding: EdgeInsets.only(top: 8.0),
                             child: Text(
-                              entries[index].key,
+                              _membrosPorMes[index].key,
                               style: GoogleFonts.inter(
                                 color: Color(0xFF666666),
                                 fontSize: 11.0,
@@ -357,7 +379,7 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
                 ),
                 borderData: FlBorderData(show: false),
                 minX: 0,
-                maxX: (entries.length - 1).toDouble(),
+                maxX: (_membrosPorMes.length - 1).toDouble(),
                 minY: 0,
                 maxY: maxValue > 0 ? maxValue.toDouble() * 1.2 : 10,
                 lineBarsData: [
@@ -392,78 +414,69 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
     );
   }
 
-  Widget _buildFilterChip(String label, String value) {
-    final isSelected = _filtroGrafico == value;
-    return GestureDetector(
-      onTap: () => setState(() => _filtroGrafico = value),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-        decoration: BoxDecoration(
-          color: isSelected ? FlutterFlowTheme.of(context).primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(6.0),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.inter(
-            color: isSelected ? Colors.white : Color(0xFF999999),
-            fontSize: 12.0,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildMinisterioItem(MinisterioRow ministerio) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.0),
-      padding: EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Color(0xFF1A1A1A),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          // Navegar para detalhes do ministério
+          context.pushNamed(
+            PageMinisterioDetalhesSecretariaWidget.routeName,
+            queryParameters: {'idMinisterio': ministerio.idMinisterio.toString()},
+          );
+        },
         borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: Color(0xFF333333)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44.0,
-            height: 44.0,
-            decoration: BoxDecoration(
-              color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            child: Icon(
-              Icons.church_rounded,
-              color: FlutterFlowTheme.of(context).primary,
-              size: 22.0,
-            ),
+        child: Container(
+          margin: EdgeInsets.only(bottom: 12.0),
+          padding: EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(12.0),
+            border: Border.all(color: Color(0xFF333333)),
           ),
-          SizedBox(width: 12.0),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  ministerio.nomeMinisterio ?? '-',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.w500,
-                  ),
+          child: Row(
+            children: [
+              Container(
+                width: 44.0,
+                height: 44.0,
+                decoration: BoxDecoration(
+                  color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10.0),
                 ),
-                if (ministerio.criadoEm != null)
-                  Text(
-                    'Criado em: ${ministerio.criadoEm!.day.toString().padLeft(2, '0')}/${ministerio.criadoEm!.month.toString().padLeft(2, '0')}/${ministerio.criadoEm!.year}',
-                    style: GoogleFonts.inter(
-                      color: Color(0xFF666666),
-                      fontSize: 12.0,
+                child: Icon(
+                  Icons.church_rounded,
+                  color: FlutterFlowTheme.of(context).primary,
+                  size: 22.0,
+                ),
+              ),
+              SizedBox(width: 12.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ministerio.nomeMinisterio,
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-              ],
-            ),
+                    if (ministerio.criadoEm != null)
+                      Text(
+                        'Criado em: ${ministerio.criadoEm!.day.toString().padLeft(2, '0')}/${ministerio.criadoEm!.month.toString().padLeft(2, '0')}/${ministerio.criadoEm!.year}',
+                        style: GoogleFonts.inter(
+                          color: Color(0xFF666666),
+                          fontSize: 12.0,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: Color(0xFF666666)),
+            ],
           ),
-          Icon(Icons.chevron_right_rounded, color: Color(0xFF666666)),
-        ],
+        ),
       ),
     );
   }
@@ -486,191 +499,87 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
 
     final categoriaColor = getCategoriaColor(aviso.categoria);
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.0),
-      padding: EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Color(0xFF1A1A1A),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          // Navegar para lista de avisos
+          context.pushNamed(PageAvisosSecretariaWidget.routeName);
+        },
         borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: Color(0xFF333333)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44.0,
-            height: 44.0,
-            decoration: BoxDecoration(
-              color: categoriaColor.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            child: Icon(
-              Icons.campaign_rounded,
-              color: categoriaColor,
-              size: 22.0,
-            ),
+        child: Container(
+          margin: EdgeInsets.only(bottom: 12.0),
+          padding: EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(12.0),
+            border: Border.all(color: Color(0xFF333333)),
           ),
-          SizedBox(width: 12.0),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  aviso.nomeAviso ?? '-',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          child: Row(
+            children: [
+              Container(
+                width: 44.0,
+                height: 44.0,
+                decoration: BoxDecoration(
+                  color: categoriaColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10.0),
                 ),
-                SizedBox(height: 4.0),
-                Row(
+                child: Icon(
+                  Icons.campaign_rounded,
+                  color: categoriaColor,
+                  size: 22.0,
+                ),
+              ),
+              SizedBox(width: 12.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-                      decoration: BoxDecoration(
-                        color: categoriaColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: Text(
-                        aviso.categoria ?? 'Geral',
-                        style: GoogleFonts.inter(
-                          color: categoriaColor,
-                          fontSize: 10.0,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8.0),
                     Text(
-                        '${aviso.createdAt.day.toString().padLeft(2, '0')}/${aviso.createdAt.month.toString().padLeft(2, '0')}',
-                        style: GoogleFonts.inter(
-                          color: Color(0xFF666666),
-                          fontSize: 11.0,
-                        ),
+                      aviso.nomeAviso ?? '-',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.w500,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 4.0),
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                          decoration: BoxDecoration(
+                            color: categoriaColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(4.0),
+                          ),
+                          child: Text(
+                            aviso.categoria ?? 'Geral',
+                            style: GoogleFonts.inter(
+                              color: categoriaColor,
+                              fontSize: 10.0,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8.0),
+                        Text(
+                          '${aviso.createdAt.day.toString().padLeft(2, '0')}/${aviso.createdAt.month.toString().padLeft(2, '0')}',
+                          style: GoogleFonts.inter(
+                            color: Color(0xFF666666),
+                            fontSize: 11.0,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: Color(0xFF666666)),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAniversarianteItem(MembrosRow membro) {
-    final dia = membro.dataNascimento!.day;
-    final hoje = DateTime.now();
-    final isHoje = membro.dataNascimento!.day == hoje.day && membro.dataNascimento!.month == hoje.month;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 10.0),
-      padding: EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
-      decoration: BoxDecoration(
-        color: isHoje ? FlutterFlowTheme.of(context).primary.withOpacity(0.1) : Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(10.0),
-        border: Border.all(
-          color: isHoje ? FlutterFlowTheme.of(context).primary : Color(0xFF333333),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36.0,
-            height: 36.0,
-            decoration: BoxDecoration(
-              color: isHoje ? FlutterFlowTheme.of(context).primary : Color(0xFF404040),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                dia.toString(),
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 14.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          SizedBox(width: 12.0),
-          Expanded(
-            child: Text(
-              membro.nomeMembro,
-              style: GoogleFonts.inter(
-                color: Colors.white,
-                fontSize: 14.0,
-                fontWeight: isHoje ? FontWeight.w600 : FontWeight.normal,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (isHoje)
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-              decoration: BoxDecoration(
-                color: FlutterFlowTheme.of(context).primary,
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              child: Text(
-                'HOJE!',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 10.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCelulaItem(CelulaRow celula) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.0),
-      padding: EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: Color(0xFF333333)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44.0,
-            height: 44.0,
-            decoration: BoxDecoration(
-              color: Color(0xFF4CAF50).withOpacity(0.15),
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            child: Icon(
-              Icons.groups_rounded,
-              color: Color(0xFF4CAF50),
-              size: 22.0,
-            ),
-          ),
-          SizedBox(width: 12.0),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  celula.nomeCelula ?? '-',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right_rounded, color: Color(0xFF666666)),
-        ],
       ),
     );
   }
@@ -877,150 +786,78 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
 
                                       SizedBox(height: 32.0),
 
-                                      // Grid de seções
+                                      // Ministérios e Avisos lado a lado
                                       LayoutBuilder(
                                         builder: (context, constraints) {
-                                          if (constraints.maxWidth > 900) {
+                                          if (constraints.maxWidth > 800) {
                                             return Row(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
+                                                // Últimos Ministérios
                                                 Expanded(
-                                                  child: Column(
-                                                    children: [
-                                                      Container(
-                                                        width: double.infinity,
-                                                        padding: EdgeInsets.all(20.0),
-                                                        decoration: BoxDecoration(
-                                                          color: Color(0xFF2D2D2D),
-                                                          borderRadius: BorderRadius.circular(16.0),
-                                                          border: Border.all(color: Color(0xFF404040)),
+                                                  child: Container(
+                                                    padding: EdgeInsets.all(20.0),
+                                                    decoration: BoxDecoration(
+                                                      color: Color(0xFF2D2D2D),
+                                                      borderRadius: BorderRadius.circular(16.0),
+                                                      border: Border.all(color: Color(0xFF404040)),
+                                                    ),
+                                                    child: Column(
+                                                      children: [
+                                                        _buildSectionHeader(
+                                                          'Últimos Ministérios',
+                                                          onVerTodos: () => context.pushNamed(PageMinisteriosSecretariaWidget.routeName),
                                                         ),
-                                                        child: Column(
-                                                          children: [
-                                                            _buildSectionHeader(
-                                                              'Últimos Ministérios',
-                                                              onVerTodos: () => context.pushNamed(PageMinisteriosSecretariaWidget.routeName),
+                                                        SizedBox(height: 16.0),
+                                                        if (_ultimosMinisterios.isEmpty)
+                                                          Padding(
+                                                            padding: EdgeInsets.all(40.0),
+                                                            child: Text(
+                                                              'Nenhum ministério cadastrado',
+                                                              style: GoogleFonts.inter(color: Color(0xFF666666)),
                                                             ),
-                                                            SizedBox(height: 16.0),
-                                                            if (_ultimosMinisterios.isEmpty)
-                                                              Padding(
-                                                                padding: EdgeInsets.all(20.0),
-                                                                child: Text('Nenhum ministério cadastrado', style: GoogleFonts.inter(color: Color(0xFF666666))),
-                                                              )
-                                                            else
-                                                              ...(_ultimosMinisterios.map((m) => _buildMinisterioItem(m))),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      SizedBox(height: 24.0),
-                                                      Container(
-                                                        width: double.infinity,
-                                                        padding: EdgeInsets.all(20.0),
-                                                        decoration: BoxDecoration(
-                                                          color: Color(0xFF2D2D2D),
-                                                          borderRadius: BorderRadius.circular(16.0),
-                                                          border: Border.all(color: Color(0xFF404040)),
-                                                        ),
-                                                        child: Column(
-                                                          children: [
-                                                            _buildSectionHeader(
-                                                              'Últimos Avisos',
-                                                              onVerTodos: () => context.pushNamed(PageAvisosSecretariaWidget.routeName),
-                                                            ),
-                                                            SizedBox(height: 16.0),
-                                                            if (_ultimosAvisos.isEmpty)
-                                                              Padding(
-                                                                padding: EdgeInsets.all(20.0),
-                                                                child: Text('Nenhum aviso cadastrado', style: GoogleFonts.inter(color: Color(0xFF666666))),
-                                                              )
-                                                            else
-                                                              ...(_ultimosAvisos.map((a) => _buildAvisoItem(a))),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ],
+                                                          )
+                                                        else
+                                                          ...(_ultimosMinisterios.map((m) => _buildMinisterioItem(m))),
+                                                      ],
+                                                    ),
                                                   ),
                                                 ),
                                                 SizedBox(width: 24.0),
+                                                // Últimos Avisos
                                                 Expanded(
-                                                  child: Column(
-                                                    children: [
-                                                      Container(
-                                                        width: double.infinity,
-                                                        padding: EdgeInsets.all(20.0),
-                                                        decoration: BoxDecoration(
-                                                          color: Color(0xFF2D2D2D),
-                                                          borderRadius: BorderRadius.circular(16.0),
-                                                          border: Border.all(color: Color(0xFF404040)),
+                                                  child: Container(
+                                                    padding: EdgeInsets.all(20.0),
+                                                    decoration: BoxDecoration(
+                                                      color: Color(0xFF2D2D2D),
+                                                      borderRadius: BorderRadius.circular(16.0),
+                                                      border: Border.all(color: Color(0xFF404040)),
+                                                    ),
+                                                    child: Column(
+                                                      children: [
+                                                        _buildSectionHeader(
+                                                          'Últimos Avisos',
+                                                          onVerTodos: () => context.pushNamed(PageAvisosSecretariaWidget.routeName),
                                                         ),
-                                                        child: Column(
-                                                          children: [
-                                                            Row(
-                                                              children: [
-                                                                Container(
-                                                                  padding: EdgeInsets.all(8.0),
-                                                                  decoration: BoxDecoration(
-                                                                    color: Color(0xFFE91E63).withOpacity(0.15),
-                                                                    borderRadius: BorderRadius.circular(8.0),
-                                                                  ),
-                                                                  child: Icon(Icons.cake_rounded, color: Color(0xFFE91E63), size: 20.0),
-                                                                ),
-                                                                SizedBox(width: 10.0),
-                                                                Expanded(
-                                                                  child: Text(
-                                                                    'Aniversariantes de ${_getNomeMesCompleto(DateTime.now().month)}',
-                                                                    style: GoogleFonts.poppins(
-                                                                      color: Colors.white,
-                                                                      fontSize: 16.0,
-                                                                      fontWeight: FontWeight.w600,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
+                                                        SizedBox(height: 16.0),
+                                                        if (_ultimosAvisos.isEmpty)
+                                                          Padding(
+                                                            padding: EdgeInsets.all(40.0),
+                                                            child: Text(
+                                                              'Nenhum aviso cadastrado',
+                                                              style: GoogleFonts.inter(color: Color(0xFF666666)),
                                                             ),
-                                                            SizedBox(height: 16.0),
-                                                            if (_aniversariantes.isEmpty)
-                                                              Padding(
-                                                                padding: EdgeInsets.all(20.0),
-                                                                child: Text('Nenhum aniversariante este mês', style: GoogleFonts.inter(color: Color(0xFF666666))),
-                                                              )
-                                                            else
-                                                              ...(_aniversariantes.map((m) => _buildAniversarianteItem(m))),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      SizedBox(height: 24.0),
-                                                      Container(
-                                                        width: double.infinity,
-                                                        padding: EdgeInsets.all(20.0),
-                                                        decoration: BoxDecoration(
-                                                          color: Color(0xFF2D2D2D),
-                                                          borderRadius: BorderRadius.circular(16.0),
-                                                          border: Border.all(color: Color(0xFF404040)),
-                                                        ),
-                                                        child: Column(
-                                                          children: [
-                                                            _buildSectionHeader(
-                                                              'Células Ativas',
-                                                              onVerTodos: () => context.pushNamed(PageCelulasSecretariaWidget.routeName),
-                                                            ),
-                                                            SizedBox(height: 16.0),
-                                                            if (_celulasAtivas.isEmpty)
-                                                              Padding(
-                                                                padding: EdgeInsets.all(20.0),
-                                                                child: Text('Nenhuma célula cadastrada', style: GoogleFonts.inter(color: Color(0xFF666666))),
-                                                              )
-                                                            else
-                                                              ...(_celulasAtivas.map((c) => _buildCelulaItem(c))),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ],
+                                                          )
+                                                        else
+                                                          ...(_ultimosAvisos.map((a) => _buildAvisoItem(a))),
+                                                      ],
+                                                    ),
                                                   ),
                                                 ),
                                               ],
                                             );
                                           }
+                                          // Layout mobile - um abaixo do outro
                                           return Column(
                                             children: [
                                               Container(
@@ -1033,48 +870,19 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
                                                 ),
                                                 child: Column(
                                                   children: [
-                                                    Row(
-                                                      children: [
-                                                        Container(
-                                                          padding: EdgeInsets.all(8.0),
-                                                          decoration: BoxDecoration(
-                                                            color: Color(0xFFE91E63).withOpacity(0.15),
-                                                            borderRadius: BorderRadius.circular(8.0),
-                                                          ),
-                                                          child: Icon(Icons.cake_rounded, color: Color(0xFFE91E63), size: 20.0),
-                                                        ),
-                                                        SizedBox(width: 10.0),
-                                                        Expanded(
-                                                          child: Text(
-                                                            'Aniversariantes de ${_getNomeMesCompleto(DateTime.now().month)}',
-                                                            style: GoogleFonts.poppins(color: Colors.white, fontSize: 16.0, fontWeight: FontWeight.w600),
-                                                          ),
-                                                        ),
-                                                      ],
+                                                    _buildSectionHeader(
+                                                      'Últimos Ministérios',
+                                                      onVerTodos: () => context.pushNamed(PageMinisteriosSecretariaWidget.routeName),
                                                     ),
                                                     SizedBox(height: 16.0),
-                                                    if (_aniversariantes.isEmpty)
-                                                      Padding(padding: EdgeInsets.all(20.0), child: Text('Nenhum aniversariante este mês', style: GoogleFonts.inter(color: Color(0xFF666666))))
-                                                    else
-                                                      ...(_aniversariantes.map((m) => _buildAniversarianteItem(m))),
-                                                  ],
-                                                ),
-                                              ),
-                                              SizedBox(height: 24.0),
-                                              Container(
-                                                width: double.infinity,
-                                                padding: EdgeInsets.all(20.0),
-                                                decoration: BoxDecoration(
-                                                  color: Color(0xFF2D2D2D),
-                                                  borderRadius: BorderRadius.circular(16.0),
-                                                  border: Border.all(color: Color(0xFF404040)),
-                                                ),
-                                                child: Column(
-                                                  children: [
-                                                    _buildSectionHeader('Últimos Ministérios', onVerTodos: () => context.pushNamed(PageMinisteriosSecretariaWidget.routeName)),
-                                                    SizedBox(height: 16.0),
                                                     if (_ultimosMinisterios.isEmpty)
-                                                      Padding(padding: EdgeInsets.all(20.0), child: Text('Nenhum ministério cadastrado', style: GoogleFonts.inter(color: Color(0xFF666666))))
+                                                      Padding(
+                                                        padding: EdgeInsets.all(20.0),
+                                                        child: Text(
+                                                          'Nenhum ministério cadastrado',
+                                                          style: GoogleFonts.inter(color: Color(0xFF666666)),
+                                                        ),
+                                                      )
                                                     else
                                                       ...(_ultimosMinisterios.map((m) => _buildMinisterioItem(m))),
                                                   ],
@@ -1091,32 +899,21 @@ class _PageHomeSecretariaWidgetState extends State<PageHomeSecretariaWidget> {
                                                 ),
                                                 child: Column(
                                                   children: [
-                                                    _buildSectionHeader('Últimos Avisos', onVerTodos: () => context.pushNamed(PageAvisosSecretariaWidget.routeName)),
+                                                    _buildSectionHeader(
+                                                      'Últimos Avisos',
+                                                      onVerTodos: () => context.pushNamed(PageAvisosSecretariaWidget.routeName),
+                                                    ),
                                                     SizedBox(height: 16.0),
                                                     if (_ultimosAvisos.isEmpty)
-                                                      Padding(padding: EdgeInsets.all(20.0), child: Text('Nenhum aviso cadastrado', style: GoogleFonts.inter(color: Color(0xFF666666))))
+                                                      Padding(
+                                                        padding: EdgeInsets.all(20.0),
+                                                        child: Text(
+                                                          'Nenhum aviso cadastrado',
+                                                          style: GoogleFonts.inter(color: Color(0xFF666666)),
+                                                        ),
+                                                      )
                                                     else
                                                       ...(_ultimosAvisos.map((a) => _buildAvisoItem(a))),
-                                                  ],
-                                                ),
-                                              ),
-                                              SizedBox(height: 24.0),
-                                              Container(
-                                                width: double.infinity,
-                                                padding: EdgeInsets.all(20.0),
-                                                decoration: BoxDecoration(
-                                                  color: Color(0xFF2D2D2D),
-                                                  borderRadius: BorderRadius.circular(16.0),
-                                                  border: Border.all(color: Color(0xFF404040)),
-                                                ),
-                                                child: Column(
-                                                  children: [
-                                                    _buildSectionHeader('Células Ativas', onVerTodos: () => context.pushNamed(PageCelulasSecretariaWidget.routeName)),
-                                                    SizedBox(height: 16.0),
-                                                    if (_celulasAtivas.isEmpty)
-                                                      Padding(padding: EdgeInsets.all(20.0), child: Text('Nenhuma célula cadastrada', style: GoogleFonts.inter(color: Color(0xFF666666))))
-                                                    else
-                                                      ...(_celulasAtivas.map((c) => _buildCelulaItem(c))),
                                                   ],
                                                 ),
                                               ),

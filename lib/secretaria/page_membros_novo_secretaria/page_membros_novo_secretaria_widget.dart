@@ -78,7 +78,7 @@ class _PageMembrosNovoSecretariaWidgetState
       // Criar endereço
       final endereco = await EnderecoTable().insert({
         'cep': _model.textFieldCEPTextController!.text.trim(),
-        'rua': _model.textFieldRuaTextController!.text.trim(),
+        'nome_endereco': _model.textFieldRuaTextController!.text.trim(),
         'numero': _model.textFieldNumeroTextController!.text.trim(),
         'bairro': _model.textFieldBairroTextController!.text.trim(),
         'id_cidade': _cidadeSelecionada,
@@ -139,10 +139,11 @@ class _PageMembrosNovoSecretariaWidgetState
     }
   }
 
-  Widget _buildInfoField({
+  Widget _buildInputField({
     required String label,
     required TextEditingController? controller,
     required FocusNode? focusNode,
+    String? hint,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     bool isRequired = false,
@@ -153,20 +154,15 @@ class _PageMembrosNovoSecretariaWidgetState
         Row(
           children: [
             Text(
-              '$label:',
-              style: FlutterFlowTheme.of(context).bodyMedium.override(
-                    font: GoogleFonts.interTight(
-                      fontWeight: FontWeight.w500,
-                    ),
-                    color: FlutterFlowTheme.of(context).primaryBackground,
-                    letterSpacing: 0.0,
-                  ),
+              label,
+              style: GoogleFonts.inter(
+                color: Color(0xFF999999),
+                fontSize: 13.0,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             if (isRequired)
-              Text(
-                ' *',
-                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-              ),
+              Text(' *', style: TextStyle(color: Colors.red, fontSize: 13.0)),
           ],
         ),
         SizedBox(height: 8.0),
@@ -178,30 +174,23 @@ class _PageMembrosNovoSecretariaWidgetState
           validator: isRequired
               ? (value) => value == null || value.isEmpty ? 'Campo obrigatório' : null
               : null,
-          style: FlutterFlowTheme.of(context).bodyMedium.override(
-                font: GoogleFonts.interTight(
-                  fontWeight: FontWeight.normal,
-                ),
-                color: FlutterFlowTheme.of(context).primaryBackground,
-                letterSpacing: 0.0,
-              ),
+          style: GoogleFonts.inter(color: Colors.white, fontSize: 15.0),
           decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.inter(color: Color(0xFF666666), fontSize: 15.0),
             filled: true,
-            fillColor: Color(0xFF57636C),
+            fillColor: Color(0xFF1A1A1A),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.0),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(color: Color(0xFF333333)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.0),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(color: Color(0xFF333333)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.0),
-              borderSide: BorderSide(
-                color: FlutterFlowTheme.of(context).primary,
-                width: 2.0,
-              ),
+              borderSide: BorderSide(color: FlutterFlowTheme.of(context).primary, width: 2.0),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.0),
@@ -224,6 +213,10 @@ class _PageMembrosNovoSecretariaWidgetState
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+        drawer: Drawer(
+          backgroundColor: Color(0xFF1A1A1A),
+          child: MenuSecretariaWidget(),
+        ),
         body: Column(
           mainAxisSize: MainAxisSize.max,
           children: [
@@ -275,247 +268,494 @@ class _PageMembrosNovoSecretariaWidgetState
                             key: _formKey,
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // Header
                                 Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(8.0, 8.0, 8.0, 8.0),
-                                  child: Container(
-                                    width: MediaQuery.sizeOf(context).width * 1.0,
-                                    height: 90.0,
-                                    decoration: BoxDecoration(
-                                      color: Color(0x00FFFFFF),
-                                      borderRadius: BorderRadius.circular(12.0),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Row(
-                                          mainAxisSize: MainAxisSize.max,
-                                          children: [
+                                  padding: EdgeInsets.all(24.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          if (!responsiveVisibility(context: context, phone: false, tablet: false, tabletLandscape: false))
                                             Padding(
-                                              padding: EdgeInsetsDirectional.fromSTEB(18.0, 0.0, 0.0, 0.0),
-                                              child: Text(
-                                                'Novo Membro',
-                                                style: FlutterFlowTheme.of(context).headlineLarge.override(
-                                                      font: GoogleFonts.interTight(
-                                                        fontWeight: FlutterFlowTheme.of(context).headlineLarge.fontWeight,
-                                                      ),
-                                                      color: FlutterFlowTheme.of(context).primaryBackground,
-                                                      letterSpacing: 0.0,
-                                                    ),
+                                              padding: EdgeInsets.only(right: 12.0),
+                                              child: IconButton(
+                                                onPressed: () => scaffoldKey.currentState?.openDrawer(),
+                                                icon: Icon(Icons.menu_rounded, color: Colors.white, size: 28.0),
                                               ),
                                             ),
-                                            Padding(
-                                              padding: EdgeInsetsDirectional.fromSTEB(8.0, 0.0, 0.0, 0.0),
-                                              child: Icon(
-                                                Icons.person_add_rounded,
-                                                color: FlutterFlowTheme.of(context).primaryBackground,
-                                                size: 40.0,
-                                              ),
+                                          Text(
+                                            'Novo Membro',
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.white,
+                                              fontSize: 28.0,
+                                              fontWeight: FontWeight.bold,
                                             ),
-                                          ],
-                                        ),
-                                        Row(
-                                          mainAxisSize: MainAxisSize.max,
-                                          children: [
-                                            FFButtonWidget(
-                                              onPressed: _isLoading ? null : _salvarMembro,
-                                              text: _isLoading ? 'Salvando...' : 'Salvar',
-                                              options: FFButtonOptions(
-                                                height: 40.0,
-                                                padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
-                                                iconPadding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
-                                                color: FlutterFlowTheme.of(context).primary,
-                                                textStyle: FlutterFlowTheme.of(context).titleSmall.override(
-                                                      font: GoogleFonts.interTight(
-                                                        fontWeight: FlutterFlowTheme.of(context).titleSmall.fontWeight,
-                                                      ),
-                                                      color: Colors.white,
-                                                      letterSpacing: 0.0,
-                                                    ),
-                                                elevation: 0.0,
-                                                borderRadius: BorderRadius.circular(8.0),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          FFButtonWidget(
+                                            onPressed: _isLoading ? null : _salvarMembro,
+                                            text: _isLoading ? 'Salvando...' : 'Salvar',
+                                            icon: Icon(Icons.save_rounded, size: 18.0),
+                                            options: FFButtonOptions(
+                                              height: 44.0,
+                                              padding: EdgeInsetsDirectional.fromSTEB(20.0, 0.0, 20.0, 0.0),
+                                              color: FlutterFlowTheme.of(context).primary,
+                                              textStyle: GoogleFonts.inter(
+                                                color: Colors.white,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.w500,
                                               ),
+                                              elevation: 0,
+                                              borderRadius: BorderRadius.circular(10.0),
                                             ),
-                                            SizedBox(width: 12.0),
-                                            FFButtonWidget(
-                                              onPressed: () => context.pop(),
-                                              text: 'Voltar',
-                                              icon: Icon(
-                                                Icons.arrow_back_rounded,
-                                                size: 20.0,
+                                          ),
+                                          SizedBox(width: 12.0),
+                                          FFButtonWidget(
+                                            onPressed: () => context.pop(),
+                                            text: 'Voltar',
+                                            icon: Icon(Icons.arrow_back_rounded, size: 18.0),
+                                            options: FFButtonOptions(
+                                              height: 44.0,
+                                              padding: EdgeInsetsDirectional.fromSTEB(20.0, 0.0, 20.0, 0.0),
+                                              color: FlutterFlowTheme.of(context).accent2,
+                                              textStyle: GoogleFonts.inter(
+                                                color: Colors.white,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.w500,
                                               ),
-                                              options: FFButtonOptions(
-                                                height: 40.0,
-                                                padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
-                                                iconPadding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
-                                                color: FlutterFlowTheme.of(context).accent2,
-                                                textStyle: FlutterFlowTheme.of(context).titleSmall.override(
-                                                      font: GoogleFonts.interTight(
-                                                        fontWeight: FlutterFlowTheme.of(context).titleSmall.fontWeight,
-                                                      ),
-                                                      color: Colors.white,
-                                                      letterSpacing: 0.0,
-                                                    ),
-                                                elevation: 0.0,
-                                                borderRadius: BorderRadius.circular(8.0),
-                                              ),
+                                              elevation: 0,
+                                              borderRadius: BorderRadius.circular(10.0),
                                             ),
-                                            SizedBox(width: 18.0),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                // Formulário
+                                // Conteúdo
                                 Padding(
-                                  padding: EdgeInsets.all(24.0),
-                                  child: Container(
-                                    width: double.infinity,
-                                    constraints: BoxConstraints(maxWidth: 1200.0),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        // Coluna Esquerda - Dados Pessoais
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              _buildInfoField(
-                                                label: 'Nome Completo',
-                                                controller: _model.textFieldNomeTextController,
-                                                focusNode: _model.textFieldNomeFocusNode,
-                                                isRequired: true,
-                                              ),
-                                              SizedBox(height: 20.0),
-                                              _buildInfoField(
-                                                label: 'Email',
-                                                controller: _model.textFieldEmailTextController,
-                                                focusNode: _model.textFieldEmailFocusNode,
-                                                keyboardType: TextInputType.emailAddress,
-                                              ),
-                                              SizedBox(height: 20.0),
-                                              _buildInfoField(
-                                                label: 'Data de Nascimento',
-                                                controller: _model.textController3,
-                                                focusNode: _model.textFieldFocusNode,
-                                                keyboardType: TextInputType.number,
-                                                inputFormatters: [_dataMask],
-                                              ),
-                                              SizedBox(height: 20.0),
-                                              _buildInfoField(
-                                                label: 'Telefone',
-                                                controller: _model.textFieldTelefoneTextController,
-                                                focusNode: _model.textFieldTelefoneFocusNode,
-                                                keyboardType: TextInputType.phone,
-                                              ),
-                                              SizedBox(height: 20.0),
-                                              // Status Ativo
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    'Está Ativo?',
-                                                    style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                                          font: GoogleFonts.interTight(
-                                                            fontWeight: FontWeight.w500,
-                                                          ),
-                                                          color: FlutterFlowTheme.of(context).primaryBackground,
-                                                          letterSpacing: 0.0,
-                                                        ),
-                                                  ),
-                                                  SizedBox(height: 8.0),
-                                                  Switch(
-                                                    value: _ativo,
-                                                    onChanged: (value) => setState(() => _ativo = value),
-                                                    activeColor: FlutterFlowTheme.of(context).primary,
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
+                                  padding: EdgeInsets.symmetric(horizontal: 24.0),
+                                  child: Column(
+                                    children: [
+                                      // Card Dados Pessoais
+                                      Container(
+                                        width: double.infinity,
+                                        padding: EdgeInsets.all(24.0),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFF2D2D2D),
+                                          borderRadius: BorderRadius.circular(16.0),
+                                          border: Border.all(color: Color(0xFF404040)),
                                         ),
-                                        SizedBox(width: 48.0),
-                                        // Coluna Direita - Endereço
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              _buildInfoField(
-                                                label: 'CEP',
-                                                controller: _model.textFieldCEPTextController,
-                                                focusNode: _model.textFieldCEPFocusNode,
-                                                keyboardType: TextInputType.number,
-                                              ),
-                                              SizedBox(height: 20.0),
-                                              _buildInfoField(
-                                                label: 'Rua',
-                                                controller: _model.textFieldRuaTextController,
-                                                focusNode: _model.textFieldRuaFocusNode,
-                                              ),
-                                              SizedBox(height: 20.0),
-                                              _buildInfoField(
-                                                label: 'Número',
-                                                controller: _model.textFieldNumeroTextController,
-                                                focusNode: _model.textFieldNumeroFocusNode,
-                                              ),
-                                              SizedBox(height: 20.0),
-                                              _buildInfoField(
-                                                label: 'Bairro',
-                                                controller: _model.textFieldBairroTextController,
-                                                focusNode: _model.textFieldBairroFocusNode,
-                                              ),
-                                              SizedBox(height: 20.0),
-                                              // Cidade Dropdown
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    'Cidade:',
-                                                    style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                                          font: GoogleFonts.interTight(
-                                                            fontWeight: FontWeight.w500,
-                                                          ),
-                                                          color: FlutterFlowTheme.of(context).primaryBackground,
-                                                          letterSpacing: 0.0,
-                                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            // Header do card
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  padding: EdgeInsets.all(10.0),
+                                                  decoration: BoxDecoration(
+                                                    color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
+                                                    borderRadius: BorderRadius.circular(10.0),
                                                   ),
-                                                  SizedBox(height: 8.0),
-                                                  Container(
-                                                    width: double.infinity,
-                                                    decoration: BoxDecoration(
-                                                      color: Color(0xFF57636C),
-                                                      borderRadius: BorderRadius.circular(12.0),
-                                                    ),
-                                                    child: DropdownButtonFormField<int>(
-                                                      value: _cidadeSelecionada,
-                                                      items: _cidades.map((c) => DropdownMenuItem(
-                                                        value: c.idCidade,
-                                                        child: Text(
-                                                          c.nomeCidade ?? '',
-                                                          style: TextStyle(color: Colors.white),
+                                                  child: Icon(
+                                                    Icons.person_rounded,
+                                                    color: FlutterFlowTheme.of(context).primary,
+                                                    size: 24.0,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 12.0),
+                                                Text(
+                                                  'Dados Pessoais',
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontSize: 18.0,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 24.0),
+                                            // Campos
+                                            LayoutBuilder(
+                                              builder: (context, constraints) {
+                                                if (constraints.maxWidth > 600) {
+                                                  return Row(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Expanded(
+                                                        child: _buildInputField(
+                                                          label: 'Nome Completo',
+                                                          controller: _model.textFieldNomeTextController,
+                                                          focusNode: _model.textFieldNomeFocusNode,
+                                                          hint: 'Digite o nome completo',
+                                                          isRequired: true,
                                                         ),
-                                                      )).toList(),
-                                                      onChanged: (value) => setState(() => _cidadeSelecionada = value),
-                                                      dropdownColor: Color(0xFF57636C),
-                                                      decoration: InputDecoration(
-                                                        border: InputBorder.none,
-                                                        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                                                       ),
-                                                      style: TextStyle(color: Colors.white, fontSize: 14.0),
-                                                      icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white70),
+                                                      SizedBox(width: 24.0),
+                                                      Expanded(
+                                                        child: _buildInputField(
+                                                          label: 'Email',
+                                                          controller: _model.textFieldEmailTextController,
+                                                          focusNode: _model.textFieldEmailFocusNode,
+                                                          hint: 'email@exemplo.com',
+                                                          keyboardType: TextInputType.emailAddress,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                }
+                                                return Column(
+                                                  children: [
+                                                    _buildInputField(
+                                                      label: 'Nome Completo',
+                                                      controller: _model.textFieldNomeTextController,
+                                                      focusNode: _model.textFieldNomeFocusNode,
+                                                      hint: 'Digite o nome completo',
+                                                      isRequired: true,
+                                                    ),
+                                                    SizedBox(height: 16.0),
+                                                    _buildInputField(
+                                                      label: 'Email',
+                                                      controller: _model.textFieldEmailTextController,
+                                                      focusNode: _model.textFieldEmailFocusNode,
+                                                      hint: 'email@exemplo.com',
+                                                      keyboardType: TextInputType.emailAddress,
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            ),
+                                            SizedBox(height: 16.0),
+                                            LayoutBuilder(
+                                              builder: (context, constraints) {
+                                                if (constraints.maxWidth > 600) {
+                                                  return Row(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Expanded(
+                                                        child: _buildInputField(
+                                                          label: 'Data de Nascimento',
+                                                          controller: _model.textController3,
+                                                          focusNode: _model.textFieldFocusNode,
+                                                          hint: 'DD/MM/AAAA',
+                                                          keyboardType: TextInputType.number,
+                                                          inputFormatters: [_dataMask],
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 24.0),
+                                                      Expanded(
+                                                        child: _buildInputField(
+                                                          label: 'Telefone',
+                                                          controller: _model.textFieldTelefoneTextController,
+                                                          focusNode: _model.textFieldTelefoneFocusNode,
+                                                          hint: '(00) 00000-0000',
+                                                          keyboardType: TextInputType.phone,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                }
+                                                return Column(
+                                                  children: [
+                                                    _buildInputField(
+                                                      label: 'Data de Nascimento',
+                                                      controller: _model.textController3,
+                                                      focusNode: _model.textFieldFocusNode,
+                                                      hint: 'DD/MM/AAAA',
+                                                      keyboardType: TextInputType.number,
+                                                      inputFormatters: [_dataMask],
+                                                    ),
+                                                    SizedBox(height: 16.0),
+                                                    _buildInputField(
+                                                      label: 'Telefone',
+                                                      controller: _model.textFieldTelefoneTextController,
+                                                      focusNode: _model.textFieldTelefoneFocusNode,
+                                                      hint: '(00) 00000-0000',
+                                                      keyboardType: TextInputType.phone,
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            ),
+                                            SizedBox(height: 16.0),
+                                            // Status
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  'Status:',
+                                                  style: GoogleFonts.inter(
+                                                    color: Color(0xFF999999),
+                                                    fontSize: 13.0,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 16.0),
+                                                InkWell(
+                                                  onTap: () => setState(() => _ativo = !_ativo),
+                                                  borderRadius: BorderRadius.circular(20.0),
+                                                  child: Container(
+                                                    padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                                                    decoration: BoxDecoration(
+                                                      color: _ativo
+                                                          ? Color(0xFF027941).withOpacity(0.2)
+                                                          : Color(0xFFFF4444).withOpacity(0.2),
+                                                      borderRadius: BorderRadius.circular(20.0),
+                                                      border: Border.all(
+                                                        color: _ativo ? Color(0xFF027941) : Color(0xFFFF4444),
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          _ativo ? Icons.check_circle : Icons.cancel,
+                                                          color: _ativo ? Color(0xFF027941) : Color(0xFFFF4444),
+                                                          size: 16.0,
+                                                        ),
+                                                        SizedBox(width: 6.0),
+                                                        Text(
+                                                          _ativo ? 'Ativo' : 'Inativo',
+                                                          style: GoogleFonts.inter(
+                                                            color: _ativo ? Color(0xFF027941) : Color(0xFFFF4444),
+                                                            fontSize: 13.0,
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                      SizedBox(height: 20.0),
+                                      // Card Endereço
+                                      Container(
+                                        width: double.infinity,
+                                        padding: EdgeInsets.all(24.0),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFF2D2D2D),
+                                          borderRadius: BorderRadius.circular(16.0),
+                                          border: Border.all(color: Color(0xFF404040)),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            // Header do card
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  padding: EdgeInsets.all(10.0),
+                                                  decoration: BoxDecoration(
+                                                    color: Color(0xFFE67700).withOpacity(0.15),
+                                                    borderRadius: BorderRadius.circular(10.0),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.location_on_rounded,
+                                                    color: Color(0xFFE67700),
+                                                    size: 24.0,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 12.0),
+                                                Text(
+                                                  'Endereço',
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontSize: 18.0,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 24.0),
+                                            // Campos
+                                            LayoutBuilder(
+                                              builder: (context, constraints) {
+                                                if (constraints.maxWidth > 600) {
+                                                  return Row(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      SizedBox(
+                                                        width: 150.0,
+                                                        child: _buildInputField(
+                                                          label: 'CEP',
+                                                          controller: _model.textFieldCEPTextController,
+                                                          focusNode: _model.textFieldCEPFocusNode,
+                                                          hint: '00000-000',
+                                                          keyboardType: TextInputType.number,
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 24.0),
+                                                      Expanded(
+                                                        child: _buildInputField(
+                                                          label: 'Rua',
+                                                          controller: _model.textFieldRuaTextController,
+                                                          focusNode: _model.textFieldRuaFocusNode,
+                                                          hint: 'Nome da rua',
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 24.0),
+                                                      SizedBox(
+                                                        width: 100.0,
+                                                        child: _buildInputField(
+                                                          label: 'Número',
+                                                          controller: _model.textFieldNumeroTextController,
+                                                          focusNode: _model.textFieldNumeroFocusNode,
+                                                          hint: 'Nº',
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                }
+                                                return Column(
+                                                  children: [
+                                                    _buildInputField(
+                                                      label: 'CEP',
+                                                      controller: _model.textFieldCEPTextController,
+                                                      focusNode: _model.textFieldCEPFocusNode,
+                                                      hint: '00000-000',
+                                                      keyboardType: TextInputType.number,
+                                                    ),
+                                                    SizedBox(height: 16.0),
+                                                    _buildInputField(
+                                                      label: 'Rua',
+                                                      controller: _model.textFieldRuaTextController,
+                                                      focusNode: _model.textFieldRuaFocusNode,
+                                                      hint: 'Nome da rua',
+                                                    ),
+                                                    SizedBox(height: 16.0),
+                                                    _buildInputField(
+                                                      label: 'Número',
+                                                      controller: _model.textFieldNumeroTextController,
+                                                      focusNode: _model.textFieldNumeroFocusNode,
+                                                      hint: 'Nº',
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            ),
+                                            SizedBox(height: 16.0),
+                                            LayoutBuilder(
+                                              builder: (context, constraints) {
+                                                if (constraints.maxWidth > 600) {
+                                                  return Row(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Expanded(
+                                                        child: _buildInputField(
+                                                          label: 'Bairro',
+                                                          controller: _model.textFieldBairroTextController,
+                                                          focusNode: _model.textFieldBairroFocusNode,
+                                                          hint: 'Nome do bairro',
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 24.0),
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Text(
+                                                              'Cidade',
+                                                              style: GoogleFonts.inter(
+                                                                color: Color(0xFF999999),
+                                                                fontSize: 13.0,
+                                                                fontWeight: FontWeight.w500,
+                                                              ),
+                                                            ),
+                                                            SizedBox(height: 8.0),
+                                                            Container(
+                                                              width: double.infinity,
+                                                              decoration: BoxDecoration(
+                                                                color: Color(0xFF1A1A1A),
+                                                                borderRadius: BorderRadius.circular(12.0),
+                                                                border: Border.all(color: Color(0xFF333333)),
+                                                              ),
+                                                              child: DropdownButtonFormField<int>(
+                                                                value: _cidadeSelecionada,
+                                                                items: _cidades.map((c) => DropdownMenuItem(
+                                                                  value: c.idCidade,
+                                                                  child: Text(c.nomeCidade ?? '', style: TextStyle(color: Colors.white)),
+                                                                )).toList(),
+                                                                onChanged: (value) => setState(() => _cidadeSelecionada = value),
+                                                                dropdownColor: Color(0xFF2D2D2D),
+                                                                decoration: InputDecoration(
+                                                                  border: InputBorder.none,
+                                                                  contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                                                                ),
+                                                                style: GoogleFonts.inter(color: Colors.white, fontSize: 15.0),
+                                                                icon: Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF666666)),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                }
+                                                return Column(
+                                                  children: [
+                                                    _buildInputField(
+                                                      label: 'Bairro',
+                                                      controller: _model.textFieldBairroTextController,
+                                                      focusNode: _model.textFieldBairroFocusNode,
+                                                      hint: 'Nome do bairro',
+                                                    ),
+                                                    SizedBox(height: 16.0),
+                                                    Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Text(
+                                                          'Cidade',
+                                                          style: GoogleFonts.inter(
+                                                            color: Color(0xFF999999),
+                                                            fontSize: 13.0,
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                        SizedBox(height: 8.0),
+                                                        Container(
+                                                          width: double.infinity,
+                                                          decoration: BoxDecoration(
+                                                            color: Color(0xFF1A1A1A),
+                                                            borderRadius: BorderRadius.circular(12.0),
+                                                            border: Border.all(color: Color(0xFF333333)),
+                                                          ),
+                                                          child: DropdownButtonFormField<int>(
+                                                            value: _cidadeSelecionada,
+                                                            items: _cidades.map((c) => DropdownMenuItem(
+                                                              value: c.idCidade,
+                                                              child: Text(c.nomeCidade ?? '', style: TextStyle(color: Colors.white)),
+                                                            )).toList(),
+                                                            onChanged: (value) => setState(() => _cidadeSelecionada = value),
+                                                            dropdownColor: Color(0xFF2D2D2D),
+                                                            decoration: InputDecoration(
+                                                              border: InputBorder.none,
+                                                              contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                                                            ),
+                                                            style: GoogleFonts.inter(color: Colors.white, fontSize: 15.0),
+                                                            icon: Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF666666)),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(height: 32.0),
+                                    ],
                                   ),
                                 ),
                               ],

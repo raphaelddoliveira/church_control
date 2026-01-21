@@ -275,6 +275,7 @@ class _PageAvisosSecretariaWidgetState
                                     ],
                                   ),
                                   FutureBuilder<List<AvisoRow>>(
+                                    key: ValueKey(_model.refreshKey),
                                     future: AvisoTable().queryRows(
                                       queryFn: (q) => q.order('created_at', ascending: false),
                                     ),
@@ -1514,7 +1515,9 @@ class _PageAvisosSecretariaWidgetState
                                                                                                   backgroundColor: FlutterFlowTheme.of(context).success,
                                                                                                 ),
                                                                                               );
-                                                                                              setState(() {});
+                                                                                              setState(() {
+                                                                                                _model.refreshKey++;
+                                                                                              });
                                                                                             },
                                                                                           ),
                                                                                           FlutterFlowIconButton(
@@ -1563,7 +1566,9 @@ class _PageAvisosSecretariaWidgetState
                                                                                                     backgroundColor: FlutterFlowTheme.of(context).success,
                                                                                                   ),
                                                                                                 );
-                                                                                                setState(() {});
+                                                                                                setState(() {
+                                                                                                  _model.refreshKey++;
+                                                                                                });
                                                                                               }
                                                                                             },
                                                                                           ),

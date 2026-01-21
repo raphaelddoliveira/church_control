@@ -23,6 +23,9 @@ class PageAvisosSecretariaModel
   String? filtroStatus; // null, 'ativo', 'expirado'
   String? filtroCategoria; // null ou categoria específica
 
+  // Refresh key para forçar atualização do FutureBuilder
+  int refreshKey = 0;
+
   @override
   void initState(BuildContext context) {
     menuSecretariaModel = createModel(context, () => MenuSecretariaModel());

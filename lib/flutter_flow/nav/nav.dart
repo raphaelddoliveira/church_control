@@ -457,6 +457,20 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => PageCriaEscalaLouvorWidget(
             idministerio: params.getParam('idministerio', ParamType.int),
           ),
+        ),
+        FFRoute(
+          name: PageCelulasPastorWidget.routeName,
+          path: PageCelulasPastorWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageCelulasPastorWidget(),
+        ),
+        FFRoute(
+          name: PageCelulaDetalhesPastorWidget.routeName,
+          path: PageCelulaDetalhesPastorWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageCelulaDetalhesPastorWidget(
+            celulaId: params.getParam('celulaId', ParamType.int)!,
+          ),
         )
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );

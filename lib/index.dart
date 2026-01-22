@@ -83,3 +83,7 @@ export '/lider/page_escala_detalhes_lider/page_escala_detalhes_lider_widget.dart
     show PageEscalaDetalhesLiderWidget;
 export '/lider/page_cria_escala_louvor/page_cria_escala_louvor_widget.dart'
     show PageCriaEscalaLouvorWidget;
+export '/pastor/page_celulas_pastor/page_celulas_pastor_widget.dart'
+    show PageCelulasPastorWidget;
+export '/pastor/page_celula_detalhes_pastor/page_celula_detalhes_pastor_widget.dart'
+    show PageCelulaDetalhesPastorWidget;

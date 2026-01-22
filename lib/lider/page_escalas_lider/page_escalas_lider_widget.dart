@@ -127,6 +127,8 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -145,12 +147,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
             mainAxisSize: MainAxisSize.max,
             children: [
               // Menu lateral (desktop)
-              if (responsiveVisibility(
-                context: context,
-                phone: false,
-                tablet: false,
-                tabletLandscape: false,
-              ))
+              if (!isMobile)
                 Padding(
                   padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
                   child: Container(
@@ -193,7 +190,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                               children: [
                                 // Header
                                 Padding(
-                                  padding: EdgeInsets.all(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  padding: EdgeInsets.all(!isMobile ? 32.0 : 16.0),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -208,32 +205,79 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                                                   _ministerio?.nomeMinisterio ?? 'Ministério',
                                                   style: GoogleFonts.poppins(
                                                     color: Colors.white,
-                                                    fontSize: responsiveVisibility(context: context, phone: false) ? 28.0 : 20.0,
+                                                    fontSize: !isMobile ? 28.0 : 18.0,
                                                     fontWeight: FontWeight.bold,
                                                   ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                                 SizedBox(height: 4.0),
                                                 Text(
                                                   'Gerencie suas escalas e participantes',
                                                   style: GoogleFonts.inter(
                                                     color: Color(0xFF999999),
-                                                    fontSize: responsiveVisibility(context: context, phone: false) ? 14.0 : 12.0,
+                                                    fontSize: !isMobile ? 14.0 : 11.0,
                                                   ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                               ],
                                             ),
                                           ),
                                           Row(
                                             children: [
+                                              // Botão Nova Escala
+                                              InkWell(
+                                                onTap: () {
+                                                  // Se for Ministério de Louvor (id = 1), usa a página especializada
+                                                  if (widget.idministerio == 1) {
+                                                    context.pushNamed(
+                                                      'PageCriaEscala_Louvor',
+                                                      queryParameters: {
+                                                        'idministerio': serializeParam(widget.idministerio, ParamType.int),
+                                                      },
+                                                    );
+                                                  } else {
+                                                    _mostrarModalNovaEscala(context);
+                                                  }
+                                                },
+                                                borderRadius: BorderRadius.circular(12.0),
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: !isMobile ? 20.0 : 12.0,
+                                                    vertical: 12.0,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: FlutterFlowTheme.of(context).primary,
+                                                    borderRadius: BorderRadius.circular(12.0),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.add_rounded,
+                                                        color: Colors.white,
+                                                        size: 20.0,
+                                                      ),
+                                                      if (!isMobile) ...[
+                                                        SizedBox(width: 8.0),
+                                                        Text(
+                                                          'Nova Escala',
+                                                          style: GoogleFonts.inter(
+                                                            color: Colors.white,
+                                                            fontSize: 14.0,
+                                                            fontWeight: FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
                                               // Botão menu mobile
-                                              if (responsiveVisibility(
-                                                context: context,
-                                                tablet: false,
-                                                tabletLandscape: false,
-                                                desktop: false,
-                                              ))
+                                              if (isMobile)
                                                 Padding(
-                                                  padding: EdgeInsets.only(right: 8.0),
+                                                  padding: EdgeInsets.only(left: 8.0),
                                                   child: InkWell(
                                                     onTap: () async {
                                                       await showDialog(
@@ -262,54 +306,6 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                                                     ),
                                                   ),
                                                 ),
-                                              // Botão Nova Escala
-                                              InkWell(
-                                                onTap: () {
-                                                  // Se for Ministério de Louvor (id = 1), usa a página especializada
-                                                  if (widget.idministerio == 1) {
-                                                    context.pushNamed(
-                                                      'PageCriaEscala_Louvor',
-                                                      queryParameters: {
-                                                        'idministerio': serializeParam(widget.idministerio, ParamType.int),
-                                                      },
-                                                    );
-                                                  } else {
-                                                    _mostrarModalNovaEscala(context);
-                                                  }
-                                                },
-                                                borderRadius: BorderRadius.circular(12.0),
-                                                child: Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: responsiveVisibility(context: context, phone: false) ? 20.0 : 12.0,
-                                                    vertical: 12.0,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: FlutterFlowTheme.of(context).primary,
-                                                    borderRadius: BorderRadius.circular(12.0),
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.add_rounded,
-                                                        color: Colors.white,
-                                                        size: 20.0,
-                                                      ),
-                                                      if (responsiveVisibility(context: context, phone: false)) ...[
-                                                        SizedBox(width: 8.0),
-                                                        Text(
-                                                          'Nova Escala',
-                                                          style: GoogleFonts.inter(
-                                                            color: Colors.white,
-                                                            fontSize: 14.0,
-                                                            fontWeight: FontWeight.w600,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
                                             ],
                                           ),
                                         ],
@@ -320,8 +316,8 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
 
                                 // Cards de estatísticas
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
-                                  child: responsiveVisibility(context: context, phone: false)
+                                  padding: EdgeInsets.symmetric(horizontal: !isMobile ? 32.0 : 16.0),
+                                  child: !isMobile
                                       ? Row(
                                           children: [
                                             Expanded(
@@ -384,21 +380,21 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                                         ),
                                 ),
 
-                                SizedBox(height: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                SizedBox(height: !isMobile ? 32.0 : 16.0),
 
                                 // Card de Histórico de Participações
                                 if (_participacoes.isNotEmpty)
                                   Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                    padding: EdgeInsets.symmetric(horizontal: !isMobile ? 32.0 : 16.0),
                                     child: _buildParticipacaoCard(),
                                   ),
 
                                 if (_participacoes.isNotEmpty)
-                                  SizedBox(height: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  SizedBox(height: !isMobile ? 32.0 : 16.0),
 
                                 // Campo de busca
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  padding: EdgeInsets.symmetric(horizontal: !isMobile ? 32.0 : 16.0),
                                   child: TextField(
                                     controller: _model.textController,
                                     focusNode: _model.textFieldFocusNode,
@@ -449,11 +445,11 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                                   ),
                                 ),
 
-                                SizedBox(height: responsiveVisibility(context: context, phone: false) ? 24.0 : 16.0),
+                                SizedBox(height: !isMobile ? 24.0 : 16.0),
 
                                 // Lista de escalas
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  padding: EdgeInsets.symmetric(horizontal: !isMobile ? 32.0 : 16.0),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [

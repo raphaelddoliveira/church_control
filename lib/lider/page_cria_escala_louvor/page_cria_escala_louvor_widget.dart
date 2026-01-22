@@ -1018,6 +1018,8 @@ class _PageCriaEscalaLouvorWidgetState extends State<PageCriaEscalaLouvorWidget>
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -1034,12 +1036,7 @@ class _PageCriaEscalaLouvorWidgetState extends State<PageCriaEscalaLouvorWidget>
             mainAxisSize: MainAxisSize.max,
             children: [
               // Menu lateral
-              if (responsiveVisibility(
-                context: context,
-                phone: false,
-                tablet: false,
-                tabletLandscape: false,
-              ))
+              if (!isMobile)
                 Padding(
                   padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
                   child: Container(
@@ -1083,7 +1080,7 @@ class _PageCriaEscalaLouvorWidgetState extends State<PageCriaEscalaLouvorWidget>
                               children: [
                                 // Header
                                 Padding(
-                                  padding: EdgeInsets.all(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  padding: EdgeInsets.all(!isMobile ? 32.0 : 16.0),
                                   child: Row(
                                     children: [
                                       FlutterFlowIconButton(
@@ -1096,7 +1093,17 @@ class _PageCriaEscalaLouvorWidgetState extends State<PageCriaEscalaLouvorWidget>
                                           color: Colors.white,
                                           size: 20.0,
                                         ),
-                                        onPressed: () => context.safePop(),
+                                        onPressed: () {
+                                          context.pushNamed(
+                                            PageEscalasLiderWidget.routeName,
+                                            queryParameters: {
+                                              'idministerio': serializeParam(
+                                                widget.idministerio,
+                                                ParamType.int,
+                                              ),
+                                            }.withoutNulls,
+                                          );
+                                        },
                                       ),
                                       SizedBox(width: 12.0),
                                       Expanded(
@@ -1108,15 +1115,15 @@ class _PageCriaEscalaLouvorWidgetState extends State<PageCriaEscalaLouvorWidget>
                                                 Icon(
                                                   Icons.music_note_rounded,
                                                   color: FlutterFlowTheme.of(context).primary,
-                                                  size: responsiveVisibility(context: context, phone: false) ? 28.0 : 20.0,
+                                                  size: !isMobile ? 28.0 : 20.0,
                                                 ),
                                                 SizedBox(width: 8.0),
                                                 Expanded(
                                                   child: Text(
-                                                    responsiveVisibility(context: context, phone: false) ? 'Nova Escala de Louvor' : 'Nova Escala',
+                                                    !isMobile ? 'Nova Escala de Louvor' : 'Nova Escala',
                                                     style: GoogleFonts.poppins(
                                                       color: Colors.white,
-                                                      fontSize: responsiveVisibility(context: context, phone: false) ? 28.0 : 18.0,
+                                                      fontSize: !isMobile ? 28.0 : 18.0,
                                                       fontWeight: FontWeight.bold,
                                                     ),
                                                     maxLines: 1,
@@ -1130,19 +1137,14 @@ class _PageCriaEscalaLouvorWidgetState extends State<PageCriaEscalaLouvorWidget>
                                               _ministerio?.nomeMinisterio ?? 'Ministerio de Louvor',
                                               style: GoogleFonts.inter(
                                                 color: Color(0xFF999999),
-                                                fontSize: responsiveVisibility(context: context, phone: false) ? 16.0 : 12.0,
+                                                fontSize: !isMobile ? 16.0 : 12.0,
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
                                       // Botao menu mobile
-                                      if (responsiveVisibility(
-                                        context: context,
-                                        tablet: false,
-                                        tabletLandscape: false,
-                                        desktop: false,
-                                      ))
+                                      if (isMobile)
                                         Padding(
                                           padding: EdgeInsets.only(left: 8.0),
                                           child: InkWell(
@@ -1179,7 +1181,7 @@ class _PageCriaEscalaLouvorWidgetState extends State<PageCriaEscalaLouvorWidget>
 
                                 // Formulario
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  padding: EdgeInsets.symmetric(horizontal: !isMobile ? 32.0 : 16.0),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [

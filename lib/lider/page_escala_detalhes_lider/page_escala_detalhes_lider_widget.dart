@@ -182,6 +182,8 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -200,12 +202,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
             mainAxisSize: MainAxisSize.max,
             children: [
               // Menu lateral (desktop)
-              if (responsiveVisibility(
-                context: context,
-                phone: false,
-                tablet: false,
-                tabletLandscape: false,
-              ))
+              if (!isMobile)
                 Padding(
                   padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
                   child: Container(
@@ -248,7 +245,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                               children: [
                                 // Header
                                 Padding(
-                                  padding: EdgeInsets.all(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  padding: EdgeInsets.all(!isMobile ? 32.0 : 16.0),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -290,7 +287,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                                   _escala?.nomeEscala ?? 'Escala',
                                                   style: GoogleFonts.poppins(
                                                     color: Colors.white,
-                                                    fontSize: responsiveVisibility(context: context, phone: false) ? 28.0 : 18.0,
+                                                    fontSize: !isMobile ? 28.0 : 18.0,
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                   maxLines: 1,
@@ -301,7 +298,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                                   _ministerio?.nomeMinisterio ?? 'Ministério',
                                                   style: GoogleFonts.inter(
                                                     color: Color(0xFF39D2C0),
-                                                    fontSize: responsiveVisibility(context: context, phone: false) ? 14.0 : 12.0,
+                                                    fontSize: !isMobile ? 14.0 : 12.0,
                                                     fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
@@ -309,12 +306,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                             ),
                                           ),
                                           // Botão menu mobile
-                                          if (responsiveVisibility(
-                                            context: context,
-                                            tablet: false,
-                                            tabletLandscape: false,
-                                            desktop: false,
-                                          ))
+                                          if (isMobile)
                                             Padding(
                                               padding: EdgeInsets.only(right: 8.0),
                                               child: InkWell(
@@ -388,8 +380,8 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
 
                                 // Cards de informações
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
-                                  child: responsiveVisibility(context: context, phone: false)
+                                  padding: EdgeInsets.symmetric(horizontal: !isMobile ? 32.0 : 16.0),
+                                  child: !isMobile
                                       ? Row(
                                           children: [
                                             Expanded(
@@ -463,7 +455,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                 // Descrição
                                 if (_escala?.descricao != null && _escala!.descricao!.isNotEmpty)
                                   Padding(
-                                    padding: EdgeInsets.fromLTRB(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0, responsiveVisibility(context: context, phone: false) ? 24.0 : 16.0, responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0, 0.0),
+                                    padding: EdgeInsets.fromLTRB(!isMobile ? 32.0 : 16.0, !isMobile ? 24.0 : 16.0, !isMobile ? 32.0 : 16.0, 0.0),
                                     child: Container(
                                       width: double.infinity,
                                       padding: EdgeInsets.all(20.0),
@@ -508,7 +500,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                 // Seção de Arquivos
                                 if (_arquivos.isNotEmpty)
                                   Padding(
-                                    padding: EdgeInsets.fromLTRB(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0, responsiveVisibility(context: context, phone: false) ? 24.0 : 16.0, responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0, 0.0),
+                                    padding: EdgeInsets.fromLTRB(!isMobile ? 32.0 : 16.0, !isMobile ? 24.0 : 16.0, !isMobile ? 32.0 : 16.0, 0.0),
                                     child: Container(
                                       width: double.infinity,
                                       padding: EdgeInsets.all(20.0),
@@ -601,7 +593,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                 // Seção de Repertório (apenas para ministério de louvor - id 1)
                                 if (widget.idministerio == 1)
                                   Padding(
-                                    padding: EdgeInsets.fromLTRB(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0, responsiveVisibility(context: context, phone: false) ? 24.0 : 16.0, responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0, 0.0),
+                                    padding: EdgeInsets.fromLTRB(!isMobile ? 32.0 : 16.0, !isMobile ? 24.0 : 16.0, !isMobile ? 32.0 : 16.0, 0.0),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -853,11 +845,11 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                     ),
                                   ),
 
-                                SizedBox(height: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                SizedBox(height: !isMobile ? 32.0 : 16.0),
 
                                 // Seção de participantes
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  padding: EdgeInsets.symmetric(horizontal: !isMobile ? 32.0 : 16.0),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
@@ -910,7 +902,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
 
                                 // Campo de busca
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  padding: EdgeInsets.symmetric(horizontal: !isMobile ? 32.0 : 16.0),
                                   child: TextField(
                                     controller: _model.textController,
                                     focusNode: _model.textFieldFocusNode,
@@ -952,7 +944,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
 
                                 // Lista de participantes
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  padding: EdgeInsets.symmetric(horizontal: !isMobile ? 32.0 : 16.0),
                                   child: Column(
                                     children: [
                                       if (_membrosFiltrados.isEmpty)

@@ -354,6 +354,8 @@ class _PageMinisterioDetalhesLiderWidgetState
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -371,12 +373,7 @@ class _PageMinisterioDetalhesLiderWidgetState
           child: Row(
             mainAxisSize: MainAxisSize.max,
             children: [
-              if (responsiveVisibility(
-                context: context,
-                phone: false,
-                tablet: false,
-                tabletLandscape: false,
-              ))
+              if (!isMobile)
                 Padding(
                   padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
                   child: Container(
@@ -418,7 +415,7 @@ class _PageMinisterioDetalhesLiderWidgetState
                               children: [
                                 // Header
                                 Padding(
-                                  padding: EdgeInsets.all(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  padding: EdgeInsets.all(!isMobile ? 32.0 : 16.0),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
@@ -430,7 +427,7 @@ class _PageMinisterioDetalhesLiderWidgetState
                                               _ministerio?.nomeMinisterio ?? 'Ministério',
                                               style: GoogleFonts.poppins(
                                                 color: Colors.white,
-                                                fontSize: responsiveVisibility(context: context, phone: false) ? 28.0 : 20.0,
+                                                fontSize: !isMobile ? 28.0 : 20.0,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -447,10 +444,7 @@ class _PageMinisterioDetalhesLiderWidgetState
                                       ),
                                       Row(
                                         children: [
-                                          if (responsiveVisibility(
-                                            context: context,
-                                            phone: false,
-                                          ))
+                                          if (!isMobile)
                                             FFButtonWidget(
                                               onPressed: _mostrarModalAdicionarMembro,
                                               text: 'Adicionar Membro',
@@ -471,43 +465,34 @@ class _PageMinisterioDetalhesLiderWidgetState
                                                 borderRadius: BorderRadius.circular(12.0),
                                               ),
                                             ),
-                                          if (responsiveVisibility(
-                                            context: context,
-                                            tablet: false,
-                                            tabletLandscape: false,
-                                            desktop: false,
-                                          ))
-                                            InkWell(
-                                              onTap: () async {
-                                                await showModalBottomSheet(
-                                                  isScrollControlled: true,
-                                                  backgroundColor: Color(0x80000000),
-                                                  enableDrag: false,
-                                                  context: context,
-                                                  builder: (context) {
-                                                    return GestureDetector(
-                                                      onTap: () {
-                                                        FocusScope.of(context).unfocus();
-                                                        FocusManager.instance.primaryFocus?.unfocus();
-                                                      },
-                                                      child: Padding(
-                                                        padding: MediaQuery.viewInsetsOf(context),
+                                          if (isMobile)
+                                            Padding(
+                                              padding: EdgeInsets.only(left: 8.0),
+                                              child: InkWell(
+                                                onTap: () async {
+                                                  await showDialog(
+                                                    context: context,
+                                                    builder: (dialogContext) {
+                                                      return Dialog(
+                                                        elevation: 0,
+                                                        insetPadding: EdgeInsets.zero,
+                                                        backgroundColor: Colors.transparent,
                                                         child: MenuLiderMobileWidget(),
-                                                      ),
-                                                    );
-                                                  },
-                                                ).then((value) => safeSetState(() {}));
-                                              },
-                                              child: Container(
-                                                padding: EdgeInsets.all(12),
-                                                decoration: BoxDecoration(
-                                                  color: Color(0xFF2A2A2A),
-                                                  borderRadius: BorderRadius.circular(12),
-                                                ),
-                                                child: Icon(
-                                                  Icons.menu,
-                                                  color: Colors.white,
-                                                  size: 24,
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                                child: Container(
+                                                  padding: EdgeInsets.all(10.0),
+                                                  decoration: BoxDecoration(
+                                                    color: Color(0xFF2A2A2A),
+                                                    borderRadius: BorderRadius.circular(12.0),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.menu_rounded,
+                                                    color: Colors.white,
+                                                    size: 24.0,
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -519,8 +504,8 @@ class _PageMinisterioDetalhesLiderWidgetState
 
                                 // Cards de estatísticas
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
-                                  child: responsiveVisibility(context: context, phone: false)
+                                  padding: EdgeInsets.symmetric(horizontal: !isMobile ? 32.0 : 16.0),
+                                  child: !isMobile
                                       ? Row(
                                           children: [
                                             Expanded(
@@ -591,15 +576,10 @@ class _PageMinisterioDetalhesLiderWidgetState
                                         ),
                                 ),
 
-                                SizedBox(height: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                SizedBox(height: !isMobile ? 32.0 : 16.0),
 
                                 // Botão mobile para adicionar participante
-                                if (responsiveVisibility(
-                                  context: context,
-                                  tablet: false,
-                                  tabletLandscape: false,
-                                  desktop: false,
-                                ))
+                                if (isMobile)
                                   Padding(
                                     padding: EdgeInsets.symmetric(horizontal: 16.0),
                                     child: SizedBox(
@@ -627,17 +607,12 @@ class _PageMinisterioDetalhesLiderWidgetState
                                     ),
                                   ),
 
-                                if (responsiveVisibility(
-                                  context: context,
-                                  tablet: false,
-                                  tabletLandscape: false,
-                                  desktop: false,
-                                ))
+                                if (isMobile)
                                   SizedBox(height: 16.0),
 
                                 // Campo de busca
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  padding: EdgeInsets.symmetric(horizontal: !isMobile ? 32.0 : 16.0),
                                   child: TextField(
                                     controller: _searchController,
                                     onChanged: (value) {
@@ -687,11 +662,11 @@ class _PageMinisterioDetalhesLiderWidgetState
                                   ),
                                 ),
 
-                                SizedBox(height: responsiveVisibility(context: context, phone: false) ? 24.0 : 16.0),
+                                SizedBox(height: !isMobile ? 24.0 : 16.0),
 
                                 // Lista de membros
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  padding: EdgeInsets.symmetric(horizontal: !isMobile ? 32.0 : 16.0),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [

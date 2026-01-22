@@ -124,6 +124,8 @@ class _PageMinisteriosLiderWidgetState
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -142,12 +144,7 @@ class _PageMinisteriosLiderWidgetState
             mainAxisSize: MainAxisSize.max,
             children: [
               // Menu lateral
-              if (responsiveVisibility(
-                context: context,
-                phone: false,
-                tablet: false,
-                tabletLandscape: false,
-              ))
+              if (!isMobile)
                 Padding(
                   padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
                   child: Container(
@@ -191,7 +188,7 @@ class _PageMinisteriosLiderWidgetState
                               children: [
                                 // Header
                                 Padding(
-                                  padding: EdgeInsets.all(32.0),
+                                  padding: EdgeInsets.all(isMobile ? 16.0 : 32.0),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
@@ -203,92 +200,117 @@ class _PageMinisteriosLiderWidgetState
                                               _ministerio?.nomeMinisterio ?? 'Meu Ministério',
                                               style: GoogleFonts.poppins(
                                                 color: Colors.white,
-                                                fontSize: 32.0,
+                                                fontSize: isMobile ? 18.0 : 32.0,
                                                 fontWeight: FontWeight.bold,
                                               ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                            SizedBox(height: 8.0),
+                                            SizedBox(height: 4.0),
                                             Text(
                                               'Gerencie suas escalas e participantes',
                                               style: GoogleFonts.inter(
                                                 color: Color(0xFF999999),
-                                                fontSize: 16.0,
+                                                fontSize: isMobile ? 11.0 : 16.0,
                                               ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ],
                                         ),
                                       ),
                                       Row(
                                         children: [
-                                          if (responsiveVisibility(
-                                            context: context,
-                                            desktop: false,
-                                          ))
-                                            InkWell(
-                                              onTap: () async {
-                                                await showModalBottomSheet(
-                                                  isScrollControlled: true,
-                                                  backgroundColor: Color(0x80000000),
-                                                  enableDrag: false,
-                                                  context: context,
-                                                  builder: (context) {
-                                                    return GestureDetector(
-                                                      onTap: () {
-                                                        FocusScope.of(context).unfocus();
-                                                        FocusManager.instance.primaryFocus?.unfocus();
-                                                      },
-                                                      child: Padding(
-                                                        padding: MediaQuery.viewInsetsOf(context),
-                                                        child: MenuLiderMobileWidget(),
-                                                      ),
-                                                    );
-                                                  },
-                                                ).then((value) => safeSetState(() {}));
-                                              },
-                                              child: Container(
-                                                padding: EdgeInsets.all(12.0),
-                                                decoration: BoxDecoration(
-                                                  color: Color(0xFF2A2A2A),
-                                                  borderRadius: BorderRadius.circular(12.0),
-                                                ),
-                                                child: Icon(
-                                                  Icons.menu,
-                                                  color: Colors.white,
-                                                  size: 24.0,
-                                                ),
-                                              ),
-                                            ),
-                                          SizedBox(width: 12.0),
-                                          FFButtonWidget(
-                                            onPressed: () {
-                                              context.pushNamed(
-                                                PageCriaEscalaLiderWidget.routeName,
-                                                queryParameters: {
-                                                  'idministerio': serializeParam(
-                                                    _ministerio?.idMinisterio,
-                                                    ParamType.int,
-                                                  ),
-                                                }.withoutNulls,
-                                              );
+                                          // Botão Nova Escala
+                                          InkWell(
+                                            onTap: () {
+                                              if (_ministerio?.idMinisterio == 1) {
+                                                context.pushNamed(
+                                                  'PageCriaEscala_Louvor',
+                                                  queryParameters: {
+                                                    'idministerio': serializeParam(
+                                                      _ministerio?.idMinisterio,
+                                                      ParamType.int,
+                                                    ),
+                                                  }.withoutNulls,
+                                                );
+                                              } else {
+                                                context.pushNamed(
+                                                  PageCriaEscalaLiderWidget.routeName,
+                                                  queryParameters: {
+                                                    'idministerio': serializeParam(
+                                                      _ministerio?.idMinisterio,
+                                                      ParamType.int,
+                                                    ),
+                                                  }.withoutNulls,
+                                                );
+                                              }
                                             },
-                                            text: 'Nova Escala',
-                                            icon: Icon(
-                                              Icons.add_rounded,
-                                              size: 20.0,
-                                            ),
-                                            options: FFButtonOptions(
-                                              height: 48.0,
-                                              padding: EdgeInsets.symmetric(horizontal: 24.0),
-                                              color: FlutterFlowTheme.of(context).primary,
-                                              textStyle: GoogleFonts.inter(
-                                                color: Colors.white,
-                                                fontSize: 16.0,
-                                                fontWeight: FontWeight.w600,
+                                            borderRadius: BorderRadius.circular(12.0),
+                                            child: Container(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: isMobile ? 12.0 : 20.0,
+                                                vertical: 12.0,
                                               ),
-                                              elevation: 0.0,
-                                              borderRadius: BorderRadius.circular(12.0),
+                                              decoration: BoxDecoration(
+                                                color: FlutterFlowTheme.of(context).primary,
+                                                borderRadius: BorderRadius.circular(12.0),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.add_rounded,
+                                                    color: Colors.white,
+                                                    size: 20.0,
+                                                  ),
+                                                  if (!isMobile) ...[
+                                                    SizedBox(width: 8.0),
+                                                    Text(
+                                                      'Nova Escala',
+                                                      style: GoogleFonts.inter(
+                                                        color: Colors.white,
+                                                        fontSize: 14.0,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
                                             ),
                                           ),
+                                          // Botão menu mobile
+                                          if (isMobile)
+                                            Padding(
+                                              padding: EdgeInsets.only(left: 8.0),
+                                              child: InkWell(
+                                                onTap: () async {
+                                                  await showDialog(
+                                                    context: context,
+                                                    builder: (dialogContext) {
+                                                      return Dialog(
+                                                        elevation: 0,
+                                                        insetPadding: EdgeInsets.zero,
+                                                        backgroundColor: Colors.transparent,
+                                                        child: MenuLiderMobileWidget(),
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                                child: Container(
+                                                  padding: EdgeInsets.all(10.0),
+                                                  decoration: BoxDecoration(
+                                                    color: Color(0xFF2A2A2A),
+                                                    borderRadius: BorderRadius.circular(12.0),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.menu_rounded,
+                                                    color: Colors.white,
+                                                    size: 24.0,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ],
@@ -297,7 +319,7 @@ class _PageMinisteriosLiderWidgetState
 
                                 // Cards de estatísticas
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 16.0 : 32.0),
                                   child: Row(
                                     children: [
                                       Expanded(
@@ -308,7 +330,7 @@ class _PageMinisteriosLiderWidgetState
                                           color: Color(0xFF4B39EF),
                                         ),
                                       ),
-                                      SizedBox(width: 24.0),
+                                      SizedBox(width: isMobile ? 8.0 : 24.0),
                                       Expanded(
                                         child: _buildStatCard(
                                           icon: Icons.people_rounded,
@@ -317,7 +339,7 @@ class _PageMinisteriosLiderWidgetState
                                           color: Color(0xFF39D2C0),
                                         ),
                                       ),
-                                      SizedBox(width: 24.0),
+                                      SizedBox(width: isMobile ? 8.0 : 24.0),
                                       Expanded(
                                         child: _buildStatCard(
                                           icon: Icons.check_circle_rounded,
@@ -333,12 +355,12 @@ class _PageMinisteriosLiderWidgetState
                                   ),
                                 ),
 
-                                SizedBox(height: 32.0),
+                                SizedBox(height: isMobile ? 16.0 : 32.0),
 
                                 // Participações do mês
                                 if (_participacoes.isNotEmpty) ...[
                                   Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 16.0 : 32.0),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -426,7 +448,7 @@ class _PageMinisteriosLiderWidgetState
 
                                 // Lista de escalas
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 16.0 : 32.0),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [

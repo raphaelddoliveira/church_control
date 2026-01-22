@@ -445,80 +445,50 @@ class _MenuLiderMobileWidgetState extends State<MenuLiderMobileWidget> {
   Widget _buildBottomSection(BuildContext context) {
     return Padding(
       padding: EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          // Botao Meu Perfil
-          Expanded(
-            child: InkWell(
-              onTap: () async {
-                Navigator.of(context).pop();
-                await showModalBottomSheet(
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  enableDrag: false,
-                  context: context,
-                  builder: (context) {
-                    return Padding(
-                      padding: MediaQuery.viewInsetsOf(context),
-                      child: MeuPerfilWidget(),
-                    );
-                  },
-                );
-              },
-              borderRadius: BorderRadius.circular(12.0),
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 14.0),
-                decoration: BoxDecoration(
-                  color: Color(0xFF2A2A2A),
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.person_rounded,
-                      color: Colors.white,
-                      size: 20.0,
-                    ),
-                    SizedBox(width: 8.0),
-                    Text(
-                      'Meu Perfil',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 14.0,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          SizedBox(width: 12.0),
-          // Botao Sair
-          InkWell(
-            onTap: () async {
-              Navigator.of(context).pop();
-              GoRouter.of(context).prepareAuthEvent();
-              await authManager.signOut();
-              GoRouter.of(context).clearRedirectLocation();
-              context.goNamedAuth('LoginPage', context.mounted);
+      child: InkWell(
+        onTap: () async {
+          Navigator.of(context).pop();
+          await showModalBottomSheet(
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            enableDrag: false,
+            context: context,
+            builder: (context) {
+              return Padding(
+                padding: MediaQuery.viewInsetsOf(context),
+                child: MeuPerfilWidget(),
+              );
             },
+          );
+        },
+        borderRadius: BorderRadius.circular(12.0),
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(vertical: 14.0),
+          decoration: BoxDecoration(
+            color: Color(0xFF2A2A2A),
             borderRadius: BorderRadius.circular(12.0),
-            child: Container(
-              padding: EdgeInsets.all(14.0),
-              decoration: BoxDecoration(
-                color: Color(0xFF3D2A2A),
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              child: Icon(
-                Icons.logout_rounded,
-                color: Color(0xFFFF6B6B),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.person_rounded,
+                color: Colors.white,
                 size: 20.0,
               ),
-            ),
+              SizedBox(width: 8.0),
+              Text(
+                'Meu Perfil',
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 14.0,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

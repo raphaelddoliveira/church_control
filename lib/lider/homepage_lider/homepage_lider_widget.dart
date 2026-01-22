@@ -5,6 +5,7 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/lider/menu_lider/menu_lider_widget.dart';
 import '/lider/menu_lider_mobile/menu_lider_mobile_widget.dart';
+import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -503,10 +504,10 @@ class _HomepageLiderWidgetState extends State<HomepageLiderWidget> {
                       onTap: () {
                         if (_ministerio != null) {
                           context.pushNamed(
-                            'PageMinisterioDetalhesLider',
+                            PageMinisterioDetalhesLiderWidget.routeName,
                             queryParameters: {
                               'idministerio': serializeParam(_ministerio!.idMinisterio, ParamType.int),
-                            },
+                            }.withoutNulls,
                           );
                         }
                       },

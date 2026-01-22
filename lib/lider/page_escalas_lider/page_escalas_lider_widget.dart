@@ -920,16 +920,20 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                             size: 14.0,
                           ),
                           SizedBox(width: 6.0),
-                          Text(
-                            escala.dataHoraEscala != null
-                                ? DateFormat('dd/MM/yyyy - HH:mm').format(escala.dataHoraEscala!)
-                                : 'Data não definida',
-                            style: GoogleFonts.inter(
-                              color: Color(0xFF999999),
-                              fontSize: 13.0,
+                          Flexible(
+                            child: Text(
+                              escala.dataHoraEscala != null
+                                  ? DateFormat('dd/MM/yyyy - HH:mm').format(escala.dataHoraEscala!)
+                                  : 'Data não definida',
+                              style: GoogleFonts.inter(
+                                color: Color(0xFF999999),
+                                fontSize: 13.0,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          SizedBox(width: 16.0),
+                          SizedBox(width: 12.0),
                           Icon(
                             Icons.people_rounded,
                             color: Color(0xFF666666),
@@ -937,7 +941,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                           ),
                           SizedBox(width: 6.0),
                           Text(
-                            '$membrosCount participantes',
+                            '$membrosCount',
                             style: GoogleFonts.inter(
                               color: Color(0xFF999999),
                               fontSize: 13.0,

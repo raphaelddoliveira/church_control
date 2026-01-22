@@ -461,16 +461,23 @@ class _PageMinisteriosAdminDetalhesWidgetState
                                       Row(
                                         children: [
                                           FFButtonWidget(
-                                            onPressed: () {
-                                              context.pushNamed(
-                                                PageMinisterioAdminEditarWidget.routeName,
-                                                queryParameters: {
-                                                  'idministerio': serializeParam(
-                                                    widget.idministerio,
-                                                    ParamType.int,
-                                                  ),
-                                                }.withoutNulls,
+                                            onPressed: () async {
+                                              final result = await showDialog(
+                                                context: context,
+                                                builder: (dialogContext) {
+                                                  return Dialog(
+                                                    elevation: 0,
+                                                    insetPadding: EdgeInsets.zero,
+                                                    backgroundColor: Colors.transparent,
+                                                    child: PageMinisterioAdminEditarWidget(
+                                                      idministerio: widget.idministerio,
+                                                    ),
+                                                  );
+                                                },
                                               );
+                                              if (result == true) {
+                                                safeSetState(() {});
+                                              }
                                             },
                                             text: 'Editar Líder',
                                             icon: Icon(

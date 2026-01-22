@@ -202,10 +202,21 @@ class _PageMinisteriosAdminWidgetState
                                         ],
                                       ),
                                       FFButtonWidget(
-                                        onPressed: () {
-                                          context.pushNamed(
-                                            PageMinisterioAdminNovoWidget.routeName,
+                                        onPressed: () async {
+                                          final result = await showDialog(
+                                            context: context,
+                                            builder: (dialogContext) {
+                                              return Dialog(
+                                                elevation: 0,
+                                                insetPadding: EdgeInsets.zero,
+                                                backgroundColor: Colors.transparent,
+                                                child: PageMinisterioAdminNovoWidget(),
+                                              );
+                                            },
                                           );
+                                          if (result == true) {
+                                            safeSetState(() {});
+                                          }
                                         },
                                         text: 'Novo Ministerio',
                                         icon: Icon(

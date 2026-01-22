@@ -1,15 +1,11 @@
 import '/admin/menu_admin/menu_admin_widget.dart';
 import '/backend/supabase/supabase.dart';
-import '/components/meu_perfil_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import 'dart:ui';
 import '/index.dart';
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'page_membros_admin_model.dart';
 export 'page_membros_admin_model.dart';
 
@@ -25,1223 +21,689 @@ class PageMembrosAdminWidget extends StatefulWidget {
 
 class _PageMembrosAdminWidgetState extends State<PageMembrosAdminWidget> {
   late PageMembrosAdminModel _model;
-
   final scaffoldKey = GlobalKey<ScaffoldState>();
+
+  List<MembrosRow> _membros = [];
+  Map<String, TelefoneRow?> _telefonesCache = {};
+  bool _isLoading = true;
+  int _totalAtivos = 0;
+  int _totalInativos = 0;
 
   @override
   void initState() {
     super.initState();
     _model = createModel(context, () => PageMembrosAdminModel());
-
     _model.textController ??= TextEditingController();
     _model.textFieldFocusNode ??= FocusNode();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
+    _carregarDados();
   }
 
   @override
   void dispose() {
     _model.dispose();
-
     super.dispose();
   }
 
-  Future<List<Map<String, dynamic>>> _getMembrosComDetalhes() async {
-    // Buscar membros filtrados por nome
-    final membros = await MembrosTable().queryRows(
-      queryFn: (q) => q.ilike(
-        'nome_membro',
-        '%${_model.textController.text}%',
-      ),
-    );
+  Future<void> _carregarDados() async {
+    try {
+      final membros = await MembrosTable().queryRows(
+        queryFn: (q) => q.order('nome_membro'),
+      );
 
-    // Buscar todos os endereços e ministérios de uma vez
-    final enderecos = await EnderecoTable().queryRows(queryFn: (q) => q);
-    final membrosMinisterios =
-        await MembrosMinisteriosTable().queryRows(queryFn: (q) => q);
+      final telefones = await TelefoneTable().queryRows(queryFn: (q) => q);
+      final telefonesMap = <String, TelefoneRow?>{
+        for (var t in telefones)
+          if (t.idMembro != null) t.idMembro!: t
+      };
 
-    // Criar mapa para acesso rápido
-    final enderecosMap = {for (var e in enderecos) e.idEndereco: e};
-    final membrosMinisteriosMap = <String, List<int>>{};
-    for (var mm in membrosMinisterios) {
-      if (mm.idMembro != null && mm.idMinisterio != null) {
-        membrosMinisteriosMap.putIfAbsent(mm.idMembro!, () => []);
-        membrosMinisteriosMap[mm.idMembro!]!.add(mm.idMinisterio!);
+      int ativos = 0;
+      int inativos = 0;
+      for (var m in membros) {
+        if (m.ativo == true) {
+          ativos++;
+        } else {
+          inativos++;
+        }
       }
+
+      setState(() {
+        _membros = membros;
+        _telefonesCache = telefonesMap;
+        _totalAtivos = ativos;
+        _totalInativos = inativos;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
     }
-
-    // Combinar dados
-    final resultado = <Map<String, dynamic>>[];
-    for (var membro in membros) {
-      final endereco =
-          membro.idEndereco != null ? enderecosMap[membro.idEndereco!] : null;
-      final ministeriosDoMembro =
-          membrosMinisteriosMap[membro.idMembro] ?? [];
-
-      // Aplicar filtros
-      bool passaFiltros = true;
-
-      // Filtro de status
-      if (_model.filtroStatus != null) {
-        if (_model.filtroStatus == 'ativo' && membro.ativo != true) {
-          passaFiltros = false;
-        } else if (_model.filtroStatus == 'inativo' && membro.ativo != false) {
-          passaFiltros = false;
-        }
-      }
-
-      // Filtro de bairro
-      if (_model.filtroBairro != null &&
-          _model.filtroBairro!.isNotEmpty &&
-          endereco?.bairro != _model.filtroBairro) {
-        passaFiltros = false;
-      }
-
-      // Filtro de ministério
-      if (_model.filtroMinisterio != null &&
-          !ministeriosDoMembro.contains(_model.filtroMinisterio)) {
-        passaFiltros = false;
-      }
-
-      // Filtro de data de nascimento
-      if (_model.filtroDataNascimentoInicio != null &&
-          membro.dataNascimento != null) {
-        if (membro.dataNascimento!
-            .isBefore(_model.filtroDataNascimentoInicio!)) {
-          passaFiltros = false;
-        }
-      }
-      if (_model.filtroDataNascimentoFim != null &&
-          membro.dataNascimento != null) {
-        if (membro.dataNascimento!.isAfter(_model.filtroDataNascimentoFim!)) {
-          passaFiltros = false;
-        }
-      }
-
-      if (passaFiltros) {
-        resultado.add({
-          'membro': membro,
-          'endereco': endereco,
-          'ministerios': ministeriosDoMembro,
-        });
-      }
-    }
-
-    return resultado;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _getMembrosComDetalhes(),
-      builder: (context, snapshot) {
-        // Customize what your widget looks like when it's loading.
-        if (!snapshot.hasData) {
-          return Scaffold(
-            backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-            body: Center(
-              child: SizedBox(
-                width: 50.0,
-                height: 50.0,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    FlutterFlowTheme.of(context).primary,
-                  ),
+  List<MembrosRow> get _membrosFiltrados {
+    final query = _model.textController!.text.toLowerCase();
+
+    return _membros.where((membro) {
+      if (query.isNotEmpty && !membro.nomeMembro.toLowerCase().contains(query)) {
+        return false;
+      }
+
+      if (_model.filtroStatus != null) {
+        if (_model.filtroStatus == 'ativo' && membro.ativo != true) return false;
+        if (_model.filtroStatus == 'inativo' && membro.ativo != false) return false;
+      }
+
+      return true;
+    }).toList();
+  }
+
+  void _mostrarFiltros() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.45,
+              decoration: BoxDecoration(
+                color: Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24.0),
+                  topRight: Radius.circular(24.0),
                 ),
               ),
-            ),
-          );
-        }
-        List<Map<String, dynamic>> pageMembrosAdminDadosCompletos =
-            snapshot.data!;
-        List<MembrosRow> pageMembrosAdminMembrosRowList =
-            pageMembrosAdminDadosCompletos
-                .map((d) => d['membro'] as MembrosRow)
-                .toList();
-
-        return GestureDetector(
-          onTap: () {
-            FocusScope.of(context).unfocus();
-            FocusManager.instance.primaryFocus?.unfocus();
-          },
-          child: Scaffold(
-            key: scaffoldKey,
-            backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-            body: Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Container(
-                  width: MediaQuery.sizeOf(context).width * 1.0,
-                  height: MediaQuery.sizeOf(context).height * 1.0,
-                  decoration: BoxDecoration(
-                    color: Color(0xFF14181B),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      if (responsiveVisibility(
-                        context: context,
-                        phone: false,
-                        tablet: false,
-                        tabletLandscape: false,
-                      ))
-                        Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(
-                              16.0, 16.0, 0.0, 16.0),
-                          child: Container(
-                            width: 250.0,
-                            height: MediaQuery.sizeOf(context).height * 1.0,
-                            decoration: BoxDecoration(
-                              color: Color(0xFF3C3D3E),
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            child: wrapWithModel(
-                              model: _model.menuAdminModel,
-                              updateCallback: () => safeSetState(() {}),
-                              child: MenuAdminWidget(),
-                            ),
-                          ),
-                        ),
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(
-                              16.0, 16.0, 16.0, 16.0),
-                          child: Container(
-                            width: 100.0,
-                            height: MediaQuery.sizeOf(context).height * 1.0,
-                            decoration: BoxDecoration(
-                              color: Color(0xFF3C3D3E),
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            child: SingleChildScrollView(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        8.0, 8.0, 8.0, 8.0),
-                                    child: Container(
-                                      width: MediaQuery.sizeOf(context).width *
-                                          1.0,
-                                      height: 90.0,
-                                      decoration: BoxDecoration(
-                                        color: Color(0x00FFFFFF),
-                                        borderRadius:
-                                            BorderRadius.circular(12.0),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Container(
-                                              width: 100.0,
-                                              height: 100.0,
-                                              decoration: BoxDecoration(
-                                                color: Color(0x00FFFFFF),
-                                              ),
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.max,
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    'Sua lista de Membros,',
-                                                    style: FlutterFlowTheme.of(
-                                                            context)
-                                                        .bodyMedium
-                                                        .override(
-                                                          font:
-                                                              GoogleFonts.inter(
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            fontStyle:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .bodyMedium
-                                                                    .fontStyle,
-                                                          ),
-                                                          color: FlutterFlowTheme
-                                                                  .of(context)
-                                                              .primaryBackground,
-                                                          letterSpacing: 0.0,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyMedium
-                                                                  .fontStyle,
-                                                        ),
-                                                  ),
-                                                  Text(
-                                                    'PIB Santa Fé do Sul',
-                                                    style: FlutterFlowTheme.of(
-                                                            context)
-                                                        .bodyMedium
-                                                        .override(
-                                                          font:
-                                                              GoogleFonts.inter(
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            fontStyle:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .bodyMedium
-                                                                    .fontStyle,
-                                                          ),
-                                                          color: FlutterFlowTheme
-                                                                  .of(context)
-                                                              .primaryBackground,
-                                                          fontSize: 20.0,
-                                                          letterSpacing: 0.0,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          fontStyle:
-                                                              FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .bodyMedium
-                                                                  .fontStyle,
-                                                        ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          if (responsiveVisibility(
-                                            context: context,
-                                            desktop: false,
-                                          ))
-                                            InkWell(
-                                              splashColor: Colors.transparent,
-                                              focusColor: Colors.transparent,
-                                              hoverColor: Colors.transparent,
-                                              highlightColor:
-                                                  Colors.transparent,
-                                              onTap: () async {
-                                                await showModalBottomSheet(
-                                                  isScrollControlled: true,
-                                                  backgroundColor:
-                                                      Color(0x80000000),
-                                                  enableDrag: false,
-                                                  context: context,
-                                                  builder: (context) {
-                                                    return GestureDetector(
-                                                      onTap: () {
-                                                        FocusScope.of(context)
-                                                            .unfocus();
-                                                        FocusManager.instance
-                                                            .primaryFocus
-                                                            ?.unfocus();
-                                                      },
-                                                      child: Padding(
-                                                        padding: MediaQuery
-                                                            .viewInsetsOf(
-                                                                context),
-                                                        child:
-                                                            MeuPerfilWidget(),
-                                                      ),
-                                                    );
-                                                  },
-                                                ).then((value) =>
-                                                    safeSetState(() {}));
-                                              },
-                                              child: Icon(
-                                                Icons.menu,
-                                                color:
-                                                    FlutterFlowTheme.of(context)
-                                                        .secondaryText,
-                                                size: 30.0,
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        8.0, 8.0, 8.0, 8.0),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: TextFormField(
-                                            controller: _model.textController,
-                                            focusNode: _model.textFieldFocusNode,
-                                            onChanged: (_) => EasyDebounce.debounce(
-                                              '_model.textController',
-                                              Duration(milliseconds: 500),
-                                              () => safeSetState(() {}),
-                                            ),
-                                            autofocus: false,
-                                            obscureText: false,
-                                            decoration: InputDecoration(
-                                              isDense: true,
-                                              labelStyle: FlutterFlowTheme.of(context)
-                                                  .labelMedium
-                                                  .override(
-                                                    font: GoogleFonts.inter(
-                                                      fontWeight:
-                                                          FlutterFlowTheme.of(context)
-                                                              .labelMedium
-                                                              .fontWeight,
-                                                      fontStyle:
-                                                          FlutterFlowTheme.of(context)
-                                                              .labelMedium
-                                                              .fontStyle,
-                                                    ),
-                                                    letterSpacing: 0.0,
-                                                    fontWeight:
-                                                        FlutterFlowTheme.of(context)
-                                                            .labelMedium
-                                                            .fontWeight,
-                                                    fontStyle:
-                                                        FlutterFlowTheme.of(context)
-                                                            .labelMedium
-                                                            .fontStyle,
-                                                  ),
-                                              hintText: 'Coloque o nome do membro',
-                                              hintStyle: FlutterFlowTheme.of(context)
-                                                  .labelMedium
-                                                  .override(
-                                                    font: GoogleFonts.inter(
-                                                      fontWeight:
-                                                          FlutterFlowTheme.of(context)
-                                                              .labelMedium
-                                                              .fontWeight,
-                                                      fontStyle:
-                                                          FlutterFlowTheme.of(context)
-                                                              .labelMedium
-                                                              .fontStyle,
-                                                    ),
-                                                    color: FlutterFlowTheme.of(context)
-                                                        .primaryBackground,
-                                                    letterSpacing: 0.0,
-                                                    fontWeight:
-                                                        FlutterFlowTheme.of(context)
-                                                            .labelMedium
-                                                            .fontWeight,
-                                                    fontStyle:
-                                                        FlutterFlowTheme.of(context)
-                                                            .labelMedium
-                                                            .fontStyle,
-                                                  ),
-                                              enabledBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                  color: Color(0x00000000),
-                                                  width: 1.0,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(0.0),
-                                              ),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                  color: Color(0x00000000),
-                                                  width: 1.0,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(0.0),
-                                              ),
-                                              errorBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                  color: FlutterFlowTheme.of(context)
-                                                      .error,
-                                                  width: 1.0,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(0.0),
-                                              ),
-                                              focusedErrorBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                  color: FlutterFlowTheme.of(context)
-                                                      .error,
-                                                  width: 1.0,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(0.0),
-                                              ),
-                                              filled: true,
-                                              fillColor: FlutterFlowTheme.of(context)
-                                                  .primaryText,
-                                              prefixIcon: Icon(
-                                                Icons.search_sharp,
-                                                color: FlutterFlowTheme.of(context)
-                                                    .primaryBackground,
-                                              ),
-                                            ),
-                                            style: FlutterFlowTheme.of(context)
-                                                .bodyMedium
-                                                .override(
-                                                  font: GoogleFonts.inter(
-                                                    fontWeight:
-                                                        FlutterFlowTheme.of(context)
-                                                            .bodyMedium
-                                                            .fontWeight,
-                                                    fontStyle:
-                                                        FlutterFlowTheme.of(context)
-                                                            .bodyMedium
-                                                            .fontStyle,
-                                                  ),
-                                                  color: FlutterFlowTheme.of(context)
-                                                      .primaryBackground,
-                                                  letterSpacing: 0.0,
-                                                  fontWeight:
-                                                      FlutterFlowTheme.of(context)
-                                                          .bodyMedium
-                                                          .fontWeight,
-                                                  fontStyle:
-                                                      FlutterFlowTheme.of(context)
-                                                          .bodyMedium
-                                                          .fontStyle,
-                                                ),
-                                            cursorColor: FlutterFlowTheme.of(context)
-                                                .primaryText,
-                                            validator: _model.textControllerValidator
-                                                .asValidator(context),
-                                          ),
-                                        ),
-                                        // Botão de Filtro
-                                        Padding(
-                                          padding: EdgeInsetsDirectional.fromSTEB(
-                                              8.0, 0.0, 0.0, 0.0),
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  FlutterFlowTheme.of(context).primaryText,
-                                              borderRadius: BorderRadius.circular(8.0),
-                                            ),
-                                            child: IconButton(
-                                              icon: Icon(
-                                                Icons.filter_list,
-                                                color: FlutterFlowTheme.of(context)
-                                                    .primaryBackground,
-                                                size: 24.0,
-                                              ),
-                                              onPressed: () async {
-                                    await showModalBottomSheet(
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      enableDrag: false,
-                                      context: context,
-                                      builder: (context) {
-                                        return GestureDetector(
-                                          onTap: () {
-                                            FocusScope.of(context).unfocus();
-                                            FocusManager.instance.primaryFocus
-                                                ?.unfocus();
-                                          },
-                                          child: Padding(
-                                            padding:
-                                                MediaQuery.viewInsetsOf(context),
-                                            child: Container(
-                                              height: MediaQuery.sizeOf(context).height * 0.7,
-                                              decoration: BoxDecoration(
-                                                color: Color(0xFF3C3D3E),
-                                                borderRadius: BorderRadius.only(
-                                                  topLeft: Radius.circular(20.0),
-                                                  topRight: Radius.circular(20.0),
-                                                ),
-                                              ),
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Padding(
-                                                    padding: EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 0),
-                                                    child: Row(
-                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                      children: [
-                                                        Text(
-                                                          'Filtros',
-                                                          style: FlutterFlowTheme.of(context)
-                                                              .headlineSmall
-                                                              .override(
-                                                                font: GoogleFonts.inter(),
-                                                                color: FlutterFlowTheme.of(context).primaryBackground,
-                                                                letterSpacing: 0.0,
-                                                              ),
-                                                        ),
-                                                        IconButton(
-                                                          icon: Icon(
-                                                            Icons.close,
-                                                            color: FlutterFlowTheme.of(context).primaryBackground,
-                                                            size: 24.0,
-                                                          ),
-                                                          onPressed: () {
-                                                            Navigator.pop(context);
-                                                          },
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    child: ListView(
-                                                      padding: EdgeInsetsDirectional.fromSTEB(24.0, 24.0, 24.0, 24.0),
-                                                      children: [
-                                                          // Filtro de Status
-                                                          DropdownButtonFormField<
-                                                              String>(
-                                                            value: _model
-                                                                .filtroStatus,
-                                                            decoration:
-                                                                InputDecoration(
-                                                              labelText:
-                                                                  'Status',
-                                                              labelStyle: FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .labelMedium
-                                                                  .override(
-                                                                    font: GoogleFonts
-                                                                        .inter(),
-                                                                    color: FlutterFlowTheme.of(
-                                                                            context)
-                                                                        .primaryBackground,
-                                                                    letterSpacing:
-                                                                        0.0,
-                                                                  ),
-                                                              filled: true,
-                                                              fillColor: FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .primaryText,
-                                                              border:
-                                                                  OutlineInputBorder(
-                                                                borderRadius:
-                                                                    BorderRadius.circular(
-                                                                        8.0),
-                                                              ),
-                                                            ),
-                                                            dropdownColor:
-                                                                FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .primaryText,
-                                                            items: [
-                                                              DropdownMenuItem(
-                                                                value: null,
-                                                                child: Text(
-                                                                    'Todos',
-                                                                    style: FlutterFlowTheme.of(
-                                                                            context)
-                                                                        .bodyMedium
-                                                                        .override(
-                                                                          font: GoogleFonts.inter(),
-                                                                          color: FlutterFlowTheme.of(context).primaryBackground,
-                                                                          letterSpacing: 0.0,
-                                                                        )),
-                                                              ),
-                                                              DropdownMenuItem(
-                                                                value: 'ativo',
-                                                                child: Text(
-                                                                    'Ativo',
-                                                                    style: FlutterFlowTheme.of(
-                                                                            context)
-                                                                        .bodyMedium
-                                                                        .override(
-                                                                          font: GoogleFonts.inter(),
-                                                                          color: FlutterFlowTheme.of(context).primaryBackground,
-                                                                          letterSpacing: 0.0,
-                                                                        )),
-                                                              ),
-                                                              DropdownMenuItem(
-                                                                value: 'inativo',
-                                                                child: Text(
-                                                                    'Inativo',
-                                                                    style: FlutterFlowTheme.of(
-                                                                            context)
-                                                                        .bodyMedium
-                                                                        .override(
-                                                                          font: GoogleFonts.inter(),
-                                                                          color: FlutterFlowTheme.of(context).primaryBackground,
-                                                                          letterSpacing: 0.0,
-                                                                        )),
-                                                              ),
-                                                            ],
-                                                            onChanged: (value) {
-                                                              safeSetState(() {
-                                                                _model.filtroStatus =
-                                                                    value;
-                                                              });
-                                                            },
-                                                            style: FlutterFlowTheme
-                                                                    .of(context)
-                                                                .bodyMedium
-                                                                .override(
-                                                                  font: GoogleFonts
-                                                                      .inter(),
-                                                                  color: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .primaryBackground,
-                                                                  letterSpacing:
-                                                                      0.0,
-                                                                ),
-                                                          ),
-                                                          SizedBox(height: 16.0),
-                                                          // Filtro de Bairro
-                                                          FutureBuilder<
-                                                              List<String>>(
-                                                            future: EnderecoTable()
-                                                                .queryRows(
-                                                                    queryFn: (q) =>
-                                                                        q)
-                                                                .then((enderecos) =>
-                                                                    enderecos
-                                                                        .where((e) =>
-                                                                            e.bairro !=
-                                                                                null &&
-                                                                            e.bairro!
-                                                                                .isNotEmpty)
-                                                                        .map((e) =>
-                                                                            e.bairro!)
-                                                                        .toSet()
-                                                                        .toList()
-                                                                      ..sort()),
-                                                            builder: (context,
-                                                                snapshot) {
-                                                              final bairros =
-                                                                  snapshot.data ??
-                                                                      [];
-                                                              // Verificar se o valor selecionado existe nos items
-                                                              final valorValido = _model.filtroBairro != null && bairros.contains(_model.filtroBairro)
-                                                                  ? _model.filtroBairro
-                                                                  : null;
-                                                              return DropdownButtonFormField<
-                                                                  String>(
-                                                                value: valorValido,
-                                                                decoration:
-                                                                    InputDecoration(
-                                                                  labelText:
-                                                                      'Bairro',
-                                                                  labelStyle: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .labelMedium
-                                                                      .override(
-                                                                        font: GoogleFonts.inter(),
-                                                                        color: FlutterFlowTheme.of(context).primaryBackground,
-                                                                        letterSpacing: 0.0,
-                                                                      ),
-                                                                  filled: true,
-                                                                  fillColor: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .primaryText,
-                                                                  border:
-                                                                      OutlineInputBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(8.0),
-                                                                  ),
-                                                                ),
-                                                                dropdownColor:
-                                                                    FlutterFlowTheme.of(
-                                                                            context)
-                                                                        .primaryText,
-                                                                items: [
-                                                                  DropdownMenuItem(
-                                                                    value: null,
-                                                                    child: Text(
-                                                                        'Todos',
-                                                                        style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                                                              font: GoogleFonts.inter(),
-                                                                              color: FlutterFlowTheme.of(context).primaryBackground,
-                                                                              letterSpacing: 0.0,
-                                                                            )),
-                                                                  ),
-                                                                  ...bairros.map((bairro) => DropdownMenuItem(
-                                                                        value: bairro,
-                                                                        child: Text(bairro, style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                                                              font: GoogleFonts.inter(),
-                                                                              color: FlutterFlowTheme.of(context).primaryBackground,
-                                                                              letterSpacing: 0.0,
-                                                                            )),
-                                                                      )),
-                                                                ],
-                                                                onChanged:
-                                                                    (value) {
-                                                                  safeSetState(
-                                                                      () {
-                                                                    _model.filtroBairro =
-                                                                        value;
-                                                                  });
-                                                                },
-                                                                style: FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .bodyMedium
-                                                                    .override(
-                                                                      font: GoogleFonts
-                                                                          .inter(),
-                                                                      color: FlutterFlowTheme.of(
-                                                                              context)
-                                                                          .primaryBackground,
-                                                                      letterSpacing:
-                                                                          0.0,
-                                                                    ),
-                                                              );
-                                                            },
-                                                          ),
-                                                          SizedBox(height: 16.0),
-                                                          // Filtro de Ministério
-                                                          FutureBuilder<
-                                                              List<MinisterioRow>>(
-                                                            future: MinisterioTable()
-                                                                .queryRows(
-                                                                    queryFn: (q) =>
-                                                                        q),
-                                                            builder: (context,
-                                                                snapshot) {
-                                                              final ministerios =
-                                                                  snapshot.data ??
-                                                                      [];
-                                                              // Verificar se o valor selecionado existe nos items
-                                                              final ministerioIds = ministerios.map((m) => m.idMinisterio).toList();
-                                                              final valorValido = _model.filtroMinisterio != null && ministerioIds.contains(_model.filtroMinisterio)
-                                                                  ? _model.filtroMinisterio
-                                                                  : null;
-                                                              return DropdownButtonFormField<
-                                                                  int>(
-                                                                value: valorValido,
-                                                                decoration:
-                                                                    InputDecoration(
-                                                                  labelText:
-                                                                      'Ministério',
-                                                                  labelStyle: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .labelMedium
-                                                                      .override(
-                                                                        font: GoogleFonts.inter(),
-                                                                        color: FlutterFlowTheme.of(context).primaryBackground,
-                                                                        letterSpacing: 0.0,
-                                                                      ),
-                                                                  filled: true,
-                                                                  fillColor: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .primaryText,
-                                                                  border:
-                                                                      OutlineInputBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(8.0),
-                                                                  ),
-                                                                ),
-                                                                dropdownColor:
-                                                                    FlutterFlowTheme.of(
-                                                                            context)
-                                                                        .primaryText,
-                                                                items: [
-                                                                  DropdownMenuItem(
-                                                                    value: null,
-                                                                    child: Text(
-                                                                        'Todos',
-                                                                        style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                                                              font: GoogleFonts.inter(),
-                                                                              color: FlutterFlowTheme.of(context).primaryBackground,
-                                                                              letterSpacing: 0.0,
-                                                                            )),
-                                                                  ),
-                                                                  ...ministerios.map((ministerio) => DropdownMenuItem(
-                                                                        value: ministerio.idMinisterio,
-                                                                        child: Text(ministerio.nomeMinisterio, style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                                                              font: GoogleFonts.inter(),
-                                                                              color: FlutterFlowTheme.of(context).primaryBackground,
-                                                                              letterSpacing: 0.0,
-                                                                            )),
-                                                                      )),
-                                                                ],
-                                                                onChanged:
-                                                                    (value) {
-                                                                  safeSetState(
-                                                                      () {
-                                                                    _model.filtroMinisterio =
-                                                                        value;
-                                                                  });
-                                                                },
-                                                                style: FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .bodyMedium
-                                                                    .override(
-                                                                      font: GoogleFonts
-                                                                          .inter(),
-                                                                      color: FlutterFlowTheme.of(
-                                                                              context)
-                                                                          .primaryBackground,
-                                                                      letterSpacing:
-                                                                          0.0,
-                                                                    ),
-                                                              );
-                                                            },
-                                                          ),
-                                                          SizedBox(height: 24.0),
-                                                          // Botão Aplicar Filtros
-                                                          FFButtonWidget(
-                                                            onPressed: () {
-                                                              Navigator.pop(context);
-                                                            },
-                                                            text: 'Aplicar Filtros',
-                                                            icon: Icon(
-                                                              Icons.check,
-                                                              size: 15.0,
-                                                            ),
-                                                            options:
-                                                                FFButtonOptions(
-                                                              width: double
-                                                                  .infinity,
-                                                              height: 50.0,
-                                                              padding: EdgeInsetsDirectional
-                                                                  .fromSTEB(
-                                                                      16.0,
-                                                                      0.0,
-                                                                      16.0,
-                                                                      0.0),
-                                                              color: Color(
-                                                                  0x4D027941),
-                                                              textStyle: FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .titleSmall
-                                                                  .override(
-                                                                    font: GoogleFonts
-                                                                        .interTight(),
-                                                                    color: Colors
-                                                                        .white,
-                                                                    letterSpacing:
-                                                                        0.0,
-                                                                  ),
-                                                              elevation: 0.0,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          8.0),
-                                                            ),
-                                                          ),
-                                                          SizedBox(height: 12.0),
-                                                          // Botão limpar filtros
-                                                          FFButtonWidget(
-                                                            onPressed: () {
-                                                              safeSetState(() {
-                                                                _model.filtroStatus =
-                                                                    null;
-                                                                _model.filtroBairro =
-                                                                    null;
-                                                                _model.filtroMinisterio =
-                                                                    null;
-                                                                _model.filtroDataNascimentoInicio =
-                                                                    null;
-                                                                _model.filtroDataNascimentoFim =
-                                                                    null;
-                                                              });
-                                                              Navigator.pop(
-                                                                  context);
-                                                            },
-                                                            text: 'Limpar Filtros',
-                                                            icon: Icon(
-                                                              Icons.clear,
-                                                              size: 15.0,
-                                                            ),
-                                                            options:
-                                                                FFButtonOptions(
-                                                              width: double
-                                                                  .infinity,
-                                                              height: 50.0,
-                                                              padding: EdgeInsetsDirectional
-                                                                  .fromSTEB(
-                                                                      16.0,
-                                                                      0.0,
-                                                                      16.0,
-                                                                      0.0),
-                                                              color: Color(
-                                                                  0x4DFF5963),
-                                                              textStyle: FlutterFlowTheme.of(
-                                                                      context)
-                                                                  .titleSmall
-                                                                  .override(
-                                                                    font: GoogleFonts
-                                                                        .interTight(),
-                                                                    color: Colors
-                                                                        .white,
-                                                                    letterSpacing:
-                                                                        0.0,
-                                                                  ),
-                                                              elevation: 0.0,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          8.0),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ).then((value) => safeSetState(() {}));
-                                  },
-                                ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(20.0),
+                    decoration: BoxDecoration(
+                      color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(24.0),
+                        topRight: Radius.circular(24.0),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.filter_list_rounded, color: FlutterFlowTheme.of(context).primary, size: 24.0),
+                            SizedBox(width: 12.0),
+                            Text(
+                              'Filtros',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 20.0,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                                  Builder(
-                                    builder: (context) {
-                                      final listmembros =
-                                          pageMembrosAdminMembrosRowList
-                                              .toList();
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(Icons.close_rounded, color: Color(0xFF999999)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.all(20.0),
+                      children: [
+                        _buildFilterDropdown(
+                          'Status',
+                          _model.filtroStatus,
+                          [
+                            DropdownMenuItem(value: null, child: Text('Todos', style: TextStyle(color: Colors.white))),
+                            DropdownMenuItem(value: 'ativo', child: Text('Ativo', style: TextStyle(color: Colors.white))),
+                            DropdownMenuItem(value: 'inativo', child: Text('Inativo', style: TextStyle(color: Colors.white))),
+                          ],
+                          (value) => setModalState(() => _model.filtroStatus = value),
+                        ),
+                        SizedBox(height: 24.0),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  setModalState(() {
+                                    _model.filtroStatus = null;
+                                  });
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Color(0xFF999999),
+                                  side: BorderSide(color: Color(0xFF444444)),
+                                  padding: EdgeInsets.symmetric(vertical: 14.0),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                                ),
+                                child: Text('Limpar', style: GoogleFonts.inter(fontSize: 15.0, fontWeight: FontWeight.w500)),
+                              ),
+                            ),
+                            SizedBox(width: 12.0),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  setState(() {});
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: FlutterFlowTheme.of(context).primary,
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(vertical: 14.0),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                                ),
+                                child: Text('Aplicar', style: GoogleFonts.inter(fontSize: 15.0, fontWeight: FontWeight.w600)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
-                                      return ListView.builder(
-                                        padding: EdgeInsets.zero,
-                                        shrinkWrap: true,
-                                        scrollDirection: Axis.vertical,
-                                        itemCount: listmembros.length,
-                                        itemBuilder:
-                                            (context, listmembrosIndex) {
-                                          final listmembrosItem =
-                                              listmembros[listmembrosIndex];
-                                          return Padding(
-                                            padding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                    0.0, 0.0, 0.0, 1.0),
-                                            child: FutureBuilder<
-                                                List<TelefoneRow>>(
-                                              future: TelefoneTable()
-                                                  .querySingleRow(
-                                                queryFn: (q) => q.eqOrNull(
-                                                  'id_membro',
-                                                  listmembrosItem.idMembro,
-                                                ),
-                                              ),
-                                              builder: (context, snapshot) {
-                                                // Customize what your widget looks like when it's loading.
-                                                if (!snapshot.hasData) {
-                                                  return Center(
-                                                    child: SizedBox(
-                                                      width: 50.0,
-                                                      height: 50.0,
-                                                      child:
-                                                          CircularProgressIndicator(
-                                                        valueColor:
-                                                            AlwaysStoppedAnimation<
-                                                                Color>(
-                                                          FlutterFlowTheme.of(
-                                                                  context)
-                                                              .primary,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  );
-                                                }
-                                                List<TelefoneRow>
-                                                    containerTelefoneRowList =
-                                                    snapshot.data!;
+  Widget _buildFilterDropdown<T>(String label, T? value, List<DropdownMenuItem<T>> items, Function(T?) onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 13.0, fontWeight: FontWeight.w500)),
+        SizedBox(height: 8.0),
+        Container(
+          decoration: BoxDecoration(
+            color: Color(0xFF0D0D0D),
+            borderRadius: BorderRadius.circular(12.0),
+            border: Border.all(color: Color(0xFF2A2A2A)),
+          ),
+          child: DropdownButtonFormField<T>(
+            value: value,
+            items: items,
+            onChanged: onChanged,
+            dropdownColor: Color(0xFF1A1A1A),
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            ),
+            style: GoogleFonts.inter(color: Colors.white, fontSize: 15.0),
+            icon: Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF666666)),
+          ),
+        ),
+      ],
+    );
+  }
 
-                                                final containerTelefoneRow =
-                                                    containerTelefoneRowList
-                                                            .isNotEmpty
-                                                        ? containerTelefoneRowList
-                                                            .first
-                                                        : null;
+  Widget _buildStatCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(12.0),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: Icon(
+              icon,
+              size: 32.0,
+              color: color,
+            ),
+          ),
+          SizedBox(height: 16.0),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: Color(0xFF999999),
+              fontSize: 14.0,
+            ),
+          ),
+          SizedBox(height: 8.0),
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 32.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                                                return InkWell(
-                                                  splashColor:
-                                                      Colors.transparent,
-                                                  focusColor:
-                                                      Colors.transparent,
-                                                  hoverColor:
-                                                      Colors.transparent,
-                                                  highlightColor:
-                                                      Colors.transparent,
-                                                  onTap: () async {
-                                                    context.pushNamed(
-                                                      PageMembrosAdminDetalhesWidget
-                                                          .routeName,
-                                                      queryParameters: {
-                                                        'idmembro':
-                                                            serializeParam(
-                                                          listmembrosItem
-                                                              .idMembro,
-                                                          ParamType.String,
-                                                        ),
-                                                        'emailmembro':
-                                                            serializeParam(
-                                                          listmembrosItem.email,
-                                                          ParamType.String,
-                                                        ),
-                                                        'nomemembro':
-                                                            serializeParam(
-                                                          listmembrosItem
-                                                              .nomeMembro,
-                                                          ParamType.String,
-                                                        ),
-                                                      }.withoutNulls,
-                                                    );
-                                                  },
-                                                  child: Container(
-                                                    width: 100.0,
-                                                    height: 72.0,
-                                                    decoration: BoxDecoration(
-                                                      color: Color(0xFFE0E3E7),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              0.0),
-                                                    ),
-                                                    child: Padding(
-                                                      padding:
-                                                          EdgeInsetsDirectional
-                                                              .fromSTEB(
-                                                                  16.0,
-                                                                  0.0,
-                                                                  16.0,
-                                                                  0.0),
-                                                      child: Row(
-                                                        mainAxisSize:
-                                                            MainAxisSize.max,
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Container(
-                                                            width: 44.0,
-                                                            height: 44.0,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color: FlutterFlowTheme
-                                                                      .of(context)
-                                                                  .secondaryBackground,
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                              border:
-                                                                  Border.all(
-                                                                color: FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .primaryText,
-                                                                width: 2.0,
-                                                              ),
-                                                            ),
-                                                            child: Icon(
-                                                              Icons.person,
-                                                              color: FlutterFlowTheme
-                                                                      .of(context)
-                                                                  .primaryText,
-                                                              size: 24.0,
-                                                            ),
-                                                          ),
-                                                          Expanded(
-                                                            child: Padding(
-                                                              padding:
-                                                                  EdgeInsetsDirectional
-                                                                      .fromSTEB(
-                                                                          12.0,
-                                                                          0.0,
-                                                                          0.0,
-                                                                          0.0),
-                                                              child: Column(
-                                                                mainAxisSize:
-                                                                    MainAxisSize
-                                                                        .max,
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .center,
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
-                                                                        .start,
-                                                                children: [
-                                                                  Padding(
-                                                                    padding: EdgeInsetsDirectional
-                                                                        .fromSTEB(
-                                                                            0.0,
-                                                                            0.0,
-                                                                            0.0,
-                                                                            4.0),
-                                                                    child: Text(
-                                                                      valueOrDefault<
-                                                                          String>(
-                                                                        listmembrosItem
-                                                                            .nomeMembro,
-                                                                        'Raphael',
-                                                                      ),
-                                                                      style: FlutterFlowTheme.of(
-                                                                              context)
-                                                                          .bodyLarge
-                                                                          .override(
-                                                                            font:
-                                                                                GoogleFonts.inter(
-                                                                              fontWeight: FlutterFlowTheme.of(context).bodyLarge.fontWeight,
-                                                                              fontStyle: FlutterFlowTheme.of(context).bodyLarge.fontStyle,
-                                                                            ),
-                                                                            letterSpacing:
-                                                                                0.0,
-                                                                            fontWeight:
-                                                                                FlutterFlowTheme.of(context).bodyLarge.fontWeight,
-                                                                            fontStyle:
-                                                                                FlutterFlowTheme.of(context).bodyLarge.fontStyle,
-                                                                          ),
-                                                                    ),
-                                                                  ),
-                                                                  Text(
-                                                                    valueOrDefault<
-                                                                        String>(
-                                                                      containerTelefoneRow
-                                                                          ?.numeroTelefone,
-                                                                      '22998188307',
-                                                                    ),
-                                                                    style: FlutterFlowTheme.of(
-                                                                            context)
-                                                                        .labelMedium
-                                                                        .override(
-                                                                          font:
-                                                                              GoogleFonts.inter(
-                                                                            fontWeight:
-                                                                                FlutterFlowTheme.of(context).labelMedium.fontWeight,
-                                                                            fontStyle:
-                                                                                FlutterFlowTheme.of(context).labelMedium.fontStyle,
-                                                                          ),
-                                                                          letterSpacing:
-                                                                              0.0,
-                                                                          fontWeight: FlutterFlowTheme.of(context)
-                                                                              .labelMedium
-                                                                              .fontWeight,
-                                                                          fontStyle: FlutterFlowTheme.of(context)
-                                                                              .labelMedium
-                                                                              .fontStyle,
-                                                                        ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          Icon(
-                                                            Icons
-                                                                .chevron_right_rounded,
-                                                            color: FlutterFlowTheme
-                                                                    .of(context)
-                                                                .secondaryText,
-                                                            size: 24.0,
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ],
+  Widget _buildMembroItem(MembrosRow membro) {
+    final telefone = _telefonesCache[membro.idMembro];
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            context.pushNamed(
+              PageMembrosAdminDetalhesWidget.routeName,
+              queryParameters: {
+                'idmembro': serializeParam(membro.idMembro, ParamType.String),
+                'emailmembro': serializeParam(membro.email, ParamType.String),
+                'nomemembro': serializeParam(membro.nomeMembro, ParamType.String),
+              }.withoutNulls,
+            );
+          },
+          borderRadius: BorderRadius.circular(16.0),
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Container(
+                  width: 50.0,
+                  height: 50.0,
+                  decoration: BoxDecoration(
+                    color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: membro.fotoUrl != null && membro.fotoUrl!.isNotEmpty
+                      ? ClipOval(
+                          child: Image.network(
+                            membro.fotoUrl!,
+                            fit: BoxFit.cover,
+                            width: 50.0,
+                            height: 50.0,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.person_rounded,
+                              color: FlutterFlowTheme.of(context).primary,
+                              size: 26.0,
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          Icons.person_rounded,
+                          color: FlutterFlowTheme.of(context).primary,
+                          size: 26.0,
+                        ),
+                ),
+                SizedBox(width: 16.0),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              membro.nomeMembro,
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: 8.0),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                            decoration: BoxDecoration(
+                              color: membro.ativo == true
+                                  ? Color(0xFF027941).withOpacity(0.2)
+                                  : Color(0xFFFF4444).withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(6.0),
+                            ),
+                            child: Text(
+                              membro.ativo == true ? 'Ativo' : 'Inativo',
+                              style: GoogleFonts.inter(
+                                color: membro.ativo == true ? Color(0xFF027941) : Color(0xFFFF4444),
+                                fontSize: 12.0,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
-                        ),
+                        ],
+                      ),
+                      SizedBox(height: 4.0),
+                      Row(
+                        children: [
+                          if (telefone?.numeroTelefone != null) ...[
+                            Icon(Icons.phone_rounded, color: Color(0xFF666666), size: 14.0),
+                            SizedBox(width: 4.0),
+                            Text(
+                              telefone!.numeroTelefone!,
+                              style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 13.0),
+                            ),
+                            SizedBox(width: 16.0),
+                          ],
+                          if (membro.email != null && membro.email!.isNotEmpty) ...[
+                            Icon(Icons.email_outlined, color: Color(0xFF666666), size: 14.0),
+                            SizedBox(width: 4.0),
+                            Expanded(
+                              child: Text(
+                                membro.email!,
+                                style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 13.0),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                          if (telefone?.numeroTelefone == null && (membro.email == null || membro.email!.isEmpty))
+                            Text(
+                              'Sem informacoes de contato',
+                              style: GoogleFonts.inter(color: Color(0xFF666666), fontSize: 13.0),
+                            ),
+                        ],
                       ),
                     ],
                   ),
                 ),
+                SizedBox(width: 8.0),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFF666666),
+                  size: 24.0,
+                ),
               ],
             ),
           ),
-        );
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+        FocusManager.instance.primaryFocus?.unfocus();
       },
+      child: Scaffold(
+        key: scaffoldKey,
+        backgroundColor: Color(0xFF14181B),
+        body: Container(
+          width: MediaQuery.sizeOf(context).width,
+          height: MediaQuery.sizeOf(context).height,
+          decoration: BoxDecoration(
+            color: Color(0xFF14181B),
+          ),
+          child: Row(
+            children: [
+              // Menu lateral
+              if (responsiveVisibility(
+                context: context,
+                phone: false,
+                tablet: false,
+                tabletLandscape: false,
+              ))
+                Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
+                  child: Container(
+                    width: 250.0,
+                    height: MediaQuery.sizeOf(context).height,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3C3D3E),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: wrapWithModel(
+                      model: _model.menuAdminModel,
+                      updateCallback: () => setState(() {}),
+                      child: MenuAdminWidget(),
+                    ),
+                  ),
+                ),
+
+              // Conteudo principal
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Container(
+                    height: MediaQuery.sizeOf(context).height,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3C3D3E),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: _isLoading
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                FlutterFlowTheme.of(context).primary,
+                              ),
+                            ),
+                          )
+                        : SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Header
+                                Padding(
+                                  padding: EdgeInsets.all(32.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Membros',
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: 32.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(height: 8.0),
+                                      Text(
+                                        'Gerencie os niveis de acesso dos membros',
+                                        style: GoogleFonts.inter(
+                                          color: Color(0xFF999999),
+                                          fontSize: 16.0,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Cards de estatisticas
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildStatCard(
+                                          icon: Icons.people_rounded,
+                                          title: 'Total de Membros',
+                                          value: _membros.length.toString(),
+                                          color: Color(0xFF2196F3),
+                                        ),
+                                      ),
+                                      SizedBox(width: 24.0),
+                                      Expanded(
+                                        child: _buildStatCard(
+                                          icon: Icons.check_circle_rounded,
+                                          title: 'Membros Ativos',
+                                          value: _totalAtivos.toString(),
+                                          color: Color(0xFF027941),
+                                        ),
+                                      ),
+                                      SizedBox(width: 24.0),
+                                      Expanded(
+                                        child: _buildStatCard(
+                                          icon: Icons.cancel_rounded,
+                                          title: 'Membros Inativos',
+                                          value: _totalInativos.toString(),
+                                          color: Color(0xFFFF9800),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                SizedBox(height: 32.0),
+
+                                // Campo de busca e filtros
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _model.textController,
+                                          focusNode: _model.textFieldFocusNode,
+                                          onChanged: (_) => EasyDebounce.debounce(
+                                            '_model.textController',
+                                            Duration(milliseconds: 300),
+                                            () => setState(() {}),
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: 'Buscar membro por nome...',
+                                            hintStyle: GoogleFonts.inter(
+                                              color: Color(0xFF666666),
+                                              fontSize: 16.0,
+                                            ),
+                                            prefixIcon: Icon(
+                                              Icons.search_rounded,
+                                              color: Color(0xFF666666),
+                                            ),
+                                            filled: true,
+                                            fillColor: Color(0xFF2A2A2A),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12.0),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12.0),
+                                              borderSide: BorderSide(
+                                                color: Color(0xFF3A3A3A),
+                                                width: 1.0,
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12.0),
+                                              borderSide: BorderSide(
+                                                color: FlutterFlowTheme.of(context).primary,
+                                                width: 2.0,
+                                              ),
+                                            ),
+                                            contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 16.0,
+                                              vertical: 16.0,
+                                            ),
+                                          ),
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white,
+                                            fontSize: 16.0,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 12.0),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFF2A2A2A),
+                                          borderRadius: BorderRadius.circular(12.0),
+                                          border: Border.all(color: Color(0xFF3A3A3A)),
+                                        ),
+                                        child: IconButton(
+                                          onPressed: _mostrarFiltros,
+                                          icon: Icon(
+                                            Icons.filter_list_rounded,
+                                            color: _model.filtroStatus != null
+                                                ? FlutterFlowTheme.of(context).primary
+                                                : Color(0xFF666666),
+                                            size: 24.0,
+                                          ),
+                                          padding: EdgeInsets.all(12.0),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                SizedBox(height: 24.0),
+
+                                // Lista de membros
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Todos os Membros',
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: 20.0,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      SizedBox(height: 16.0),
+
+                                      if (_membrosFiltrados.isEmpty)
+                                        Container(
+                                          padding: EdgeInsets.all(48.0),
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFF2A2A2A),
+                                            borderRadius: BorderRadius.circular(16.0),
+                                          ),
+                                          child: Center(
+                                            child: Column(
+                                              children: [
+                                                Icon(
+                                                  Icons.people_outline_rounded,
+                                                  size: 64.0,
+                                                  color: Color(0xFF666666),
+                                                ),
+                                                SizedBox(height: 16.0),
+                                                Text(
+                                                  'Nenhum membro encontrado',
+                                                  style: GoogleFonts.inter(
+                                                    color: Color(0xFF999999),
+                                                    fontSize: 16.0,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      else
+                                        ListView.builder(
+                                          shrinkWrap: true,
+                                          physics: NeverScrollableScrollPhysics(),
+                                          itemCount: _membrosFiltrados.length,
+                                          itemBuilder: (context, index) {
+                                            return _buildMembroItem(_membrosFiltrados[index]);
+                                          },
+                                        ),
+                                    ],
+                                  ),
+                                ),
+
+                                SizedBox(height: 32.0),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

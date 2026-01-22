@@ -473,8 +473,17 @@ class _HomeAdminWidgetState extends State<HomeAdminWidget> {
                       hoverColor: Colors.transparent,
                       highlightColor: Colors.transparent,
                       onTap: () async {
-                        context
-                            .pushNamed(PageMinisterioAdminNovoWidget.routeName);
+                        await showDialog(
+                          context: context,
+                          builder: (dialogContext) {
+                            return Dialog(
+                              elevation: 0,
+                              insetPadding: EdgeInsets.zero,
+                              backgroundColor: Colors.transparent,
+                              child: PageMinisterioAdminNovoWidget(),
+                            );
+                          },
+                        );
                       },
                       child: Container(
                         height: 0.0,

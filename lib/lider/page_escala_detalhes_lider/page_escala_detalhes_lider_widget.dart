@@ -248,7 +248,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                               children: [
                                 // Header
                                 Padding(
-                                  padding: EdgeInsets.all(32.0),
+                                  padding: EdgeInsets.all(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -277,11 +277,11 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                               child: Icon(
                                                 Icons.arrow_back_rounded,
                                                 color: Colors.white,
-                                                size: 24.0,
+                                                size: 20.0,
                                               ),
                                             ),
                                           ),
-                                          SizedBox(width: 16.0),
+                                          SizedBox(width: 12.0),
                                           Expanded(
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,16 +290,18 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                                   _escala?.nomeEscala ?? 'Escala',
                                                   style: GoogleFonts.poppins(
                                                     color: Colors.white,
-                                                    fontSize: 28.0,
+                                                    fontSize: responsiveVisibility(context: context, phone: false) ? 28.0 : 18.0,
                                                     fontWeight: FontWeight.bold,
                                                   ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                                 SizedBox(height: 4.0),
                                                 Text(
                                                   _ministerio?.nomeMinisterio ?? 'Ministério',
                                                   style: GoogleFonts.inter(
                                                     color: Color(0xFF39D2C0),
-                                                    fontSize: 14.0,
+                                                    fontSize: responsiveVisibility(context: context, phone: false) ? 14.0 : 12.0,
                                                     fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
@@ -314,7 +316,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                             desktop: false,
                                           ))
                                             Padding(
-                                              padding: EdgeInsets.only(right: 12.0),
+                                              padding: EdgeInsets.only(right: 8.0),
                                               child: InkWell(
                                                 onTap: () async {
                                                   await showDialog(
@@ -356,7 +358,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                               child: Icon(
                                                 Icons.edit_rounded,
                                                 color: FlutterFlowTheme.of(context).primary,
-                                                size: 24.0,
+                                                size: 20.0,
                                               ),
                                             ),
                                           ),
@@ -374,7 +376,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                               child: Icon(
                                                 Icons.delete_rounded,
                                                 color: Colors.red,
-                                                size: 24.0,
+                                                size: 20.0,
                                               ),
                                             ),
                                           ),
@@ -386,47 +388,82 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
 
                                 // Cards de informações
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: _buildInfoCard(
-                                          icon: Icons.calendar_today_rounded,
-                                          title: 'Data',
-                                          value: _escala?.dataHoraEscala != null
-                                              ? DateFormat('dd/MM/yyyy').format(_escala!.dataHoraEscala!)
-                                              : 'Não definida',
-                                          color: Color(0xFF2196F3),
+                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  child: responsiveVisibility(context: context, phone: false)
+                                      ? Row(
+                                          children: [
+                                            Expanded(
+                                              child: _buildInfoCard(
+                                                icon: Icons.calendar_today_rounded,
+                                                title: 'Data',
+                                                value: _escala?.dataHoraEscala != null
+                                                    ? DateFormat('dd/MM/yyyy').format(_escala!.dataHoraEscala!)
+                                                    : 'Não definida',
+                                                color: Color(0xFF2196F3),
+                                              ),
+                                            ),
+                                            SizedBox(width: 16.0),
+                                            Expanded(
+                                              child: _buildInfoCard(
+                                                icon: Icons.access_time_rounded,
+                                                title: 'Horário',
+                                                value: _escala?.dataHoraEscala != null
+                                                    ? DateFormat('HH:mm').format(_escala!.dataHoraEscala!)
+                                                    : 'Não definido',
+                                                color: Color(0xFFFF9800),
+                                              ),
+                                            ),
+                                            SizedBox(width: 16.0),
+                                            Expanded(
+                                              child: _buildInfoCard(
+                                                icon: Icons.people_rounded,
+                                                title: 'Participantes',
+                                                value: _membrosEscala.length.toString(),
+                                                color: Color(0xFF9C27B0),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : Row(
+                                          children: [
+                                            Expanded(
+                                              child: _buildInfoCardCompact(
+                                                icon: Icons.calendar_today_rounded,
+                                                title: 'Data',
+                                                value: _escala?.dataHoraEscala != null
+                                                    ? DateFormat('dd/MM/yyyy').format(_escala!.dataHoraEscala!)
+                                                    : 'N/A',
+                                                color: Color(0xFF2196F3),
+                                              ),
+                                            ),
+                                            SizedBox(width: 8.0),
+                                            Expanded(
+                                              child: _buildInfoCardCompact(
+                                                icon: Icons.access_time_rounded,
+                                                title: 'Horário',
+                                                value: _escala?.dataHoraEscala != null
+                                                    ? DateFormat('HH:mm').format(_escala!.dataHoraEscala!)
+                                                    : 'N/A',
+                                                color: Color(0xFFFF9800),
+                                              ),
+                                            ),
+                                            SizedBox(width: 8.0),
+                                            Expanded(
+                                              child: _buildInfoCardCompact(
+                                                icon: Icons.people_rounded,
+                                                title: 'Participantes',
+                                                value: _membrosEscala.length.toString(),
+                                                color: Color(0xFF9C27B0),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      SizedBox(width: 16.0),
-                                      Expanded(
-                                        child: _buildInfoCard(
-                                          icon: Icons.access_time_rounded,
-                                          title: 'Horário',
-                                          value: _escala?.dataHoraEscala != null
-                                              ? DateFormat('HH:mm').format(_escala!.dataHoraEscala!)
-                                              : 'Não definido',
-                                          color: Color(0xFFFF9800),
-                                        ),
-                                      ),
-                                      SizedBox(width: 16.0),
-                                      Expanded(
-                                        child: _buildInfoCard(
-                                          icon: Icons.people_rounded,
-                                          title: 'Participantes',
-                                          value: _membrosEscala.length.toString(),
-                                          color: Color(0xFF9C27B0),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
                                 ),
 
                                 // Descrição
                                 if (_escala?.descricao != null && _escala!.descricao!.isNotEmpty)
                                   Padding(
-                                    padding: EdgeInsets.fromLTRB(32.0, 24.0, 32.0, 0.0),
+                                    padding: EdgeInsets.fromLTRB(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0, responsiveVisibility(context: context, phone: false) ? 24.0 : 16.0, responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0, 0.0),
                                     child: Container(
                                       width: double.infinity,
                                       padding: EdgeInsets.all(20.0),
@@ -471,7 +508,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                 // Seção de Arquivos
                                 if (_arquivos.isNotEmpty)
                                   Padding(
-                                    padding: EdgeInsets.fromLTRB(32.0, 24.0, 32.0, 0.0),
+                                    padding: EdgeInsets.fromLTRB(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0, responsiveVisibility(context: context, phone: false) ? 24.0 : 16.0, responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0, 0.0),
                                     child: Container(
                                       width: double.infinity,
                                       padding: EdgeInsets.all(20.0),
@@ -564,7 +601,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                 // Seção de Repertório (apenas para ministério de louvor - id 1)
                                 if (widget.idministerio == 1)
                                   Padding(
-                                    padding: EdgeInsets.fromLTRB(32.0, 24.0, 32.0, 0.0),
+                                    padding: EdgeInsets.fromLTRB(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0, responsiveVisibility(context: context, phone: false) ? 24.0 : 16.0, responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0, 0.0),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -816,11 +853,11 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                     ),
                                   ),
 
-                                SizedBox(height: 32.0),
+                                SizedBox(height: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
 
                                 // Seção de participantes
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
@@ -873,7 +910,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
 
                                 // Campo de busca
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
                                   child: TextField(
                                     controller: _model.textController,
                                     focusNode: _model.textFieldFocusNode,
@@ -915,7 +952,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
 
                                 // Lista de participantes
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
                                   child: Column(
                                     children: [
                                       if (_membrosFiltrados.isEmpty)
@@ -1029,6 +1066,61 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
               fontSize: 18.0,
               fontWeight: FontWeight.w600,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCardCompact({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            child: Icon(
+              icon,
+              size: 20.0,
+              color: color,
+            ),
+          ),
+          SizedBox(height: 8.0),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: Color(0xFF999999),
+              fontSize: 11.0,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 4.0),
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 14.0,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
           ),
         ],
       ),

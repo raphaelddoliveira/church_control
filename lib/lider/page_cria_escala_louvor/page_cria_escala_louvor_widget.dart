@@ -1083,22 +1083,22 @@ class _PageCriaEscalaLouvorWidgetState extends State<PageCriaEscalaLouvorWidget>
                               children: [
                                 // Header
                                 Padding(
-                                  padding: EdgeInsets.all(32.0),
+                                  padding: EdgeInsets.all(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
                                   child: Row(
                                     children: [
                                       FlutterFlowIconButton(
                                         borderColor: Colors.transparent,
                                         borderRadius: 12.0,
-                                        buttonSize: 48.0,
+                                        buttonSize: 40.0,
                                         fillColor: Color(0xFF2A2A2A),
                                         icon: Icon(
                                           Icons.arrow_back_rounded,
                                           color: Colors.white,
-                                          size: 24.0,
+                                          size: 20.0,
                                         ),
                                         onPressed: () => context.safePop(),
                                       ),
-                                      SizedBox(width: 16.0),
+                                      SizedBox(width: 12.0),
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1108,15 +1108,19 @@ class _PageCriaEscalaLouvorWidgetState extends State<PageCriaEscalaLouvorWidget>
                                                 Icon(
                                                   Icons.music_note_rounded,
                                                   color: FlutterFlowTheme.of(context).primary,
-                                                  size: 28.0,
+                                                  size: responsiveVisibility(context: context, phone: false) ? 28.0 : 20.0,
                                                 ),
-                                                SizedBox(width: 12.0),
-                                                Text(
-                                                  'Nova Escala de Louvor',
-                                                  style: GoogleFonts.poppins(
-                                                    color: Colors.white,
-                                                    fontSize: 28.0,
-                                                    fontWeight: FontWeight.bold,
+                                                SizedBox(width: 8.0),
+                                                Expanded(
+                                                  child: Text(
+                                                    responsiveVisibility(context: context, phone: false) ? 'Nova Escala de Louvor' : 'Nova Escala',
+                                                    style: GoogleFonts.poppins(
+                                                      color: Colors.white,
+                                                      fontSize: responsiveVisibility(context: context, phone: false) ? 28.0 : 18.0,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
                                                   ),
                                                 ),
                                               ],
@@ -1126,7 +1130,7 @@ class _PageCriaEscalaLouvorWidgetState extends State<PageCriaEscalaLouvorWidget>
                                               _ministerio?.nomeMinisterio ?? 'Ministerio de Louvor',
                                               style: GoogleFonts.inter(
                                                 color: Color(0xFF999999),
-                                                fontSize: 16.0,
+                                                fontSize: responsiveVisibility(context: context, phone: false) ? 16.0 : 12.0,
                                               ),
                                             ),
                                           ],
@@ -1140,7 +1144,7 @@ class _PageCriaEscalaLouvorWidgetState extends State<PageCriaEscalaLouvorWidget>
                                         desktop: false,
                                       ))
                                         Padding(
-                                          padding: EdgeInsets.only(left: 12.0),
+                                          padding: EdgeInsets.only(left: 8.0),
                                           child: InkWell(
                                             onTap: () async {
                                               await showDialog(
@@ -1175,7 +1179,7 @@ class _PageCriaEscalaLouvorWidgetState extends State<PageCriaEscalaLouvorWidget>
 
                                 // Formulario
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [

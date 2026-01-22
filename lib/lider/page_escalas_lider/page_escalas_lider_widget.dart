@@ -193,7 +193,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                               children: [
                                 // Header
                                 Padding(
-                                  padding: EdgeInsets.all(32.0),
+                                  padding: EdgeInsets.all(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -205,20 +205,19 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  'Escalas',
+                                                  _ministerio?.nomeMinisterio ?? 'Ministério',
                                                   style: GoogleFonts.poppins(
                                                     color: Colors.white,
-                                                    fontSize: 32.0,
+                                                    fontSize: responsiveVisibility(context: context, phone: false) ? 28.0 : 20.0,
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
                                                 SizedBox(height: 4.0),
                                                 Text(
-                                                  _ministerio?.nomeMinisterio ?? 'Ministério',
+                                                  'Gerencie suas escalas e participantes',
                                                   style: GoogleFonts.inter(
-                                                    color: Color(0xFF39D2C0),
-                                                    fontSize: 16.0,
-                                                    fontWeight: FontWeight.w500,
+                                                    color: Color(0xFF999999),
+                                                    fontSize: responsiveVisibility(context: context, phone: false) ? 14.0 : 12.0,
                                                   ),
                                                 ),
                                               ],
@@ -234,7 +233,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                                                 desktop: false,
                                               ))
                                                 Padding(
-                                                  padding: EdgeInsets.only(right: 12.0),
+                                                  padding: EdgeInsets.only(right: 8.0),
                                                   child: InkWell(
                                                     onTap: () async {
                                                       await showDialog(
@@ -281,7 +280,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                                                 borderRadius: BorderRadius.circular(12.0),
                                                 child: Container(
                                                   padding: EdgeInsets.symmetric(
-                                                    horizontal: 20.0,
+                                                    horizontal: responsiveVisibility(context: context, phone: false) ? 20.0 : 12.0,
                                                     vertical: 12.0,
                                                   ),
                                                   decoration: BoxDecoration(
@@ -296,15 +295,17 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                                                         color: Colors.white,
                                                         size: 20.0,
                                                       ),
-                                                      SizedBox(width: 8.0),
-                                                      Text(
-                                                        'Nova Escala',
-                                                        style: GoogleFonts.inter(
-                                                          color: Colors.white,
-                                                          fontSize: 14.0,
-                                                          fontWeight: FontWeight.w600,
+                                                      if (responsiveVisibility(context: context, phone: false)) ...[
+                                                        SizedBox(width: 8.0),
+                                                        Text(
+                                                          'Nova Escala',
+                                                          style: GoogleFonts.inter(
+                                                            color: Colors.white,
+                                                            fontSize: 14.0,
+                                                            fontWeight: FontWeight.w600,
+                                                          ),
                                                         ),
-                                                      ),
+                                                      ],
                                                     ],
                                                   ),
                                                 ),
@@ -319,60 +320,85 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
 
                                 // Cards de estatísticas
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: _buildStatCard(
-                                          icon: Icons.event_rounded,
-                                          title: 'Total de Escalas',
-                                          value: _escalas.length.toString(),
-                                          color: Color(0xFF2196F3),
+                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  child: responsiveVisibility(context: context, phone: false)
+                                      ? Row(
+                                          children: [
+                                            Expanded(
+                                              child: _buildStatCard(
+                                                icon: Icons.event_rounded,
+                                                title: 'Escalas',
+                                                value: _escalas.length.toString(),
+                                                color: Color(0xFF2196F3),
+                                              ),
+                                            ),
+                                            SizedBox(width: 24.0),
+                                            Expanded(
+                                              child: _buildStatCard(
+                                                icon: Icons.people_rounded,
+                                                title: 'Membros',
+                                                value: _participacoes.length.toString(),
+                                                color: Color(0xFF00BFA5),
+                                              ),
+                                            ),
+                                            SizedBox(width: 24.0),
+                                            Expanded(
+                                              child: _buildStatCard(
+                                                icon: Icons.check_circle_rounded,
+                                                title: 'Participações',
+                                                value: _participacoes.fold<int>(0, (sum, p) => sum + (p.qtdParticipacoes ?? 0)).toString(),
+                                                color: Color(0xFFFF9800),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : Row(
+                                          children: [
+                                            Expanded(
+                                              child: _buildStatCardCompact(
+                                                icon: Icons.event_rounded,
+                                                title: 'Escalas',
+                                                value: _escalas.length.toString(),
+                                                color: Color(0xFF2196F3),
+                                              ),
+                                            ),
+                                            SizedBox(width: 8.0),
+                                            Expanded(
+                                              child: _buildStatCardCompact(
+                                                icon: Icons.people_rounded,
+                                                title: 'Membros',
+                                                value: _participacoes.length.toString(),
+                                                color: Color(0xFF00BFA5),
+                                              ),
+                                            ),
+                                            SizedBox(width: 8.0),
+                                            Expanded(
+                                              child: _buildStatCardCompact(
+                                                icon: Icons.check_circle_rounded,
+                                                title: 'Participações',
+                                                value: _participacoes.fold<int>(0, (sum, p) => sum + (p.qtdParticipacoes ?? 0)).toString(),
+                                                color: Color(0xFFFF9800),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      SizedBox(width: 24.0),
-                                      Expanded(
-                                        child: _buildStatCard(
-                                          icon: Icons.upcoming_rounded,
-                                          title: 'Próximas',
-                                          value: _escalas.where((e) =>
-                                            e.dataHoraEscala != null &&
-                                            e.dataHoraEscala!.isAfter(DateTime.now())
-                                          ).length.toString(),
-                                          color: Color(0xFFFF9800),
-                                        ),
-                                      ),
-                                      SizedBox(width: 24.0),
-                                      Expanded(
-                                        child: _buildStatCard(
-                                          icon: Icons.history_rounded,
-                                          title: 'Realizadas',
-                                          value: _escalas.where((e) =>
-                                            e.dataHoraEscala != null &&
-                                            e.dataHoraEscala!.isBefore(DateTime.now())
-                                          ).length.toString(),
-                                          color: Color(0xFF9C27B0),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
                                 ),
 
-                                SizedBox(height: 32.0),
+                                SizedBox(height: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
 
                                 // Card de Histórico de Participações
                                 if (_participacoes.isNotEmpty)
                                   Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                    padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
                                     child: _buildParticipacaoCard(),
                                   ),
 
                                 if (_participacoes.isNotEmpty)
-                                  SizedBox(height: 32.0),
+                                  SizedBox(height: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
 
                                 // Campo de busca
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
                                   child: TextField(
                                     controller: _model.textController,
                                     focusNode: _model.textFieldFocusNode,
@@ -423,11 +449,11 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                                   ),
                                 ),
 
-                                SizedBox(height: 24.0),
+                                SizedBox(height: responsiveVisibility(context: context, phone: false) ? 24.0 : 16.0),
 
                                 // Lista de escalas
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -743,6 +769,60 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
               fontSize: 32.0,
               fontWeight: FontWeight.bold,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCardCompact({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            child: Icon(
+              icon,
+              size: 20.0,
+              color: color,
+            ),
+          ),
+          SizedBox(height: 8.0),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: Color(0xFF999999),
+              fontSize: 11.0,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 4.0),
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 20.0,
+              fontWeight: FontWeight.bold,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

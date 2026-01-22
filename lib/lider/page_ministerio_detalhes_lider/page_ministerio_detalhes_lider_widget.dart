@@ -418,30 +418,32 @@ class _PageMinisterioDetalhesLiderWidgetState
                               children: [
                                 // Header
                                 Padding(
-                                  padding: EdgeInsets.all(32.0),
+                                  padding: EdgeInsets.all(responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            _ministerio?.nomeMinisterio ?? 'Ministério',
-                                            style: GoogleFonts.poppins(
-                                              color: Colors.white,
-                                              fontSize: 28.0,
-                                              fontWeight: FontWeight.bold,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              _ministerio?.nomeMinisterio ?? 'Ministério',
+                                              style: GoogleFonts.poppins(
+                                                color: Colors.white,
+                                                fontSize: responsiveVisibility(context: context, phone: false) ? 28.0 : 20.0,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
-                                          ),
-                                          SizedBox(height: 4.0),
-                                          Text(
-                                            'Detalhes do ministério',
-                                            style: GoogleFonts.inter(
-                                              color: Color(0xFF999999),
-                                              fontSize: 14.0,
+                                            SizedBox(height: 4.0),
+                                            Text(
+                                              'Detalhes do ministério',
+                                              style: GoogleFonts.inter(
+                                                color: Color(0xFF999999),
+                                                fontSize: 14.0,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                       Row(
                                         children: [
@@ -517,44 +519,79 @@ class _PageMinisterioDetalhesLiderWidgetState
 
                                 // Cards de estatísticas
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: _buildStatCard(
-                                          icon: Icons.people_rounded,
-                                          title: 'Participantes',
-                                          value: _membrosMinisterio.length.toString(),
-                                          color: Color(0xFF2196F3),
+                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
+                                  child: responsiveVisibility(context: context, phone: false)
+                                      ? Row(
+                                          children: [
+                                            Expanded(
+                                              child: _buildStatCard(
+                                                icon: Icons.people_rounded,
+                                                title: 'Participantes',
+                                                value: _membrosMinisterio.length.toString(),
+                                                color: Color(0xFF2196F3),
+                                              ),
+                                            ),
+                                            SizedBox(width: 24.0),
+                                            Expanded(
+                                              child: _buildStatCard(
+                                                icon: Icons.person_rounded,
+                                                title: 'Líder',
+                                                value: _lider?.nomeMembro ?? 'Não definido',
+                                                color: Color(0xFFFF9800),
+                                                isText: true,
+                                              ),
+                                            ),
+                                            SizedBox(width: 24.0),
+                                            Expanded(
+                                              child: _buildStatCard(
+                                                icon: Icons.calendar_today_rounded,
+                                                title: 'Criado em',
+                                                value: _ministerio?.criadoEm != null
+                                                    ? DateFormat('dd/MM/yyyy').format(_ministerio!.criadoEm!)
+                                                    : 'N/A',
+                                                color: Color(0xFF9C27B0),
+                                                isText: true,
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : Row(
+                                          children: [
+                                            Expanded(
+                                              child: _buildStatCardCompact(
+                                                icon: Icons.people_rounded,
+                                                title: 'Participantes',
+                                                value: _membrosMinisterio.length.toString(),
+                                                color: Color(0xFF2196F3),
+                                              ),
+                                            ),
+                                            SizedBox(width: 8.0),
+                                            Expanded(
+                                              child: _buildStatCardCompact(
+                                                icon: Icons.person_rounded,
+                                                title: 'Líder',
+                                                value: _lider?.nomeMembro ?? 'N/A',
+                                                color: Color(0xFFFF9800),
+                                                isText: true,
+                                              ),
+                                            ),
+                                            SizedBox(width: 8.0),
+                                            Expanded(
+                                              child: _buildStatCardCompact(
+                                                icon: Icons.calendar_today_rounded,
+                                                title: 'Criado em',
+                                                value: _ministerio?.criadoEm != null
+                                                    ? DateFormat('dd/MM/yy').format(_ministerio!.criadoEm!)
+                                                    : 'N/A',
+                                                color: Color(0xFF9C27B0),
+                                                isText: true,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      SizedBox(width: 24.0),
-                                      Expanded(
-                                        child: _buildStatCard(
-                                          icon: Icons.person_rounded,
-                                          title: 'Líder',
-                                          value: _lider?.nomeMembro ?? 'Não definido',
-                                          color: Color(0xFFFF9800),
-                                          isText: true,
-                                        ),
-                                      ),
-                                      SizedBox(width: 24.0),
-                                      Expanded(
-                                        child: _buildStatCard(
-                                          icon: Icons.calendar_today_rounded,
-                                          title: 'Criado em',
-                                          value: _ministerio?.criadoEm != null
-                                              ? DateFormat('dd/MM/yyyy').format(_ministerio!.criadoEm!)
-                                              : 'N/A',
-                                          color: Color(0xFF9C27B0),
-                                          isText: true,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
                                 ),
 
-                                SizedBox(height: 32.0),
+                                SizedBox(height: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
 
                                 // Botão mobile para adicionar participante
                                 if (responsiveVisibility(
@@ -564,7 +601,7 @@ class _PageMinisterioDetalhesLiderWidgetState
                                   desktop: false,
                                 ))
                                   Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                    padding: EdgeInsets.symmetric(horizontal: 16.0),
                                     child: SizedBox(
                                       width: double.infinity,
                                       child: FFButtonWidget(
@@ -596,11 +633,11 @@ class _PageMinisterioDetalhesLiderWidgetState
                                   tabletLandscape: false,
                                   desktop: false,
                                 ))
-                                  SizedBox(height: 24.0),
+                                  SizedBox(height: 16.0),
 
                                 // Campo de busca
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
                                   child: TextField(
                                     controller: _searchController,
                                     onChanged: (value) {
@@ -650,11 +687,11 @@ class _PageMinisterioDetalhesLiderWidgetState
                                   ),
                                 ),
 
-                                SizedBox(height: 24.0),
+                                SizedBox(height: responsiveVisibility(context: context, phone: false) ? 24.0 : 16.0),
 
                                 // Lista de membros
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 32.0),
+                                  padding: EdgeInsets.symmetric(horizontal: responsiveVisibility(context: context, phone: false) ? 32.0 : 16.0),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -801,6 +838,62 @@ class _PageMinisterioDetalhesLiderWidgetState
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCardCompact({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+    bool isText = false,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            child: Icon(
+              icon,
+              size: 20.0,
+              color: color,
+            ),
+          ),
+          SizedBox(height: 8.0),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: Color(0xFF999999),
+              fontSize: 11.0,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 4.0),
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: isText ? 12.0 : 20.0,
+              fontWeight: FontWeight.bold,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
           ),
         ],
       ),

@@ -41,3 +41,4 @@ export 'tables/membros_celula.dart';
 export 'tables/musicas.dart';
 export 'tables/escala_musicas.dart';
 export 'tables/funcoes_louvor.dart';
+export 'tables/devocional.dart';

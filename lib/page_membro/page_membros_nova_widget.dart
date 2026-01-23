@@ -1,6 +1,7 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
 import '/components/meu_perfil_widget.dart';
+import '/page_membro/page_devocional_membro_leitura/page_devocional_membro_leitura_widget.dart';
 import '/flutter_flow/flutter_flow_choice_chips.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -23,7 +24,7 @@ class PageMembrosNovaWidget extends StatefulWidget {
 class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
   late PageMembrosNovaModel _model;
   final scaffoldKey = GlobalKey<ScaffoldState>();
-  int _paginaAtual = 0; // 0 = Feed, 1 = Escalas
+  int _paginaAtual = 0; // 0 = Feed, 1 = Devocionais, 2 = Escalas
 
   @override
   void initState() {
@@ -547,7 +548,9 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                         );
                       },
                     )
-                    : _buildTelaEscalas(membroAtual),
+                    : _paginaAtual == 1
+                      ? _buildTelaDevocionais()
+                      : _buildTelaEscalas(membroAtual),
                   ),
                 ],
               ),
@@ -555,9 +558,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
             bottomNavigationBar: FutureBuilder<bool>(
               future: _verificarSeEhMembroMinisterio(membroAtual?.idMembro),
               builder: (context, snapshotMinisterio) {
-                if (!snapshotMinisterio.hasData || !snapshotMinisterio.data!) {
-                  return SizedBox.shrink();
-                }
+                final ehMembroMinisterio = snapshotMinisterio.data ?? false;
 
                 return FutureBuilder<bool>(
                   future: _temEscalasPendentes(membroAtual?.idMembro),
@@ -586,11 +587,17 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                               index: 0,
                             ),
                             _buildNavItem(
-                              icon: Icons.calendar_today_rounded,
-                              label: 'Escalas',
+                              icon: Icons.menu_book_rounded,
+                              label: 'Devocionais',
                               index: 1,
-                              showBadge: temPendentes,
                             ),
+                            if (ehMembroMinisterio)
+                              _buildNavItem(
+                                icon: Icons.calendar_today_rounded,
+                                label: 'Escalas',
+                                index: 2,
+                                showBadge: temPendentes,
+                              ),
                           ],
                         ),
                       ),
@@ -1371,6 +1378,216 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildTelaDevocionais() {
+    return FutureBuilder<List<DevocionalRow>>(
+      future: DevocionalTable().queryRows(
+        queryFn: (q) => q.eqOrNull('status', 'publicado').order('created_at', ascending: false),
+      ),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(
+                FlutterFlowTheme.of(context).primary,
+              ),
+            ),
+          );
+        }
+
+        final devocionais = snapshot.data!;
+
+        if (devocionais.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.menu_book_rounded,
+                  size: 64.0,
+                  color: Color(0xFF666666),
+                ),
+                SizedBox(height: 16.0),
+                Text(
+                  'Nenhum devocional disponível',
+                  style: GoogleFonts.inter(
+                    color: Color(0xFF999999),
+                    fontSize: 16.0,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+              child: Text(
+                'Devocionais',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.all(16.0),
+                itemCount: devocionais.length,
+                itemBuilder: (context, index) {
+                  final devocional = devocionais[index];
+
+                  return FutureBuilder<List<MembrosRow>>(
+                    future: devocional.criadoPor != null
+                        ? MembrosTable().queryRows(
+                            queryFn: (q) => q.eqOrNull('id_membro', devocional.criadoPor),
+                          )
+                        : Future.value([]),
+                    builder: (context, snapshotAutor) {
+                      final nomeAutor = snapshotAutor.hasData && snapshotAutor.data!.isNotEmpty
+                          ? snapshotAutor.data!.first.nomeMembro
+                          : 'Autor desconhecido';
+
+                      return InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PageDevocionalMembroLeituraWidget(
+                                idDevocional: devocional.id,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          margin: EdgeInsets.only(bottom: 12.0),
+                          padding: EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF1A1A1A),
+                            borderRadius: BorderRadius.circular(12.0),
+                            border: Border.all(
+                              color: Color(0xFF2A2A2A),
+                              width: 1.0,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              // Imagem quadrada à esquerda
+                              Container(
+                                width: 70.0,
+                                height: 70.0,
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF2A2A2A),
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  child: devocional.imagem != null && devocional.imagem!.isNotEmpty
+                                      ? Image.network(
+                                          devocional.imagem!,
+                                          width: 70.0,
+                                          height: 70.0,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Center(
+                                              child: Icon(
+                                                Icons.menu_book_rounded,
+                                                color: Color(0xFF666666),
+                                                size: 28.0,
+                                              ),
+                                            );
+                                          },
+                                        )
+                                      : Center(
+                                          child: Icon(
+                                            Icons.menu_book_rounded,
+                                            color: Color(0xFF666666),
+                                            size: 28.0,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                              SizedBox(width: 12.0),
+                              // Informações à direita
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      devocional.titulo ?? 'Sem título',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontSize: 14.0,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    SizedBox(height: 6.0),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.person_outline_rounded,
+                                          color: Color(0xFF999999),
+                                          size: 14.0,
+                                        ),
+                                        SizedBox(width: 4.0),
+                                        Flexible(
+                                          child: Text(
+                                            nomeAutor,
+                                            style: GoogleFonts.inter(
+                                              color: Color(0xFF999999),
+                                              fontSize: 12.0,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 4.0),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today_rounded,
+                                          color: Color(0xFF999999),
+                                          size: 12.0,
+                                        ),
+                                        SizedBox(width: 4.0),
+                                        Text(
+                                          dateTimeFormat('dd/MM/yyyy', devocional.createdAt),
+                                          style: GoogleFonts.inter(
+                                            color: Color(0xFF999999),
+                                            fontSize: 12.0,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                color: Color(0xFF666666),
+                                size: 22.0,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

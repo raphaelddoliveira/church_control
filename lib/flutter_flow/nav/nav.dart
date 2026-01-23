@@ -249,6 +249,29 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           ),
         ),
         FFRoute(
+          name: PageDevocionaisPastorWidget.routeName,
+          path: PageDevocionaisPastorWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageDevocionaisPastorWidget(),
+        ),
+        FFRoute(
+          name: PageDevocionalPastorNovoWidget.routeName,
+          path: PageDevocionalPastorNovoWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageDevocionalPastorNovoWidget(),
+        ),
+        FFRoute(
+          name: PageDevocionalPastorEditarWidget.routeName,
+          path: PageDevocionalPastorEditarWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageDevocionalPastorEditarWidget(
+            iddevocional: params.getParam(
+              'iddevocional',
+              ParamType.int,
+            ),
+          ),
+        ),
+        FFRoute(
           name: PageMinisteriosLiderWidget.routeName,
           path: PageMinisteriosLiderWidget.routePath,
           requireAuth: true,
@@ -471,7 +494,15 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => PageCelulaDetalhesPastorWidget(
             celulaId: params.getParam('celulaId', ParamType.int)!,
           ),
-        )
+        ),
+        FFRoute(
+          name: PageDevocionalMembroLeituraWidget.routeName,
+          path: PageDevocionalMembroLeituraWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageDevocionalMembroLeituraWidget(
+            idDevocional: params.getParam('idDevocional', ParamType.int),
+          ),
+        ),
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );
 

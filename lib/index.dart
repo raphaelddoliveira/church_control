@@ -87,3 +87,11 @@ export '/pastor/page_celulas_pastor/page_celulas_pastor_widget.dart'
     show PageCelulasPastorWidget;
 export '/pastor/page_celula_detalhes_pastor/page_celula_detalhes_pastor_widget.dart'
     show PageCelulaDetalhesPastorWidget;
+export '/pastor/page_devocionais_pastor/page_devocionais_pastor_widget.dart'
+    show PageDevocionaisPastorWidget;
+export '/pastor/page_devocional_pastor_novo/page_devocional_pastor_novo_widget.dart'
+    show PageDevocionalPastorNovoWidget;
+export '/pastor/page_devocional_pastor_editar/page_devocional_pastor_editar_widget.dart'
+    show PageDevocionalPastorEditarWidget;
+export '/page_membro/page_devocional_membro_leitura/page_devocional_membro_leitura_widget.dart'
+    show PageDevocionalMembroLeituraWidget;

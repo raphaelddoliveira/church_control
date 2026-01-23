@@ -609,7 +609,7 @@ class _HomepagePastorWidgetState extends State<HomepagePastorWidget> {
           ),
           const SizedBox(height: 24.0),
           SizedBox(
-            height: 200.0,
+            height: 240.0,
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
@@ -655,11 +655,15 @@ class _HomepagePastorWidgetState extends State<HomepagePastorWidget> {
                       showTitles: true,
                       reservedSize: 40,
                       getTitlesWidget: (value, meta) {
-                        return Text(
-                          value.toInt().toString(),
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF666666),
-                            fontSize: 12.0,
+                        if (value == meta.max) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Text(
+                            value.toInt().toString(),
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFF666666),
+                              fontSize: 12.0,
+                            ),
                           ),
                         );
                       },
@@ -671,7 +675,7 @@ class _HomepagePastorWidgetState extends State<HomepagePastorWidget> {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: maxValue > 0 ? (maxValue / 4).ceilToDouble().clamp(1, double.infinity) : 1,
+                  horizontalInterval: maxValue > 0 ? (maxValue / 3).ceilToDouble().clamp(1, double.infinity) : 1,
                   getDrawingHorizontalLine: (value) => const FlLine(
                     color: Color(0xFF404040),
                     strokeWidth: 1,

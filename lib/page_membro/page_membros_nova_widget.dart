@@ -212,7 +212,8 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                             ),
                             Row(
                               children: [
-                                // Dropdown de Categorias
+                                // Dropdown de Categorias (só aparece no Feed)
+                                if (_paginaAtual == 0)
                                 PopupMenuButton<String>(
                                   initialValue: _model.categoriaValue ?? 'Todos',
                                   onSelected: (String value) {
@@ -268,6 +269,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                                     _buildMenuItem('Outro'),
                                   ],
                                 ),
+                                if (_paginaAtual == 0)
                                 SizedBox(width: 12.0),
                                 Builder(
                                   builder: (context) => InkWell(
@@ -1390,9 +1392,10 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
   }
 
   Widget _buildTelaDevocionais() {
+    final cincoDiasAtras = DateTime.now().subtract(const Duration(days: 5)).toUtc().toIso8601String();
     return FutureBuilder<List<DevocionalRow>>(
       future: DevocionalTable().queryRows(
-        queryFn: (q) => q.eqOrNull('status', 'publicado').order('created_at', ascending: false),
+        queryFn: (q) => q.eqOrNull('status', 'publicado').gte('created_at', cincoDiasAtras).order('created_at', ascending: false),
       ),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {

@@ -201,12 +201,38 @@ class _PageMembrosAdminDetalhesWidgetState
             },
           );
         } else {
-          setState(() => _isSaving = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro ao criar acesso para o membro'),
-              backgroundColor: Colors.red,
+          // Usuario ja existe no auth - apenas atualizar nivel de acesso
+          await MembrosTable().update(
+            data: {
+              'id_nivel_acesso': _selectedNivelAcesso,
+              'pode_acessar_area_membro': true,
+            },
+            matchingRows: (rows) => rows.eqOrNull(
+              'id_membro',
+              widget.idmembro,
             ),
+          );
+
+          setState(() => _isSaving = false);
+
+          await showDialog(
+            context: context,
+            builder: (alertDialogContext) {
+              return AlertDialog(
+                backgroundColor: Color(0xFF2A2A2A),
+                title: Text('Sucesso!', style: TextStyle(color: Colors.white)),
+                content: Text(
+                  'Nivel de acesso atualizado com sucesso.',
+                  style: TextStyle(color: Color(0xFF999999)),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(alertDialogContext),
+                    child: Text('Ok', style: TextStyle(color: FlutterFlowTheme.of(context).primary)),
+                  ),
+                ],
+              );
+            },
           );
         }
       }

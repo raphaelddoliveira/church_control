@@ -28,6 +28,8 @@ class _PageMembrosAdminWidgetState extends State<PageMembrosAdminWidget> {
   bool _isLoading = true;
   int _totalAtivos = 0;
   int _totalInativos = 0;
+  int _paginaAtualMembros = 0;
+  final int _itensPorPagina = 10;
 
   @override
   void initState() {
@@ -185,7 +187,7 @@ class _PageMembrosAdminWidgetState extends State<PageMembrosAdminWidget> {
                               child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.pop(context);
-                                  setState(() {});
+                                  setState(() => _paginaAtualMembros = 0);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: FlutterFlowTheme.of(context).primary,
@@ -569,7 +571,7 @@ class _PageMembrosAdminWidgetState extends State<PageMembrosAdminWidget> {
                                           onChanged: (_) => EasyDebounce.debounce(
                                             '_model.textController',
                                             Duration(milliseconds: 300),
-                                            () => setState(() {}),
+                                            () => setState(() => _paginaAtualMembros = 0),
                                           ),
                                           decoration: InputDecoration(
                                             hintText: 'Buscar membro por nome...',
@@ -680,15 +682,63 @@ class _PageMembrosAdminWidgetState extends State<PageMembrosAdminWidget> {
                                             ),
                                           ),
                                         )
-                                      else
-                                        ListView.builder(
-                                          shrinkWrap: true,
-                                          physics: NeverScrollableScrollPhysics(),
-                                          itemCount: _membrosFiltrados.length,
-                                          itemBuilder: (context, index) {
-                                            return _buildMembroItem(_membrosFiltrados[index]);
+                                      else ...[
+                                        Builder(
+                                          builder: (context) {
+                                            final totalPaginas = (_membrosFiltrados.length / _itensPorPagina).ceil();
+                                            if (_paginaAtualMembros >= totalPaginas && totalPaginas > 0) {
+                                              _paginaAtualMembros = totalPaginas - 1;
+                                            }
+                                            final inicio = _paginaAtualMembros * _itensPorPagina;
+                                            final fim = (inicio + _itensPorPagina).clamp(0, _membrosFiltrados.length);
+                                            final membrosPaginados = _membrosFiltrados.sublist(inicio, fim);
+
+                                            return Column(
+                                              children: [
+                                                ListView.builder(
+                                                  shrinkWrap: true,
+                                                  physics: NeverScrollableScrollPhysics(),
+                                                  itemCount: membrosPaginados.length,
+                                                  itemBuilder: (context, index) {
+                                                    return _buildMembroItem(membrosPaginados[index]);
+                                                  },
+                                                ),
+                                                if (totalPaginas > 1) ...[
+                                                  SizedBox(height: 16.0),
+                                                  Row(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: List.generate(totalPaginas, (index) {
+                                                      final isAtual = index == _paginaAtualMembros;
+                                                      return GestureDetector(
+                                                        onTap: () => setState(() => _paginaAtualMembros = index),
+                                                        child: Container(
+                                                          width: 32.0,
+                                                          height: 32.0,
+                                                          margin: EdgeInsets.symmetric(horizontal: 4.0),
+                                                          decoration: BoxDecoration(
+                                                            color: isAtual ? FlutterFlowTheme.of(context).primary : Color(0xFF2A2A2A),
+                                                            borderRadius: BorderRadius.circular(8.0),
+                                                          ),
+                                                          child: Center(
+                                                            child: Text(
+                                                              '${index + 1}',
+                                                              style: GoogleFonts.inter(
+                                                                color: isAtual ? Colors.white : Color(0xFF999999),
+                                                                fontSize: 13.0,
+                                                                fontWeight: isAtual ? FontWeight.w600 : FontWeight.normal,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }),
+                                                  ),
+                                                ],
+                                              ],
+                                            );
                                           },
                                         ),
+                                      ],
                                     ],
                                   ),
                                 ),

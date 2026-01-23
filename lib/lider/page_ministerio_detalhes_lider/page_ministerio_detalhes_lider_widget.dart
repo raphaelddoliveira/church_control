@@ -36,6 +36,8 @@ class _PageMinisterioDetalhesLiderWidgetState
   List<MembrosMinisteriosRow> _membrosMinisterio = [];
   Map<String, MembrosRow> _membrosData = {};
   bool _isLoading = true;
+  int _paginaAtualMembros = 0;
+  final int _itensPorPagina = 10;
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -618,6 +620,7 @@ class _PageMinisterioDetalhesLiderWidgetState
                                     onChanged: (value) {
                                       setState(() {
                                         _searchQuery = value;
+                                        _paginaAtualMembros = 0;
                                       });
                                     },
                                     decoration: InputDecoration(
@@ -737,18 +740,66 @@ class _PageMinisterioDetalhesLiderWidgetState
                                             ),
                                           ),
                                         )
-                                      else
-                                        ListView.builder(
-                                          shrinkWrap: true,
-                                          physics: NeverScrollableScrollPhysics(),
-                                          itemCount: _membrosFiltrados.length,
-                                          itemBuilder: (context, index) {
-                                            final membroMinisterio = _membrosFiltrados[index];
-                                            final membro = _membrosData[membroMinisterio.idMembro];
+                                      else ...[
+                                        Builder(
+                                          builder: (context) {
+                                            final totalPaginas = (_membrosFiltrados.length / _itensPorPagina).ceil();
+                                            if (_paginaAtualMembros >= totalPaginas && totalPaginas > 0) {
+                                              _paginaAtualMembros = totalPaginas - 1;
+                                            }
+                                            final inicio = _paginaAtualMembros * _itensPorPagina;
+                                            final fim = (inicio + _itensPorPagina).clamp(0, _membrosFiltrados.length);
+                                            final membrosPaginados = _membrosFiltrados.sublist(inicio, fim);
 
-                                            return _buildMembroCard(membro: membro);
+                                            return Column(
+                                              children: [
+                                                ListView.builder(
+                                                  shrinkWrap: true,
+                                                  physics: NeverScrollableScrollPhysics(),
+                                                  itemCount: membrosPaginados.length,
+                                                  itemBuilder: (context, index) {
+                                                    final membroMinisterio = membrosPaginados[index];
+                                                    final membro = _membrosData[membroMinisterio.idMembro];
+
+                                                    return _buildMembroCard(membro: membro);
+                                                  },
+                                                ),
+                                                if (totalPaginas > 1) ...[
+                                                  SizedBox(height: 16.0),
+                                                  Row(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: List.generate(totalPaginas, (index) {
+                                                      final isAtual = index == _paginaAtualMembros;
+                                                      return GestureDetector(
+                                                        onTap: () => setState(() => _paginaAtualMembros = index),
+                                                        child: Container(
+                                                          width: 32.0,
+                                                          height: 32.0,
+                                                          margin: EdgeInsets.symmetric(horizontal: 4.0),
+                                                          decoration: BoxDecoration(
+                                                            color: isAtual ? FlutterFlowTheme.of(context).primary : Color(0xFF2A2A2A),
+                                                            borderRadius: BorderRadius.circular(8.0),
+                                                          ),
+                                                          child: Center(
+                                                            child: Text(
+                                                              '${index + 1}',
+                                                              style: GoogleFonts.inter(
+                                                                color: isAtual ? Colors.white : Color(0xFF999999),
+                                                                fontSize: 13.0,
+                                                                fontWeight: isAtual ? FontWeight.w600 : FontWeight.normal,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }),
+                                                  ),
+                                                ],
+                                              ],
+                                            );
                                           },
                                         ),
+                                      ],
                                     ],
                                   ),
                                 ),

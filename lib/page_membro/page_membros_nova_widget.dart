@@ -710,6 +710,14 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
       }
     }
 
+    // Filtrar somente escalas do mês corrente
+    final agora = DateTime.now();
+    escalasCompletas = escalasCompletas.where((item) {
+      final data = (item['escala'] as EscalasRow).dataHoraEscala;
+      if (data == null) return false;
+      return data.year == agora.year && data.month == agora.month;
+    }).toList();
+
     // Ordenar por data
     escalasCompletas.sort((a, b) {
       final dataA = (a['escala'] as EscalasRow).dataHoraEscala;

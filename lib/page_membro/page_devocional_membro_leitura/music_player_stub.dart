@@ -122,29 +122,103 @@ class _YouTubePlayerWidget extends StatefulWidget {
 class _YouTubePlayerWidgetState extends State<_YouTubePlayerWidget> {
   late final WebViewController _controller;
   bool _isLoading = true;
+  bool _hasError = false;
 
   @override
   void initState() {
     super.initState();
+    _initController();
+  }
+
+  void _initController() {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Color(0xFF1A1A1A))
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (String url) {
-            setState(() {
-              _isLoading = false;
-            });
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+              });
+            }
+          },
+          onWebResourceError: (WebResourceError error) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+                _hasError = true;
+              });
+            }
+          },
+          onNavigationRequest: (NavigationRequest request) {
+            // Permite apenas URLs do YouTube
+            if (request.url.contains('youtube.com') ||
+                request.url.contains('youtu.be') ||
+                request.url.contains('google.com')) {
+              return NavigationDecision.navigate;
+            }
+            return NavigationDecision.prevent;
           },
         ),
       )
       ..loadRequest(Uri.parse(
-        'https://www.youtube.com/embed/${widget.videoId}?autoplay=0&rel=0&modestbranding=1',
+        'https://www.youtube.com/embed/${widget.videoId}?autoplay=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin=https://www.youtube.com',
       ));
+  }
+
+  void _openInBrowser() {
+    launchURL('https://www.youtube.com/watch?v=${widget.videoId}');
   }
 
   @override
   Widget build(BuildContext context) {
+    // Se houver erro, mostra botão para abrir externamente
+    if (_hasError) {
+      return Container(
+        height: 200.0,
+        decoration: BoxDecoration(
+          color: Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(12.0),
+          border: Border.all(
+            color: FlutterFlowTheme.of(context).primary.withOpacity(0.3),
+            width: 1.0,
+          ),
+        ),
+        child: InkWell(
+          onTap: _openInBrowser,
+          borderRadius: BorderRadius.circular(12.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.play_circle_outline_rounded,
+                color: Color(0xFFFF0000),
+                size: 48.0,
+              ),
+              SizedBox(height: 12.0),
+              Text(
+                'Toque para assistir no YouTube',
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 14.0,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 4.0),
+              Text(
+                'O vídeo será aberto externamente',
+                style: GoogleFonts.inter(
+                  color: Color(0xFF999999),
+                  fontSize: 12.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Container(
       height: 200.0,
       decoration: BoxDecoration(
@@ -164,6 +238,26 @@ class _YouTubePlayerWidgetState extends State<_YouTubePlayerWidget> {
                   ),
                 ),
               ),
+            // Botão de abrir externamente no canto superior direito
+            Positioned(
+              top: 8.0,
+              right: 8.0,
+              child: InkWell(
+                onTap: _openInBrowser,
+                child: Container(
+                  padding: EdgeInsets.all(6.0),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(6.0),
+                  ),
+                  child: Icon(
+                    Icons.open_in_new_rounded,
+                    color: Colors.white,
+                    size: 18.0,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

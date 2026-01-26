@@ -112,6 +112,8 @@ class _LoginTesteWidgetState extends State<LoginTesteWidget> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // Espaçamento do topo
+                      SizedBox(height: 32.0),
                       // Logo e título
                       Container(
                         padding: EdgeInsets.all(20.0),

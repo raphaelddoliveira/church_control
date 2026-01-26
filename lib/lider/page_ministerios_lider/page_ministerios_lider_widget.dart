@@ -492,7 +492,6 @@ class _PageMinisteriosLiderWidgetState
                                             ),
                                         ],
                                       ),
-                                      SizedBox(height: 16.0),
 
                                       if (_escalas.isEmpty)
                                         Container(

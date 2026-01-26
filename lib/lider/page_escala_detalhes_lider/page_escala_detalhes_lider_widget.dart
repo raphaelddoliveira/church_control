@@ -41,6 +41,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
   List<Map<String, dynamic>> _musicasEscala = [];
   List<MusicasRow> _todasMusicas = [];
   bool _isLoading = true;
+  bool _modoEdicaoMusicas = false;
 
   @override
   void initState() {
@@ -639,35 +640,71 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                                 ),
                                               ],
                                             ),
-                                            InkWell(
-                                              onTap: () => _mostrarModalAdicionarMusica(context),
-                                              borderRadius: BorderRadius.circular(8.0),
-                                              child: Container(
-                                                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                                decoration: BoxDecoration(
-                                                  color: Color(0xFFFF5722),
+                                            Row(
+                                              children: [
+                                                // Botão de editar (lápis)
+                                                InkWell(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _modoEdicaoMusicas = !_modoEdicaoMusicas;
+                                                    });
+                                                  },
                                                   borderRadius: BorderRadius.circular(8.0),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Icon(Icons.add_rounded, color: Colors.white, size: 18.0),
-                                                    SizedBox(width: 6.0),
-                                                    Text(
-                                                      'Adicionar',
-                                                      style: GoogleFonts.inter(
-                                                        color: Colors.white,
-                                                        fontSize: 13.0,
-                                                        fontWeight: FontWeight.w600,
+                                                  child: Container(
+                                                    padding: EdgeInsets.all(10.0),
+                                                    decoration: BoxDecoration(
+                                                      color: _modoEdicaoMusicas
+                                                          ? Color(0xFFFF5722)
+                                                          : Color(0xFF2A2A2A),
+                                                      borderRadius: BorderRadius.circular(8.0),
+                                                      border: Border.all(
+                                                        color: _modoEdicaoMusicas
+                                                            ? Color(0xFFFF5722)
+                                                            : Color(0xFF3A3A3A),
+                                                        width: 1,
                                                       ),
                                                     ),
-                                                  ],
+                                                    child: Icon(
+                                                      Icons.edit_rounded,
+                                                      color: _modoEdicaoMusicas
+                                                          ? Colors.white
+                                                          : Color(0xFF999999),
+                                                      size: 18.0,
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
+                                                SizedBox(width: 8.0),
+                                                // Botão de adicionar
+                                                InkWell(
+                                                  onTap: () => _mostrarModalAdicionarMusica(context),
+                                                  borderRadius: BorderRadius.circular(8.0),
+                                                  child: Container(
+                                                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                                    decoration: BoxDecoration(
+                                                      color: Color(0xFFFF5722),
+                                                      borderRadius: BorderRadius.circular(8.0),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(Icons.add_rounded, color: Colors.white, size: 18.0),
+                                                        SizedBox(width: 6.0),
+                                                        Text(
+                                                          'Adicionar',
+                                                          style: GoogleFonts.inter(
+                                                            color: Colors.white,
+                                                            fontSize: 13.0,
+                                                            fontWeight: FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                        SizedBox(height: 16.0),
                                         if (_musicasEscala.isEmpty)
                                           Container(
                                             width: double.infinity,
@@ -711,26 +748,62 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                               child: Row(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  // Número ordinal
-                                                  Container(
-                                                    width: 40.0,
-                                                    height: 40.0,
-                                                    decoration: BoxDecoration(
-                                                      color: Color(0xFFD84315),
-                                                      borderRadius: BorderRadius.circular(8.0),
-                                                    ),
-                                                    child: Center(
-                                                      child: Text(
-                                                        '${index + 1}ª',
-                                                        style: GoogleFonts.inter(
-                                                          color: Colors.white,
-                                                          fontSize: 14.0,
-                                                          fontWeight: FontWeight.bold,
+                                                  // Controles de ordem (subir/descer)
+                                                  Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      // Botão subir
+                                                      InkWell(
+                                                        onTap: index > 0
+                                                            ? () => _moverMusica(index, index - 1)
+                                                            : null,
+                                                        borderRadius: BorderRadius.circular(4.0),
+                                                        child: Container(
+                                                          padding: EdgeInsets.all(4.0),
+                                                          child: Icon(
+                                                            Icons.keyboard_arrow_up_rounded,
+                                                            color: index > 0 ? Color(0xFF999999) : Color(0xFF444444),
+                                                            size: 20.0,
+                                                          ),
                                                         ),
                                                       ),
-                                                    ),
+                                                      // Número ordinal
+                                                      Container(
+                                                        width: 36.0,
+                                                        height: 36.0,
+                                                        decoration: BoxDecoration(
+                                                          color: Color(0xFFD84315),
+                                                          borderRadius: BorderRadius.circular(8.0),
+                                                        ),
+                                                        child: Center(
+                                                          child: Text(
+                                                            '${index + 1}ª',
+                                                            style: GoogleFonts.inter(
+                                                              color: Colors.white,
+                                                              fontSize: 13.0,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      // Botão descer
+                                                      InkWell(
+                                                        onTap: index < _musicasEscala.length - 1
+                                                            ? () => _moverMusica(index, index + 1)
+                                                            : null,
+                                                        borderRadius: BorderRadius.circular(4.0),
+                                                        child: Container(
+                                                          padding: EdgeInsets.all(4.0),
+                                                          child: Icon(
+                                                            Icons.keyboard_arrow_down_rounded,
+                                                            color: index < _musicasEscala.length - 1 ? Color(0xFF999999) : Color(0xFF444444),
+                                                            size: 20.0,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
-                                                  SizedBox(width: 16.0),
+                                                  SizedBox(width: 12.0),
                                                   // Informações da música
                                                   Expanded(
                                                     child: Column(
@@ -770,7 +843,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                                       Row(
                                                         mainAxisSize: MainAxisSize.min,
                                                         children: [
-                                                          // Ícone Letra (A)
+                                                          // Ícone Letra (A) - editar tom
                                                           InkWell(
                                                             onTap: () => _mostrarModalEditarTom(context, escalaMusicaRow, musica),
                                                             borderRadius: BorderRadius.circular(4.0),
@@ -832,6 +905,22 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                                             ),
                                                         ],
                                                       ),
+                                                      // Botão de remover música (só aparece no modo edição)
+                                                      if (_modoEdicaoMusicas) ...[
+                                                        SizedBox(height: 8.0),
+                                                        InkWell(
+                                                          onTap: () => _removerMusica(escalaMusicaRow),
+                                                          borderRadius: BorderRadius.circular(4.0),
+                                                          child: Container(
+                                                            padding: EdgeInsets.all(4.0),
+                                                            child: Icon(
+                                                              Icons.delete_outline_rounded,
+                                                              color: Color(0xFFFF5252),
+                                                              size: 18.0,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ],
                                                   ),
                                                 ],
@@ -895,7 +984,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                   ),
                                 ),
 
-                                SizedBox(height: 16.0),
+                                SizedBox(height: 12.0),
 
                                 // Campo de busca
                                 Padding(
@@ -937,7 +1026,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                   ),
                                 ),
 
-                                SizedBox(height: 16.0),
+                                SizedBox(height: 12.0),
 
                                 // Lista de participantes
                                 Padding(
@@ -2446,6 +2535,50 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
         );
       },
     );
+  }
+
+  Future<void> _moverMusica(int fromIndex, int toIndex) async {
+    if (fromIndex < 0 || toIndex < 0 ||
+        fromIndex >= _musicasEscala.length || toIndex >= _musicasEscala.length) {
+      return;
+    }
+
+    // Pegar os itens
+    final itemFrom = _musicasEscala[fromIndex];
+    final itemTo = _musicasEscala[toIndex];
+
+    final EscalaMusicasRow escalaFrom = itemFrom['escala_musica'];
+    final EscalaMusicasRow escalaTo = itemTo['escala_musica'];
+
+    // Trocar as ordens no banco de dados
+    final ordemFrom = escalaFrom.ordem ?? (fromIndex + 1);
+    final ordemTo = escalaTo.ordem ?? (toIndex + 1);
+
+    try {
+      // Atualizar a ordem dos dois itens
+      await EscalaMusicasTable().update(
+        data: {'ordem': ordemTo},
+        matchingRows: (rows) => rows.eq('id', escalaFrom.id),
+      );
+
+      await EscalaMusicasTable().update(
+        data: {'ordem': ordemFrom},
+        matchingRows: (rows) => rows.eq('id', escalaTo.id),
+      );
+
+      // Recarregar os dados
+      await _carregarDados();
+    } catch (e) {
+      // Em caso de erro, mostrar mensagem
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao reordenar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _removerMusica(EscalaMusicasRow escalaMusicaRow) {

@@ -450,7 +450,7 @@ class _PageEscalasLiderWidgetState extends State<PageEscalasLiderWidget> {
                                   ),
                                 ),
 
-                                SizedBox(height: !isMobile ? 24.0 : 16.0),
+                                SizedBox(height: !isMobile ? 24.0 : 12.0),
 
                                 // Lista de escalas
                                 Padding(

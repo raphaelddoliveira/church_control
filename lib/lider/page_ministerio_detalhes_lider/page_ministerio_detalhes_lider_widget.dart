@@ -708,7 +708,6 @@ class _PageMinisterioDetalhesLiderWidgetState
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 16.0),
 
                                       if (_membrosFiltrados.isEmpty)
                                         Container(

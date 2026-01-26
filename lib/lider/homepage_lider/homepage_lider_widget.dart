@@ -741,7 +741,6 @@ class _HomepageLiderWidgetState extends State<HomepageLiderWidget> {
                 ),
             ],
           ),
-          SizedBox(height: 16.0),
           if (_proximasEscalas.isEmpty)
             Container(
               width: double.infinity,

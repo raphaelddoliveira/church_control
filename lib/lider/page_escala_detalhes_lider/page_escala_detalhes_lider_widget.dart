@@ -222,7 +222,12 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
               // Conteúdo principal
               Expanded(
                 child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
+                  padding: EdgeInsets.fromLTRB(
+                    16.0,
+                    16.0 + (isMobile ? MediaQuery.of(context).padding.top : 0),
+                    16.0,
+                    16.0,
+                  ),
                   child: Container(
                     width: 100.0,
                     height: MediaQuery.sizeOf(context).height * 1.0,
@@ -696,34 +701,36 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                             final MusicasRow musica = item['musica'];
 
                                             return Container(
-                                              margin: EdgeInsets.only(bottom: 12.0),
+                                              margin: EdgeInsets.only(bottom: 16.0),
                                               padding: EdgeInsets.all(16.0),
                                               decoration: BoxDecoration(
-                                                color: Color(0xFF2A2A2A),
+                                                color: Color(0xFF1A1A1A),
                                                 borderRadius: BorderRadius.circular(12.0),
+                                                border: Border.all(color: Color(0xFF2A2A2A), width: 1),
                                               ),
                                               child: Row(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  // Número da ordem
+                                                  // Número ordinal
                                                   Container(
-                                                    width: 32.0,
-                                                    height: 32.0,
+                                                    width: 40.0,
+                                                    height: 40.0,
                                                     decoration: BoxDecoration(
-                                                      color: Color(0xFFFF5722).withOpacity(0.2),
+                                                      color: Color(0xFFD84315),
                                                       borderRadius: BorderRadius.circular(8.0),
                                                     ),
                                                     child: Center(
                                                       child: Text(
-                                                        '${index + 1}',
+                                                        '${index + 1}ª',
                                                         style: GoogleFonts.inter(
-                                                          color: Color(0xFFFF5722),
+                                                          color: Colors.white,
                                                           fontSize: 14.0,
                                                           fontWeight: FontWeight.bold,
                                                         ),
                                                       ),
                                                     ),
                                                   ),
-                                                  SizedBox(width: 12.0),
+                                                  SizedBox(width: 16.0),
                                                   // Informações da música
                                                   Expanded(
                                                     child: Column(
@@ -732,110 +739,100 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                                         Text(
                                                           musica.nome ?? 'Música',
                                                           style: GoogleFonts.poppins(
-                                                            color: Colors.white,
-                                                            fontSize: 15.0,
-                                                            fontWeight: FontWeight.w500,
+                                                            color: Color(0xFFFFAB40),
+                                                            fontSize: 16.0,
+                                                            fontWeight: FontWeight.w600,
                                                           ),
                                                         ),
                                                         SizedBox(height: 4.0),
-                                                        Row(
-                                                          children: [
-                                                            Text(
-                                                              musica.artista ?? 'Artista desconhecido',
-                                                              style: GoogleFonts.inter(
-                                                                color: Color(0xFF999999),
-                                                                fontSize: 13.0,
-                                                              ),
-                                                            ),
-                                                            if (escalaMusicaRow.tomEscala != null) ...[
-                                                              SizedBox(width: 8.0),
-                                                              Container(
-                                                                padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-                                                                decoration: BoxDecoration(
-                                                                  color: Color(0xFF4CAF50).withOpacity(0.2),
-                                                                  borderRadius: BorderRadius.circular(4.0),
-                                                                ),
-                                                                child: Text(
-                                                                  escalaMusicaRow.tomEscala!,
-                                                                  style: GoogleFonts.inter(
-                                                                    color: Color(0xFF4CAF50),
-                                                                    fontSize: 11.0,
-                                                                    fontWeight: FontWeight.w600,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ],
+                                                        Text(
+                                                          musica.artista ?? 'Artista desconhecido',
+                                                          style: GoogleFonts.inter(
+                                                            color: Colors.white,
+                                                            fontSize: 14.0,
+                                                          ),
+                                                        ),
+                                                        SizedBox(height: 4.0),
+                                                        Text(
+                                                          'Louvor, Tom: ${escalaMusicaRow.tomEscala ?? musica.tomOriginal ?? '-'}',
+                                                          style: GoogleFonts.inter(
+                                                            color: Color(0xFF888888),
+                                                            fontSize: 13.0,
+                                                          ),
                                                         ),
                                                       ],
                                                     ),
                                                   ),
-                                                  // Botões YouTube e Cifra
-                                                  if (musica.youtubeLink != null && musica.youtubeLink!.isNotEmpty)
-                                                    Padding(
-                                                      padding: EdgeInsets.only(right: 8.0),
-                                                      child: InkWell(
-                                                        onTap: () => launchURL(musica.youtubeLink!),
-                                                        borderRadius: BorderRadius.circular(8.0),
-                                                        child: Container(
-                                                          padding: EdgeInsets.all(8.0),
-                                                          decoration: BoxDecoration(
-                                                            color: Color(0xFFFF0000).withOpacity(0.1),
-                                                            borderRadius: BorderRadius.circular(8.0),
+                                                  // Ícones de ação à direita
+                                                  Column(
+                                                    mainAxisAlignment: MainAxisAlignment.start,
+                                                    children: [
+                                                      Row(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          // Ícone Letra (A)
+                                                          InkWell(
+                                                            onTap: () => _mostrarModalEditarTom(context, escalaMusicaRow, musica),
+                                                            borderRadius: BorderRadius.circular(4.0),
+                                                            child: Container(
+                                                              padding: EdgeInsets.all(4.0),
+                                                              child: Text(
+                                                                'A',
+                                                                style: GoogleFonts.inter(
+                                                                  color: Color(0xFFFFAB40),
+                                                                  fontSize: 16.0,
+                                                                  fontWeight: FontWeight.bold,
+                                                                  decoration: TextDecoration.underline,
+                                                                  decorationColor: Color(0xFFFFAB40),
+                                                                ),
+                                                              ),
+                                                            ),
                                                           ),
-                                                          child: Icon(
-                                                            Icons.play_circle_filled_rounded,
-                                                            color: Color(0xFFFF0000),
-                                                            size: 20.0,
+                                                          SizedBox(width: 8.0),
+                                                          // Ícone Cifra
+                                                          if (musica.cifraLink != null && musica.cifraLink!.isNotEmpty)
+                                                            InkWell(
+                                                              onTap: () => launchURL(musica.cifraLink!),
+                                                              borderRadius: BorderRadius.circular(4.0),
+                                                              child: Container(
+                                                                padding: EdgeInsets.all(4.0),
+                                                                child: Icon(
+                                                                  Icons.format_list_bulleted_rounded,
+                                                                  color: Color(0xFFFFAB40),
+                                                                  size: 18.0,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(height: 8.0),
+                                                      Row(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          // Ícone Música
+                                                          Icon(
+                                                            Icons.music_note_rounded,
+                                                            color: Color(0xFF4CAF50),
+                                                            size: 18.0,
                                                           ),
-                                                        ),
+                                                          SizedBox(width: 8.0),
+                                                          // Ícone YouTube
+                                                          if (musica.youtubeLink != null && musica.youtubeLink!.isNotEmpty)
+                                                            InkWell(
+                                                              onTap: () => launchURL(musica.youtubeLink!),
+                                                              borderRadius: BorderRadius.circular(4.0),
+                                                              child: Container(
+                                                                padding: EdgeInsets.all(4.0),
+                                                                child: Icon(
+                                                                  Icons.play_arrow_rounded,
+                                                                  color: Color(0xFFFF0000),
+                                                                  size: 18.0,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                        ],
                                                       ),
-                                                    ),
-                                                  if (musica.cifraLink != null && musica.cifraLink!.isNotEmpty)
-                                                    Padding(
-                                                      padding: EdgeInsets.only(right: 8.0),
-                                                      child: InkWell(
-                                                        onTap: () => launchURL(musica.cifraLink!),
-                                                        borderRadius: BorderRadius.circular(8.0),
-                                                        child: Container(
-                                                          padding: EdgeInsets.all(8.0),
-                                                          decoration: BoxDecoration(
-                                                            color: Color(0xFF2196F3).withOpacity(0.1),
-                                                            borderRadius: BorderRadius.circular(8.0),
-                                                          ),
-                                                          child: Icon(
-                                                            Icons.library_music_rounded,
-                                                            color: Color(0xFF2196F3),
-                                                            size: 20.0,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  // Botão editar tom
-                                                  InkWell(
-                                                    onTap: () => _mostrarModalEditarTom(context, escalaMusicaRow, musica),
-                                                    borderRadius: BorderRadius.circular(8.0),
-                                                    child: Container(
-                                                      padding: EdgeInsets.all(8.0),
-                                                      child: Icon(
-                                                        Icons.edit_rounded,
-                                                        color: Color(0xFF666666),
-                                                        size: 18.0,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  // Botão remover
-                                                  InkWell(
-                                                    onTap: () => _removerMusica(escalaMusicaRow),
-                                                    borderRadius: BorderRadius.circular(8.0),
-                                                    child: Container(
-                                                      padding: EdgeInsets.all(8.0),
-                                                      child: Icon(
-                                                        Icons.close_rounded,
-                                                        color: Colors.red.withOpacity(0.7),
-                                                        size: 18.0,
-                                                      ),
-                                                    ),
+                                                    ],
                                                   ),
                                                 ],
                                               ),

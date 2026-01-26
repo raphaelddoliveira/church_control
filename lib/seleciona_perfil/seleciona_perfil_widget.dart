@@ -84,6 +84,8 @@ class _SelecionaPerfilWidgetState extends State<SelecionaPerfilWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -106,257 +108,367 @@ class _SelecionaPerfilWidgetState extends State<SelecionaPerfilWidget> {
           ),
           child: SafeArea(
             top: true,
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Logo e título modernos
-                Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(24.0, 0.0, 24.0, 48.0),
-                  child: Column(
-                    children: [
-                      // Logo com glassmorphism
-                      Container(
-                        width: 100.0,
-                        height: 100.0,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              FlutterFlowTheme.of(context).primary,
-                              FlutterFlowTheme.of(context).secondary,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(height: isMobile ? 40.0 : 60.0),
+                  // Logo e título modernos
+                  Padding(
+                    padding: EdgeInsetsDirectional.fromSTEB(24.0, 0.0, 24.0, isMobile ? 32.0 : 48.0),
+                    child: Column(
+                      children: [
+                        // Logo com glassmorphism
+                        Container(
+                          width: isMobile ? 80.0 : 100.0,
+                          height: isMobile ? 80.0 : 100.0,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                FlutterFlowTheme.of(context).primary,
+                                FlutterFlowTheme.of(context).secondary,
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: FlutterFlowTheme.of(context).primary.withOpacity(0.3),
+                                blurRadius: 30.0,
+                                spreadRadius: 10.0,
+                              ),
                             ],
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: FlutterFlowTheme.of(context).primary.withOpacity(0.3),
-                              blurRadius: 30.0,
-                              spreadRadius: 10.0,
-                            ),
+                          child: Icon(
+                            Icons.church_rounded,
+                            color: Colors.white,
+                            size: isMobile ? 40.0 : 50.0,
+                          ),
+                        ),
+                        SizedBox(height: isMobile ? 16.0 : 24.0),
+                        Text(
+                          'ChurchControl',
+                          style: FlutterFlowTheme.of(context).displaySmall.override(
+                                font: GoogleFonts.poppins(),
+                                color: Colors.white,
+                                fontSize: isMobile ? 26.0 : 32.0,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -1.0,
+                              ),
+                        ),
+                        SizedBox(height: 12.0),
+                        Text(
+                          'Olá, ${_membroAtual?.nomeMembro ?? 'Usuário'}! 👋',
+                          textAlign: TextAlign.center,
+                          style: FlutterFlowTheme.of(context).headlineSmall.override(
+                                font: GoogleFonts.inter(),
+                                color: Color(0xFFE0E0E0),
+                                fontSize: isMobile ? 18.0 : 20.0,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.0,
+                              ),
+                        ),
+                        SizedBox(height: 8.0),
+                        Text(
+                          'Como você gostaria de continuar?',
+                          style: FlutterFlowTheme.of(context).bodyLarge.override(
+                                font: GoogleFonts.inter(),
+                                color: Color(0xFF999999),
+                                fontSize: isMobile ? 14.0 : 16.0,
+                                letterSpacing: 0.0,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // Cards de seleção modernos
+                Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(isMobile ? 16.0 : 24.0, 0.0, isMobile ? 16.0 : 24.0, 32.0),
+                  child: isMobile
+                      ? Column(
+                          children: [
+                            _buildAdminCard(context, isMobile),
+                            SizedBox(height: 16.0),
+                            _buildMembroCard(context, isMobile),
+                          ],
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Expanded(child: _buildAdminCard(context, isMobile)),
+                            SizedBox(width: 20.0),
+                            Expanded(child: _buildMembroCard(context, isMobile)),
                           ],
                         ),
-                        child: Icon(
-                          Icons.church_rounded,
-                          color: Colors.white,
-                          size: 50.0,
-                        ),
-                      ),
-                      SizedBox(height: 24.0),
-                      Text(
-                        'ChurchControl',
-                        style: FlutterFlowTheme.of(context).displaySmall.override(
-                              font: GoogleFonts.poppins(),
-                              color: Colors.white,
-                              fontSize: 32.0,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -1.0,
-                            ),
-                      ),
-                      SizedBox(height: 12.0),
-                      Text(
-                        'Olá, ${_membroAtual?.nomeMembro ?? 'Usuário'}! 👋',
-                        style: FlutterFlowTheme.of(context).headlineSmall.override(
-                              font: GoogleFonts.inter(),
-                              color: Color(0xFFE0E0E0),
-                              fontSize: 20.0,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 0.0,
-                            ),
-                      ),
-                      SizedBox(height: 8.0),
-                      Text(
-                        'Como você gostaria de continuar?',
-                        style: FlutterFlowTheme.of(context).bodyLarge.override(
-                              font: GoogleFonts.inter(),
-                              color: Color(0xFF999999),
-                              letterSpacing: 0.0,
-                            ),
-                      ),
-                    ],
-                  ),
                 ),
+              ],
+            ),
+          ),
+        ),
+        ),
+      ),
+    );
+  }
 
-              // Cards de seleção modernos
-              Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(24.0, 0.0, 24.0, 0.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildAdminCard(BuildContext context, bool isMobile) {
+    return InkWell(
+      onTap: () => _navegarParaAreaAdmin(),
+      borderRadius: BorderRadius.circular(24.0),
+      child: Container(
+        height: isMobile ? 160.0 : 280.0,
+        constraints: BoxConstraints(maxWidth: 350.0),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              FlutterFlowTheme.of(context).secondary.withOpacity(0.1),
+              Color(0xFF1A1A1A),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24.0),
+          border: Border.all(
+            color: FlutterFlowTheme.of(context).secondary.withOpacity(0.3),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: FlutterFlowTheme.of(context).secondary.withOpacity(0.15),
+              blurRadius: 20.0,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(isMobile ? 20.0 : 36.0),
+          child: isMobile
+              ? Row(
                   children: [
-                    // Card Área Administrativa
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => _navegarParaAreaAdmin(),
-                        child: Container(
-                          height: 280.0,
-                          constraints: BoxConstraints(maxWidth: 350.0),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                FlutterFlowTheme.of(context).secondary.withOpacity(0.1),
-                                Color(0xFF1A1A1A),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(24.0),
-                            border: Border.all(
-                              color: FlutterFlowTheme.of(context).secondary.withOpacity(0.3),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: FlutterFlowTheme.of(context).secondary.withOpacity(0.15),
-                                blurRadius: 20.0,
-                                offset: Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.all(36.0),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 80.0,
-                                  height: 80.0,
-                                  decoration: BoxDecoration(
-                                    color: FlutterFlowTheme.of(context).secondary.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(20.0),
-                                  ),
-                                  child: Icon(
-                                    Icons.admin_panel_settings_rounded,
-                                    color: FlutterFlowTheme.of(context).secondary,
-                                    size: 40.0,
-                                  ),
-                                ),
-                                SizedBox(height: 20.0),
-                                Text(
-                                  _getNomeAreaAdmin(),
-                                  style: FlutterFlowTheme.of(context)
-                                      .headlineMedium
-                                      .override(
-                                        font: GoogleFonts.poppins(),
-                                        color: Colors.white,
-                                        fontSize: 22.0,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: -0.5,
-                                      ),
-                                ),
-                                SizedBox(height: 10.0),
-                                Text(
-                                  'Ferramentas\nadministrativas',
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .override(
-                                        font: GoogleFonts.inter(),
-                                        color: Color(0xFFAAAAAA),
-                                        fontSize: 14.0,
-                                        letterSpacing: 0.0,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                    Container(
+                      width: 60.0,
+                      height: 60.0,
+                      decoration: BoxDecoration(
+                        color: FlutterFlowTheme.of(context).secondary.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(16.0),
+                      ),
+                      child: Icon(
+                        Icons.admin_panel_settings_rounded,
+                        color: FlutterFlowTheme.of(context).secondary,
+                        size: 30.0,
                       ),
                     ),
-
-                    SizedBox(width: 20.0),
-
-                    // Card Área de Membro
+                    SizedBox(width: 16.0),
                     Expanded(
-                      child: InkWell(
-                        onTap: () {
-                          context.pushReplacementNamed(
-                              PageMembrosNovaWidget.routeName);
-                        },
-                        child: Container(
-                          height: 280.0,
-                          constraints: BoxConstraints(maxWidth: 350.0),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                FlutterFlowTheme.of(context).primary.withOpacity(0.15),
-                                Color(0xFF1A1A1A),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(24.0),
-                            border: Border.all(
-                              color: FlutterFlowTheme.of(context).primary.withOpacity(0.4),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: FlutterFlowTheme.of(context).primary.withOpacity(0.2),
-                                blurRadius: 20.0,
-                                offset: Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.all(36.0),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 80.0,
-                                  height: 80.0,
-                                  decoration: BoxDecoration(
-                                    color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(20.0),
-                                  ),
-                                  child: Icon(
-                                    Icons.person_rounded,
-                                    color: FlutterFlowTheme.of(context).primary,
-                                    size: 40.0,
-                                  ),
-                                ),
-                                SizedBox(height: 20.0),
-                                Text(
-                                  'Área do Membro',
-                                  style: FlutterFlowTheme.of(context)
-                                      .headlineMedium
-                                      .override(
-                                        font: GoogleFonts.poppins(),
-                                        color: Colors.white,
-                                        fontSize: 22.0,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: -0.5,
-                                      ),
-                                ),
-                                SizedBox(height: 10.0),
-                                Text(
-                                  'Avisos, eventos e\ninformações',
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .override(
-                                        font: GoogleFonts.inter(),
-                                        color: Color(0xFFAAAAAA),
-                                        fontSize: 14.0,
-                                        letterSpacing: 0.0,
-                                      ),
-                                ),
-                              ],
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getNomeAreaAdmin(),
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ),
+                          SizedBox(height: 4.0),
+                          Text(
+                            'Ferramentas administrativas',
+                            style: GoogleFonts.inter(
+                              color: Color(0xFFAAAAAA),
+                              fontSize: 14.0,
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: FlutterFlowTheme.of(context).secondary,
+                      size: 20.0,
+                    ),
+                  ],
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 80.0,
+                      height: 80.0,
+                      decoration: BoxDecoration(
+                        color: FlutterFlowTheme.of(context).secondary.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                      child: Icon(
+                        Icons.admin_panel_settings_rounded,
+                        color: FlutterFlowTheme.of(context).secondary,
+                        size: 40.0,
+                      ),
+                    ),
+                    SizedBox(height: 20.0),
+                    Text(
+                      _getNomeAreaAdmin(),
+                      style: FlutterFlowTheme.of(context)
+                          .headlineMedium
+                          .override(
+                            font: GoogleFonts.poppins(),
+                            color: Colors.white,
+                            fontSize: 22.0,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.5,
+                          ),
+                    ),
+                    SizedBox(height: 10.0),
+                    Text(
+                      'Ferramentas\nadministrativas',
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: FlutterFlowTheme.of(context)
+                          .bodyMedium
+                          .override(
+                            font: GoogleFonts.inter(),
+                            color: Color(0xFFAAAAAA),
+                            fontSize: 14.0,
+                            letterSpacing: 0.0,
+                          ),
                     ),
                   ],
                 ),
-              ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMembroCard(BuildContext context, bool isMobile) {
+    return InkWell(
+      onTap: () {
+        context.pushReplacementNamed(PageMembrosNovaWidget.routeName);
+      },
+      borderRadius: BorderRadius.circular(24.0),
+      child: Container(
+        height: isMobile ? 160.0 : 280.0,
+        constraints: BoxConstraints(maxWidth: 350.0),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              FlutterFlowTheme.of(context).primary.withOpacity(0.15),
+              Color(0xFF1A1A1A),
             ],
           ),
+          borderRadius: BorderRadius.circular(24.0),
+          border: Border.all(
+            color: FlutterFlowTheme.of(context).primary.withOpacity(0.4),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: FlutterFlowTheme.of(context).primary.withOpacity(0.2),
+              blurRadius: 20.0,
+              offset: Offset(0, 8),
+            ),
+          ],
         ),
+        child: Padding(
+          padding: EdgeInsets.all(isMobile ? 20.0 : 36.0),
+          child: isMobile
+              ? Row(
+                  children: [
+                    Container(
+                      width: 60.0,
+                      height: 60.0,
+                      decoration: BoxDecoration(
+                        color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(16.0),
+                      ),
+                      child: Icon(
+                        Icons.person_rounded,
+                        color: FlutterFlowTheme.of(context).primary,
+                        size: 30.0,
+                      ),
+                    ),
+                    SizedBox(width: 16.0),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Área do Membro',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 4.0),
+                          Text(
+                            'Avisos, eventos e informações',
+                            style: GoogleFonts.inter(
+                              color: Color(0xFFAAAAAA),
+                              fontSize: 14.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: FlutterFlowTheme.of(context).primary,
+                      size: 20.0,
+                    ),
+                  ],
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 80.0,
+                      height: 80.0,
+                      decoration: BoxDecoration(
+                        color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                      child: Icon(
+                        Icons.person_rounded,
+                        color: FlutterFlowTheme.of(context).primary,
+                        size: 40.0,
+                      ),
+                    ),
+                    SizedBox(height: 20.0),
+                    Text(
+                      'Área do Membro',
+                      style: FlutterFlowTheme.of(context)
+                          .headlineMedium
+                          .override(
+                            font: GoogleFonts.poppins(),
+                            color: Colors.white,
+                            fontSize: 22.0,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.5,
+                          ),
+                    ),
+                    SizedBox(height: 10.0),
+                    Text(
+                      'Avisos, eventos e\ninformações',
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: FlutterFlowTheme.of(context)
+                          .bodyMedium
+                          .override(
+                            font: GoogleFonts.inter(),
+                            color: Color(0xFFAAAAAA),
+                            fontSize: 14.0,
+                            letterSpacing: 0.0,
+                          ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );

@@ -97,10 +97,17 @@ class _PageescalacriadaWidgetState extends State<PageescalacriadaWidget> {
                   ),
                 ),
               Expanded(
-                child: Padding(
-                  padding:
-                      EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
-                  child: FutureBuilder<List<MinisterioRow>>(
+                child: Builder(
+                  builder: (context) {
+                    final isMobile = MediaQuery.sizeOf(context).width < 600;
+                    return Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        16.0,
+                        16.0 + (isMobile ? MediaQuery.of(context).padding.top : 0),
+                        16.0,
+                        16.0,
+                      ),
+                      child: FutureBuilder<List<MinisterioRow>>(
                     future: MinisterioTable().querySingleRow(
                       queryFn: (q) => q.eqOrNull(
                         'id_ministerio',
@@ -2178,8 +2185,10 @@ class _PageescalacriadaWidgetState extends State<PageescalacriadaWidget> {
                       );
                     },
                   ),
-                ),
-              ),
+                );
+              },
+            ),
+          ),
             ],
           ),
         ),

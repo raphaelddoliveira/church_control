@@ -101,17 +101,24 @@ class _PageEscalaLiderMembroWidgetState
                   ),
                 ),
               Expanded(
-                child: Padding(
-                  padding:
-                      EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
-                  child: Container(
-                    width: 100.0,
-                    height: MediaQuery.sizeOf(context).height * 1.0,
-                    decoration: BoxDecoration(
-                      color: Color(0xFF3C3D3E),
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    child: SingleChildScrollView(
+                child: Builder(
+                  builder: (context) {
+                    final isMobile = MediaQuery.sizeOf(context).width < 600;
+                    return Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        16.0,
+                        16.0 + (isMobile ? MediaQuery.of(context).padding.top : 0),
+                        16.0,
+                        16.0,
+                      ),
+                      child: Container(
+                        width: 100.0,
+                        height: MediaQuery.sizeOf(context).height * 1.0,
+                        decoration: BoxDecoration(
+                          color: Color(0xFF3C3D3E),
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.max,
                         mainAxisAlignment: MainAxisAlignment.start,
@@ -1516,12 +1523,14 @@ class _PageEscalaLiderMembroWidgetState
                               ),
                             ),
                           ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
+            ),
             ],
           ),
         ),

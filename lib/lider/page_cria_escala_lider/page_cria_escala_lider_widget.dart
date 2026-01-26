@@ -248,16 +248,24 @@ class _PageCriaEscalaLiderWidgetState extends State<PageCriaEscalaLiderWidget> {
 
               // Conteúdo principal
               Expanded(
-                child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
-                  child: Container(
-                    width: 100.0,
-                    height: MediaQuery.sizeOf(context).height * 1.0,
-                    decoration: BoxDecoration(
-                      color: Color(0xFF3C3D3E),
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    child: _isLoading
+                child: Builder(
+                  builder: (context) {
+                    final isMobile = MediaQuery.sizeOf(context).width < 600;
+                    return Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        16.0,
+                        16.0 + (isMobile ? MediaQuery.of(context).padding.top : 0),
+                        16.0,
+                        16.0,
+                      ),
+                      child: Container(
+                        width: 100.0,
+                        height: MediaQuery.sizeOf(context).height * 1.0,
+                        decoration: BoxDecoration(
+                          color: Color(0xFF3C3D3E),
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: _isLoading
                         ? Center(
                             child: CircularProgressIndicator(
                               valueColor: AlwaysStoppedAnimation<Color>(
@@ -442,7 +450,9 @@ class _PageCriaEscalaLiderWidgetState extends State<PageCriaEscalaLiderWidget> {
                               ],
                             ),
                           ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],

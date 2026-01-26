@@ -168,7 +168,12 @@ class _HomepageLiderWidgetState extends State<HomepageLiderWidget> {
               // Conteúdo principal
               Expanded(
                 child: Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: EdgeInsets.fromLTRB(
+                    16.0,
+                    16.0 + (isMobile ? MediaQuery.of(context).padding.top : 0),
+                    16.0,
+                    16.0,
+                  ),
                   child: Container(
                     width: double.infinity,
                     height: MediaQuery.sizeOf(context).height,

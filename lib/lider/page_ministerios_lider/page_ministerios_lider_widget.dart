@@ -165,7 +165,12 @@ class _PageMinisteriosLiderWidgetState
               // Conteúdo principal
               Expanded(
                 child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
+                  padding: EdgeInsets.fromLTRB(
+                    16.0,
+                    16.0 + (isMobile ? MediaQuery.of(context).padding.top : 0),
+                    16.0,
+                    16.0,
+                  ),
                   child: Container(
                     width: 100.0,
                     height: MediaQuery.sizeOf(context).height * 1.0,

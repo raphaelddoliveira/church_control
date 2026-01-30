@@ -598,23 +598,59 @@ class _PageNovoAvisoSecretariaWidgetState
                                                 );
 
                                                 if (datePicked != null) {
-                                                  safeSetState(() {
-                                                    _model.pickedDate =
-                                                        DateTime(
-                                                      datePicked.year,
-                                                      datePicked.month,
-                                                      datePicked.day,
-                                                    );
-                                                  });
-                                                  _model
-                                                      .dataHoraAvisoTextController
-                                                      ?.text = dateTimeFormat(
-                                                    "dd/MM/yyyy",
-                                                    _model.pickedDate,
-                                                    locale: FFLocalizations.of(
-                                                            context)
-                                                        .languageCode,
+                                                  // Agora selecionar a hora
+                                                  final timePicked =
+                                                      await showTimePicker(
+                                                    context: context,
+                                                    initialTime: TimeOfDay.now(),
+                                                    builder: (context, child) {
+                                                      return Theme(
+                                                        data: ThemeData.dark(),
+                                                        child: child!,
+                                                      );
+                                                    },
                                                   );
+
+                                                  if (timePicked != null) {
+                                                    safeSetState(() {
+                                                      _model.pickedDate =
+                                                          DateTime(
+                                                        datePicked.year,
+                                                        datePicked.month,
+                                                        datePicked.day,
+                                                        timePicked.hour,
+                                                        timePicked.minute,
+                                                      );
+                                                    });
+                                                    _model
+                                                        .dataHoraAvisoTextController
+                                                        ?.text = dateTimeFormat(
+                                                      "dd/MM/yyyy 'às' HH:mm",
+                                                      _model.pickedDate,
+                                                      locale: FFLocalizations.of(
+                                                              context)
+                                                          .languageCode,
+                                                    );
+                                                  } else {
+                                                    // Se não selecionar hora, usa meia-noite
+                                                    safeSetState(() {
+                                                      _model.pickedDate =
+                                                          DateTime(
+                                                        datePicked.year,
+                                                        datePicked.month,
+                                                        datePicked.day,
+                                                      );
+                                                    });
+                                                    _model
+                                                        .dataHoraAvisoTextController
+                                                        ?.text = dateTimeFormat(
+                                                      "dd/MM/yyyy",
+                                                      _model.pickedDate,
+                                                      locale: FFLocalizations.of(
+                                                              context)
+                                                          .languageCode,
+                                                    );
+                                                  }
                                                 }
                                               },
                                               cursorColor:

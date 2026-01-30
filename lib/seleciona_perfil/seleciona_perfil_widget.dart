@@ -95,6 +95,8 @@ class _SelecionaPerfilWidgetState extends State<SelecionaPerfilWidget> {
         key: scaffoldKey,
         backgroundColor: Color(0xFF0A0A0A),
         body: Container(
+          width: double.infinity,
+          height: double.infinity,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -109,9 +111,13 @@ class _SelecionaPerfilWidgetState extends State<SelecionaPerfilWidget> {
           child: SafeArea(
             top: true,
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(height: isMobile ? 40.0 : 60.0),
                   // Logo e título modernos
@@ -206,6 +212,7 @@ class _SelecionaPerfilWidgetState extends State<SelecionaPerfilWidget> {
               ],
             ),
           ),
+        ),
         ),
         ),
       ),

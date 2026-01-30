@@ -110,155 +110,126 @@ Widget buildMusicPlayer(BuildContext context, String url) {
   );
 }
 
-class _YouTubePlayerWidget extends StatefulWidget {
+class _YouTubePlayerWidget extends StatelessWidget {
   final String videoId;
 
   const _YouTubePlayerWidget({required this.videoId});
 
-  @override
-  State<_YouTubePlayerWidget> createState() => _YouTubePlayerWidgetState();
-}
-
-class _YouTubePlayerWidgetState extends State<_YouTubePlayerWidget> {
-  late final WebViewController _controller;
-  bool _isLoading = true;
-  bool _hasError = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initController();
-  }
-
-  void _initController() {
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(Color(0xFF1A1A1A))
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageFinished: (String url) {
-            if (mounted) {
-              setState(() {
-                _isLoading = false;
-              });
-            }
-          },
-          onWebResourceError: (WebResourceError error) {
-            if (mounted) {
-              setState(() {
-                _isLoading = false;
-                _hasError = true;
-              });
-            }
-          },
-          onNavigationRequest: (NavigationRequest request) {
-            // Permite apenas URLs do YouTube
-            if (request.url.contains('youtube.com') ||
-                request.url.contains('youtu.be') ||
-                request.url.contains('google.com')) {
-              return NavigationDecision.navigate;
-            }
-            return NavigationDecision.prevent;
-          },
-        ),
-      )
-      ..loadRequest(Uri.parse(
-        'https://www.youtube.com/embed/${widget.videoId}?autoplay=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin=https://www.youtube.com',
-      ));
-  }
-
-  void _openInBrowser() {
-    launchURL('https://www.youtube.com/watch?v=${widget.videoId}');
+  void _openInYouTube() {
+    launchURL('https://www.youtube.com/watch?v=$videoId');
   }
 
   @override
   Widget build(BuildContext context) {
-    // Se houver erro, mostra botão para abrir externamente
-    if (_hasError) {
-      return Container(
+    // Usar thumbnail do YouTube como preview
+    final thumbnailUrl = 'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
+
+    return InkWell(
+      onTap: _openInYouTube,
+      borderRadius: BorderRadius.circular(12.0),
+      child: Container(
         height: 200.0,
         decoration: BoxDecoration(
           color: Color(0xFF1A1A1A),
           borderRadius: BorderRadius.circular(12.0),
-          border: Border.all(
-            color: FlutterFlowTheme.of(context).primary.withOpacity(0.3),
-            width: 1.0,
-          ),
         ),
-        child: InkWell(
-          onTap: _openInBrowser,
+        child: ClipRRect(
           borderRadius: BorderRadius.circular(12.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Stack(
+            fit: StackFit.expand,
             children: [
-              Icon(
-                Icons.play_circle_outline_rounded,
-                color: Color(0xFFFF0000),
-                size: 48.0,
+              // Thumbnail do vídeo
+              Image.network(
+                thumbnailUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Color(0xFF1A1A1A),
+                    child: Center(
+                      child: Icon(
+                        Icons.video_library_rounded,
+                        color: Color(0xFF666666),
+                        size: 48.0,
+                      ),
+                    ),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: Color(0xFF1A1A1A),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          FlutterFlowTheme.of(context).primary,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-              SizedBox(height: 12.0),
-              Text(
-                'Toque para assistir no YouTube',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 14.0,
-                  fontWeight: FontWeight.w500,
+              // Overlay escuro
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.3),
+                      Colors.black.withOpacity(0.5),
+                    ],
+                  ),
                 ),
               ),
-              SizedBox(height: 4.0),
-              Text(
-                'O vídeo será aberto externamente',
-                style: GoogleFonts.inter(
-                  color: Color(0xFF999999),
-                  fontSize: 12.0,
+              // Botão de play centralizado
+              Center(
+                child: Container(
+                  padding: EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFFF0000),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.play_arrow_rounded,
+                    color: Colors.white,
+                    size: 32.0,
+                  ),
+                ),
+              ),
+              // Texto "Assistir no YouTube"
+              Positioned(
+                bottom: 12.0,
+                left: 12.0,
+                right: 12.0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.ondemand_video_rounded,
+                      color: Colors.white,
+                      size: 16.0,
+                    ),
+                    SizedBox(width: 6.0),
+                    Text(
+                      'Assistir no YouTube',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 13.0,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-        ),
-      );
-    }
-
-    return Container(
-      height: 200.0,
-      decoration: BoxDecoration(
-        color: Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12.0),
-        child: Stack(
-          children: [
-            WebViewWidget(controller: _controller),
-            if (_isLoading)
-              Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    FlutterFlowTheme.of(context).primary,
-                  ),
-                ),
-              ),
-            // Botão de abrir externamente no canto superior direito
-            Positioned(
-              top: 8.0,
-              right: 8.0,
-              child: InkWell(
-                onTap: _openInBrowser,
-                child: Container(
-                  padding: EdgeInsets.all(6.0),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(6.0),
-                  ),
-                  child: Icon(
-                    Icons.open_in_new_rounded,
-                    color: Colors.white,
-                    size: 18.0,
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

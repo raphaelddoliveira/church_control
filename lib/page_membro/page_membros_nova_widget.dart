@@ -26,6 +26,9 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   int _paginaAtual = 0; // 0 = Feed, 1 = Devocionais, 2 = Comunidades, 3 = Escalas
 
+  // Map para armazenar a foto do avatar de cada aviso (null = logo da igreja)
+  Map<int, String?> _fotosAvisos = {};
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +65,9 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
   }
 
   Future<List<AvisoRow>> _carregarAvisos(MembrosRow? membroAtual) async {
+    // Limpar o map de fotos
+    _fotosAvisos = {};
+
     // Buscar todos os avisos
     var query = AvisoTable().queryRows(
       queryFn: (q) => _model.categoriaValue == 'Todos'
@@ -98,22 +104,12 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
     // - Líder (nivel_acesso = 6): apenas membros da comunidade podem ver
     List<AvisoRow> avisosFiltrados = [];
 
-    // Buscar as comunidades do membro atual
-    List<int> comunidadesDoMembro = [];
-    if (membroAtual != null) {
-      final membroMinisterios = await MembrosMinisteriosTable().queryRows(
-        queryFn: (q) => q.eq('id_membro', membroAtual.idMembro),
-      );
-      comunidadesDoMembro = membroMinisterios
-          .where((mm) => mm.idMinisterio != null)
-          .map((mm) => mm.idMinisterio!)
-          .toList();
-    }
 
     for (var aviso in avisosAtivos) {
-      // Se não tem criador definido, mostrar para todos (aviso antigo)
+      // Se não tem criador definido, mostrar para todos (aviso antigo) - usa logo da igreja
       if (aviso.criadoPor == null) {
         avisosFiltrados.add(aviso);
+        _fotosAvisos[aviso.id] = null; // null = logo da igreja
         continue;
       }
 
@@ -123,32 +119,42 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
       );
 
       if (criadorRows.isEmpty) {
-        // Se não encontrou o criador, mostrar para todos
+        // Se não encontrou o criador, mostrar para todos - usa logo da igreja
         avisosFiltrados.add(aviso);
+        _fotosAvisos[aviso.id] = null;
         continue;
       }
 
       final criador = criadorRows.first;
 
-      // Se o criador é secretaria (nivel_acesso = 1), mostrar para todos
+      // Se o criador é secretaria (nivel_acesso = 1), mostrar para todos - usa logo da igreja
       if (criador.idNivelAcesso == 1) {
         avisosFiltrados.add(aviso);
+        _fotosAvisos[aviso.id] = null; // Secretaria usa logo da igreja
         continue;
       }
 
       // Se o criador é líder (nivel_acesso = 6), verificar se o membro atual é da comunidade
       if (criador.idNivelAcesso == 6) {
-        // Buscar o ministério que o criador lidera
-        final ministerioRows = await MinisterioTable().queryRows(
-          queryFn: (q) => q.eq('id_lider', criador.idMembro),
+        // Buscar a comunidade que o criador lidera
+        final comunidadeRows = await ComunidadeTable().queryRows(
+          queryFn: (q) => q.eq('lider_comunidade', criador.idMembro),
         );
 
-        if (ministerioRows.isNotEmpty) {
-          final ministerioDoLider = ministerioRows.first;
+        if (comunidadeRows.isNotEmpty) {
+          final comunidadeDoLider = comunidadeRows.first;
 
-          // Verificar se o membro atual é parte deste ministério
-          if (comunidadesDoMembro.contains(ministerioDoLider.idMinisterio)) {
+          // Buscar membros dessa comunidade
+          final membrosComunidade = await MembroComunidadeTable().queryRows(
+            queryFn: (q) => q.eq('id_comunidade', comunidadeDoLider.id),
+          );
+          final idsMembros = membrosComunidade.map((m) => m.idMembro).toList();
+
+          // Verificar se o membro atual é parte desta comunidade
+          if (membroAtual != null && idsMembros.contains(membroAtual.idMembro)) {
             avisosFiltrados.add(aviso);
+            // Usa a foto da comunidade
+            _fotosAvisos[aviso.id] = comunidadeDoLider.fotoUrl;
           }
         }
         continue;
@@ -156,6 +162,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
 
       // Para outros níveis de acesso, mostrar para todos por padrão
       avisosFiltrados.add(aviso);
+      _fotosAvisos[aviso.id] = null;
     }
 
     // Separar fixados e não fixados
@@ -455,11 +462,65 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                                             ],
                                           ),
                                           child: ClipOval(
-                                            child: Image.asset(
-                                              'assets/images/logo_igj.png',
-                                              width: 48.0,
-                                              height: 48.0,
-                                              fit: BoxFit.cover,
+                                            child: Builder(
+                                              builder: (context) {
+                                                final fotoUrl = _fotosAvisos[aviso.id];
+                                                if (fotoUrl != null && fotoUrl.isNotEmpty && fotoUrl.startsWith('http')) {
+                                                  return Image.network(
+                                                    fotoUrl,
+                                                    width: 48.0,
+                                                    height: 48.0,
+                                                    fit: BoxFit.cover,
+                                                    loadingBuilder: (context, child, loadingProgress) {
+                                                      if (loadingProgress == null) return child;
+                                                      return Container(
+                                                        width: 48.0,
+                                                        height: 48.0,
+                                                        color: Color(0xFF2A2A2A),
+                                                        child: Center(
+                                                          child: CircularProgressIndicator(
+                                                            strokeWidth: 2.0,
+                                                            valueColor: AlwaysStoppedAnimation<Color>(
+                                                              FlutterFlowTheme.of(context).primary,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                    errorBuilder: (context, error, stackTrace) {
+                                                      return Image.asset(
+                                                        'assets/images/logo_igj.png',
+                                                        width: 48.0,
+                                                        height: 48.0,
+                                                        fit: BoxFit.cover,
+                                                      );
+                                                    },
+                                                  );
+                                                }
+                                                // Default: logo da igreja
+                                                return Image.asset(
+                                                  'assets/images/logo_igj.png',
+                                                  width: 48.0,
+                                                  height: 48.0,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (context, error, stackTrace) {
+                                                    // Fallback: ícone da igreja
+                                                    return Container(
+                                                      width: 48.0,
+                                                      height: 48.0,
+                                                      decoration: BoxDecoration(
+                                                        color: FlutterFlowTheme.of(context).primary,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: Icon(
+                                                        Icons.church_rounded,
+                                                        color: Colors.white,
+                                                        size: 28.0,
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              },
                                             ),
                                           ),
                                         ),

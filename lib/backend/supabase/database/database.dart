@@ -42,3 +42,5 @@ export 'tables/musicas.dart';
 export 'tables/escala_musicas.dart';
 export 'tables/funcoes_louvor.dart';
 export 'tables/devocional.dart';
+export 'tables/comunidade.dart';
+export 'tables/membro_comunidade.dart';

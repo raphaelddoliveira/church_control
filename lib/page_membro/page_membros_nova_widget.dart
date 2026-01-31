@@ -24,7 +24,7 @@ class PageMembrosNovaWidget extends StatefulWidget {
 class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
   late PageMembrosNovaModel _model;
   final scaffoldKey = GlobalKey<ScaffoldState>();
-  int _paginaAtual = 0; // 0 = Feed, 1 = Devocionais, 2 = Escalas
+  int _paginaAtual = 0; // 0 = Feed, 1 = Devocionais, 2 = Comunidades, 3 = Escalas
 
   @override
   void initState() {
@@ -61,7 +61,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
     );
   }
 
-  Future<List<AvisoRow>> _carregarAvisos() async {
+  Future<List<AvisoRow>> _carregarAvisos(MembrosRow? membroAtual) async {
     // Buscar todos os avisos
     var query = AvisoTable().queryRows(
       queryFn: (q) => _model.categoriaValue == 'Todos'
@@ -93,9 +93,74 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
             (aviso.expiraEm == null || aviso.expiraEm!.isAfter(agora)))
         .toList();
 
+    // Filtrar avisos baseado no nível de acesso do criador
+    // - Secretaria (nivel_acesso = 1): todos podem ver
+    // - Líder (nivel_acesso = 6): apenas membros da comunidade podem ver
+    List<AvisoRow> avisosFiltrados = [];
+
+    // Buscar as comunidades do membro atual
+    List<int> comunidadesDoMembro = [];
+    if (membroAtual != null) {
+      final membroMinisterios = await MembrosMinisteriosTable().queryRows(
+        queryFn: (q) => q.eq('id_membro', membroAtual.idMembro),
+      );
+      comunidadesDoMembro = membroMinisterios
+          .where((mm) => mm.idMinisterio != null)
+          .map((mm) => mm.idMinisterio!)
+          .toList();
+    }
+
+    for (var aviso in avisosAtivos) {
+      // Se não tem criador definido, mostrar para todos (aviso antigo)
+      if (aviso.criadoPor == null) {
+        avisosFiltrados.add(aviso);
+        continue;
+      }
+
+      // Buscar o membro que criou o aviso
+      final criadorRows = await MembrosTable().queryRows(
+        queryFn: (q) => q.eq('id_membro', aviso.criadoPor!),
+      );
+
+      if (criadorRows.isEmpty) {
+        // Se não encontrou o criador, mostrar para todos
+        avisosFiltrados.add(aviso);
+        continue;
+      }
+
+      final criador = criadorRows.first;
+
+      // Se o criador é secretaria (nivel_acesso = 1), mostrar para todos
+      if (criador.idNivelAcesso == 1) {
+        avisosFiltrados.add(aviso);
+        continue;
+      }
+
+      // Se o criador é líder (nivel_acesso = 6), verificar se o membro atual é da comunidade
+      if (criador.idNivelAcesso == 6) {
+        // Buscar o ministério que o criador lidera
+        final ministerioRows = await MinisterioTable().queryRows(
+          queryFn: (q) => q.eq('id_lider', criador.idMembro),
+        );
+
+        if (ministerioRows.isNotEmpty) {
+          final ministerioDoLider = ministerioRows.first;
+
+          // Verificar se o membro atual é parte deste ministério
+          if (comunidadesDoMembro.contains(ministerioDoLider.idMinisterio)) {
+            avisosFiltrados.add(aviso);
+          }
+        }
+        continue;
+      }
+
+      // Para outros níveis de acesso, mostrar para todos por padrão
+      avisosFiltrados.add(aviso);
+    }
+
     // Separar fixados e não fixados
-    List<AvisoRow> fixados = avisosAtivos.where((a) => a.fixado == true).toList();
-    List<AvisoRow> naoFixados = avisosAtivos.where((a) => a.fixado != true).toList();
+    List<AvisoRow> fixados = avisosFiltrados.where((a) => a.fixado == true).toList();
+    List<AvisoRow> naoFixados = avisosFiltrados.where((a) => a.fixado != true).toList();
 
     // Ordenar ambos por data
     fixados.sort((a, b) {
@@ -315,11 +380,11 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                     ),
                   ),
 
-                  // Conteúdo alternado entre Feed e Escalas
+                  // Conteúdo alternado entre Feed, Devocionais, Comunidades e Escalas
                   Expanded(
                     child: _paginaAtual == 0
                       ? FutureBuilder<List<AvisoRow>>(
-                          future: _carregarAvisos(),
+                          future: _carregarAvisos(membroAtual),
                           builder: (context, snapshotAvisos) {
                         if (!snapshotAvisos.hasData) {
                           return Center(
@@ -552,7 +617,9 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                     )
                     : _paginaAtual == 1
                       ? _buildTelaDevocionais()
-                      : _buildTelaEscalas(membroAtual),
+                      : _paginaAtual == 2
+                        ? _buildTelaComunidades(membroAtual)
+                        : _buildTelaEscalas(membroAtual),
                   ),
                 ],
               ),
@@ -593,11 +660,16 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                               label: 'Devocionais',
                               index: 1,
                             ),
+                            _buildNavItem(
+                              icon: Icons.groups_rounded,
+                              label: 'Comunidades',
+                              index: 2,
+                            ),
                             if (ehMembroMinisterio)
                               _buildNavItem(
                                 icon: Icons.calendar_today_rounded,
                                 label: 'Escalas',
-                                index: 2,
+                                index: 3,
                                 showBadge: temPendentes,
                               ),
                           ],
@@ -1597,6 +1669,782 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
               ),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTelaComunidades(MembrosRow? membroAtual) {
+    return FutureBuilder<List<ComunidadeRow>>(
+      future: ComunidadeTable().queryRows(
+        queryFn: (q) => q.order('nome_comunidade'),
+      ),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(
+                FlutterFlowTheme.of(context).primary,
+              ),
+            ),
+          );
+        }
+
+        final comunidades = snapshot.data!;
+
+        if (comunidades.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.groups_rounded,
+                  size: 64.0,
+                  color: Color(0xFF666666),
+                ),
+                SizedBox(height: 16.0),
+                Text(
+                  'Nenhuma comunidade encontrada',
+                  style: GoogleFonts.inter(
+                    color: Color(0xFF999999),
+                    fontSize: 16.0,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Título
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+              child: Text(
+                'Comunidades',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
+              child: Text(
+                'Participe das comunidades da igreja',
+                style: GoogleFonts.inter(
+                  color: Color(0xFF999999),
+                  fontSize: 14.0,
+                ),
+              ),
+            ),
+            // Lista de comunidades
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                itemCount: comunidades.length,
+                itemBuilder: (context, index) {
+                  final comunidade = comunidades[index];
+
+                  return FutureBuilder<List<MembrosRow>>(
+                    future: comunidade.liderComunidade != null
+                        ? MembrosTable().queryRows(
+                            queryFn: (q) => q.eq('id_membro', comunidade.liderComunidade!),
+                          )
+                        : Future.value([]),
+                    builder: (context, snapshotLider) {
+                      final lider = snapshotLider.hasData && snapshotLider.data!.isNotEmpty
+                          ? snapshotLider.data!.first
+                          : null;
+
+                      return FutureBuilder<List<MembroComunidadeRow>>(
+                        future: MembroComunidadeTable().queryRows(
+                          queryFn: (q) => q.eq('id_comunidade', comunidade.id),
+                        ),
+                        builder: (context, snapshotMembros) {
+                          final totalMembros = snapshotMembros.hasData ? snapshotMembros.data!.length : 0;
+                          final ehMembro = snapshotMembros.hasData &&
+                              membroAtual != null &&
+                              snapshotMembros.data!.any((m) => m.idMembro == membroAtual.idMembro);
+
+                          return InkWell(
+                            onTap: () {
+                              _mostrarDetalhesComunidade(
+                                context,
+                                comunidade,
+                                lider,
+                                totalMembros,
+                                ehMembro,
+                                membroAtual,
+                              );
+                            },
+                            child: Container(
+                              margin: EdgeInsets.only(bottom: 12.0),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF1A1A1A),
+                                borderRadius: BorderRadius.circular(16.0),
+                                border: Border.all(
+                                  color: ehMembro
+                                      ? FlutterFlowTheme.of(context).primary.withOpacity(0.5)
+                                      : Color(0xFF2A2A2A),
+                                  width: 1.0,
+                                ),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Row(
+                                  children: [
+                                    // Avatar da comunidade
+                                    Container(
+                                      width: 56.0,
+                                      height: 56.0,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(14.0),
+                                      ),
+                                      child: comunidade.fotoUrl != null && comunidade.fotoUrl!.isNotEmpty
+                                          ? ClipRRect(
+                                              borderRadius: BorderRadius.circular(14.0),
+                                              child: Image.network(
+                                                comunidade.fotoUrl!,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) => Container(
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      colors: [
+                                                        FlutterFlowTheme.of(context).primary,
+                                                        FlutterFlowTheme.of(context).primary.withOpacity(0.6),
+                                                      ],
+                                                      begin: Alignment.topLeft,
+                                                      end: Alignment.bottomRight,
+                                                    ),
+                                                    borderRadius: BorderRadius.circular(14.0),
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      (comunidade.nomeComunidade ?? 'C').substring(0, 1).toUpperCase(),
+                                                      style: GoogleFonts.poppins(
+                                                        color: Colors.white,
+                                                        fontSize: 24.0,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                          : Container(
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [
+                                                    FlutterFlowTheme.of(context).primary,
+                                                    FlutterFlowTheme.of(context).primary.withOpacity(0.6),
+                                                  ],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
+                                                borderRadius: BorderRadius.circular(14.0),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  (comunidade.nomeComunidade ?? 'C').substring(0, 1).toUpperCase(),
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontSize: 24.0,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                    ),
+                                    SizedBox(width: 14.0),
+                                    // Informações
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  comunidade.nomeComunidade ?? 'Comunidade',
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontSize: 16.0,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                              if (ehMembro)
+                                                Container(
+                                                  padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 3.0),
+                                                  decoration: BoxDecoration(
+                                                    color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
+                                                    borderRadius: BorderRadius.circular(8.0),
+                                                  ),
+                                                  child: Text(
+                                                    'Membro',
+                                                    style: GoogleFonts.inter(
+                                                      color: FlutterFlowTheme.of(context).primary,
+                                                      fontSize: 11.0,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                          SizedBox(height: 4.0),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.person_rounded,
+                                                color: Color(0xFF999999),
+                                                size: 14.0,
+                                              ),
+                                              SizedBox(width: 4.0),
+                                              Expanded(
+                                                child: Text(
+                                                  lider?.nomeMembro ?? 'Líder não definido',
+                                                  style: GoogleFonts.inter(
+                                                    color: Color(0xFF999999),
+                                                    fontSize: 13.0,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              SizedBox(width: 8.0),
+                                              Icon(
+                                                Icons.groups_rounded,
+                                                color: Color(0xFF999999),
+                                                size: 14.0,
+                                              ),
+                                              SizedBox(width: 4.0),
+                                              Text(
+                                                '$totalMembros',
+                                                style: GoogleFonts.inter(
+                                                  color: Color(0xFF999999),
+                                                  fontSize: 13.0,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: Color(0xFF666666),
+                                      size: 24.0,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _mostrarDetalhesComunidade(
+    BuildContext context,
+    ComunidadeRow comunidade,
+    MembrosRow? lider,
+    int totalMembros,
+    bool ehMembro,
+    MembrosRow? membroAtual,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: BoxDecoration(
+                color: Color(0xFF0D0D0D),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24.0),
+                  topRight: Radius.circular(24.0),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: EdgeInsets.only(top: 12.0),
+                    width: 40.0,
+                    height: 4.0,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3A3A3A),
+                      borderRadius: BorderRadius.circular(2.0),
+                    ),
+                  ),
+                  // Header
+                  Container(
+                    padding: EdgeInsets.all(24.0),
+                    child: Column(
+                      children: [
+                        // Avatar grande
+                        Container(
+                          width: 80.0,
+                          height: 80.0,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                FlutterFlowTheme.of(context).primary,
+                                FlutterFlowTheme.of(context).primary.withOpacity(0.6),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(20.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: FlutterFlowTheme.of(context).primary.withOpacity(0.3),
+                                blurRadius: 20.0,
+                                spreadRadius: 2.0,
+                              ),
+                            ],
+                          ),
+                          child: comunidade.fotoUrl != null && comunidade.fotoUrl!.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(20.0),
+                                  child: Image.network(
+                                    comunidade.fotoUrl!,
+                                    fit: BoxFit.cover,
+                                    width: 80.0,
+                                    height: 80.0,
+                                    errorBuilder: (_, __, ___) => Center(
+                                      child: Text(
+                                        (comunidade.nomeComunidade ?? 'C').substring(0, 1).toUpperCase(),
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: 36.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Center(
+                                  child: Text(
+                                    (comunidade.nomeComunidade ?? 'C').substring(0, 1).toUpperCase(),
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontSize: 36.0,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                        ),
+                        SizedBox(height: 16.0),
+                        // Nome
+                        Text(
+                          comunidade.nomeComunidade ?? 'Comunidade',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 8.0),
+                        // Status de membro
+                        if (ehMembro)
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(20.0),
+                              border: Border.all(
+                                color: Colors.green.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle_rounded,
+                                  color: Colors.green,
+                                  size: 16.0,
+                                ),
+                                SizedBox(width: 6.0),
+                                Text(
+                                  'Você é membro desta comunidade',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.green,
+                                    fontSize: 13.0,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  // Informações
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Card do líder
+                          Container(
+                            padding: EdgeInsets.all(16.0),
+                            decoration: BoxDecoration(
+                              color: Color(0xFF1A1A1A),
+                              borderRadius: BorderRadius.circular(16.0),
+                              border: Border.all(color: Color(0xFF2A2A2A)),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48.0,
+                                  height: 48.0,
+                                  decoration: BoxDecoration(
+                                    color: FlutterFlowTheme.of(context).primary.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(12.0),
+                                  ),
+                                  child: lider?.fotoUrl != null && lider!.fotoUrl!.isNotEmpty
+                                      ? ClipRRect(
+                                          borderRadius: BorderRadius.circular(12.0),
+                                          child: Image.network(
+                                            lider.fotoUrl!,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        )
+                                      : Center(
+                                          child: Text(
+                                            lider?.nomeMembro?.substring(0, 1).toUpperCase() ?? 'L',
+                                            style: GoogleFonts.poppins(
+                                              color: FlutterFlowTheme.of(context).primary,
+                                              fontSize: 20.0,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                ),
+                                SizedBox(width: 14.0),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Líder',
+                                        style: GoogleFonts.inter(
+                                          color: Color(0xFF999999),
+                                          fontSize: 12.0,
+                                        ),
+                                      ),
+                                      SizedBox(height: 2.0),
+                                      Text(
+                                        lider?.nomeMembro ?? 'Não definido',
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: 16.0,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 12.0),
+                          // Total de membros
+                          Container(
+                            padding: EdgeInsets.all(16.0),
+                            decoration: BoxDecoration(
+                              color: Color(0xFF1A1A1A),
+                              borderRadius: BorderRadius.circular(16.0),
+                              border: Border.all(color: Color(0xFF2A2A2A)),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48.0,
+                                  height: 48.0,
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(12.0),
+                                  ),
+                                  child: Icon(
+                                    Icons.groups_rounded,
+                                    color: Colors.blue,
+                                    size: 24.0,
+                                  ),
+                                ),
+                                SizedBox(width: 14.0),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Membros',
+                                        style: GoogleFonts.inter(
+                                          color: Color(0xFF999999),
+                                          fontSize: 12.0,
+                                        ),
+                                      ),
+                                      SizedBox(height: 2.0),
+                                      Text(
+                                        '$totalMembros pessoas',
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: 16.0,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Descrição da comunidade
+                          if (comunidade.descricaoComunidade != null && comunidade.descricaoComunidade!.isNotEmpty) ...[
+                            SizedBox(height: 16.0),
+                            Container(
+                              padding: EdgeInsets.all(16.0),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF1A1A1A),
+                                borderRadius: BorderRadius.circular(14.0),
+                                border: Border.all(
+                                  color: Color(0xFF2A2A2A),
+                                  width: 1.0,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 36.0,
+                                        height: 36.0,
+                                        decoration: BoxDecoration(
+                                          color: Colors.purple.withOpacity(0.15),
+                                          borderRadius: BorderRadius.circular(10.0),
+                                        ),
+                                        child: Icon(
+                                          Icons.description_rounded,
+                                          color: Colors.purple,
+                                          size: 18.0,
+                                        ),
+                                      ),
+                                      SizedBox(width: 12.0),
+                                      Text(
+                                        'Descrição',
+                                        style: GoogleFonts.inter(
+                                          color: Color(0xFF999999),
+                                          fontSize: 12.0,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 12.0),
+                                  Text(
+                                    comunidade.descricaoComunidade!,
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white.withOpacity(0.9),
+                                      fontSize: 14.0,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          SizedBox(height: 24.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Botão de ação
+                  if (!ehMembro && membroAtual != null)
+                    Container(
+                      padding: EdgeInsets.all(24.0),
+                      child: InkWell(
+                        onTap: () async {
+                          // Entrar na comunidade
+                          await MembroComunidadeTable().insert({
+                            'id_membro': membroAtual.idMembro,
+                            'id_comunidade': comunidade.id,
+                          });
+
+                          Navigator.of(context).pop();
+
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            SnackBar(
+                              content: Text('Você entrou na comunidade ${comunidade.nomeComunidade}!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+
+                          setState(() {});
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(vertical: 16.0),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                FlutterFlowTheme.of(context).primary,
+                                FlutterFlowTheme.of(context).primary.withOpacity(0.8),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(14.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: FlutterFlowTheme.of(context).primary.withOpacity(0.3),
+                                blurRadius: 12.0,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_rounded,
+                                color: Colors.white,
+                                size: 22.0,
+                              ),
+                              SizedBox(width: 8.0),
+                              Text(
+                                'Entrar na Comunidade',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (ehMembro)
+                    Container(
+                      padding: EdgeInsets.all(24.0),
+                      child: InkWell(
+                        onTap: () async {
+                          // Confirmar saída
+                          final confirmar = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              backgroundColor: Color(0xFF1A1A1A),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16.0),
+                              ),
+                              title: Text(
+                                'Sair da comunidade?',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              content: Text(
+                                'Você tem certeza que deseja sair de ${comunidade.nomeComunidade}?',
+                                style: GoogleFonts.inter(
+                                  color: Color(0xFF999999),
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: Text(
+                                    'Cancelar',
+                                    style: GoogleFonts.inter(
+                                      color: Color(0xFF999999),
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: Text(
+                                    'Sair',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirmar == true) {
+                            await MembroComunidadeTable().delete(
+                              matchingRows: (rows) => rows
+                                  .eq('id_membro', membroAtual!.idMembro)
+                                  .eq('id_comunidade', comunidade.id),
+                            );
+
+                            Navigator.of(context).pop();
+
+                            ScaffoldMessenger.of(this.context).showSnackBar(
+                              SnackBar(
+                                content: Text('Você saiu da comunidade ${comunidade.nomeComunidade}'),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+
+                            setState(() {});
+                          }
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(vertical: 16.0),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF2A2A2A),
+                            borderRadius: BorderRadius.circular(14.0),
+                            border: Border.all(
+                              color: Colors.red.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.logout_rounded,
+                                color: Colors.red,
+                                size: 22.0,
+                              ),
+                              SizedBox(width: 8.0),
+                              Text(
+                                'Sair da Comunidade',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.red,
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
         );
       },
     );

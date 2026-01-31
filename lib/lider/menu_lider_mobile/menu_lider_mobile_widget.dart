@@ -6,6 +6,7 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import 'dart:ui';
 import '/index.dart';
+import '/lider/page_comunidade_lider/page_comunidade_lider_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -229,6 +230,25 @@ class _MenuLiderMobileWidgetState extends State<MenuLiderMobileWidget> {
                                       );
                                     }
                                   }
+                                },
+                              ),
+                              _buildMenuItem(
+                                context: context,
+                                icon: Icons.groups_3_rounded,
+                                title: 'Minha Comunidade',
+                                subtitle: 'Gerenciar comunidade e avisos',
+                                color: Color(0xFF4CAF50),
+                                onTap: () {
+                                  Navigator.of(context).pop();
+                                  context.pushNamed(
+                                    PageComunidadeLiderWidget.routeName,
+                                    extra: <String, dynamic>{
+                                      kTransitionInfoKey: TransitionInfo(
+                                        hasTransition: true,
+                                        transitionType: PageTransitionType.fade,
+                                      ),
+                                    },
+                                  );
                                 },
                               ),
                             ],

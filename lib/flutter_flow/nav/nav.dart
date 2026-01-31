@@ -503,6 +503,32 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
             idDevocional: params.getParam('idDevocional', ParamType.int),
           ),
         ),
+        FFRoute(
+          name: PageComunidadesAdminWidget.routeName,
+          path: PageComunidadesAdminWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageComunidadesAdminWidget(),
+        ),
+        FFRoute(
+          name: PageComunidadeAdminNovaWidget.routeName,
+          path: PageComunidadeAdminNovaWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageComunidadeAdminNovaWidget(),
+        ),
+        FFRoute(
+          name: PageComunidadeAdminDetalhesWidget.routeName,
+          path: PageComunidadeAdminDetalhesWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageComunidadeAdminDetalhesWidget(
+            idcomunidade: params.getParam('idcomunidade', ParamType.int),
+          ),
+        ),
+        FFRoute(
+          name: PageComunidadeLiderWidget.routeName,
+          path: PageComunidadeLiderWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageComunidadeLiderWidget(),
+        ),
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );
 

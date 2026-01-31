@@ -95,3 +95,11 @@ export '/pastor/page_devocional_pastor_editar/page_devocional_pastor_editar_widg
     show PageDevocionalPastorEditarWidget;
 export '/page_membro/page_devocional_membro_leitura/page_devocional_membro_leitura_widget.dart'
     show PageDevocionalMembroLeituraWidget;
+export '/admin/page_comunidades_admin/page_comunidades_admin_widget.dart'
+    show PageComunidadesAdminWidget;
+export '/admin/page_comunidade_admin_nova/page_comunidade_admin_nova_widget.dart'
+    show PageComunidadeAdminNovaWidget;
+export '/admin/page_comunidade_admin_detalhes/page_comunidade_admin_detalhes_widget.dart'
+    show PageComunidadeAdminDetalhesWidget;
+export '/lider/page_comunidade_lider/page_comunidade_lider_widget.dart'
+    show PageComunidadeLiderWidget;

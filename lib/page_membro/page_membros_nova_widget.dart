@@ -489,7 +489,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                                                     },
                                                     errorBuilder: (context, error, stackTrace) {
                                                       return Image.asset(
-                                                        'assets/images/logo_igj.png',
+                                                        'assets/images/logo.png',
                                                         width: 48.0,
                                                         height: 48.0,
                                                         fit: BoxFit.cover,
@@ -499,7 +499,7 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
                                                 }
                                                 // Default: logo da igreja
                                                 return Image.asset(
-                                                  'assets/images/logo_igj.png',
+                                                  'assets/images/logo.png',
                                                   width: 48.0,
                                                   height: 48.0,
                                                   fit: BoxFit.cover,

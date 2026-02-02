@@ -333,11 +333,17 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
                   children: [
                     // Botão menu
                     InkWell(
-                      onTap: () {
-                        showDialog(
+                      onTap: () async {
+                        await showDialog(
                           context: context,
-                          barrierColor: Colors.transparent,
-                          builder: (context) => MenuLiderMobileWidget(),
+                          builder: (dialogContext) {
+                            return Dialog(
+                              elevation: 0,
+                              insetPadding: EdgeInsets.zero,
+                              backgroundColor: Colors.transparent,
+                              child: MenuLiderMobileWidget(),
+                            );
+                          },
                         );
                       },
                       borderRadius: BorderRadius.circular(10.0),

@@ -158,6 +158,14 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: Color(0xFF14181B),
+        drawer: MediaQuery.sizeOf(context).width < 600
+            ? Drawer(
+                backgroundColor: Color(0xFF3C3D3E),
+                child: SafeArea(
+                  child: MenuLiderWidget(),
+                ),
+              )
+            : null,
         body: Container(
           width: MediaQuery.sizeOf(context).width * 1.0,
           height: MediaQuery.sizeOf(context).height * 1.0,
@@ -329,33 +337,51 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
                 // Foto e nome lado a lado no mobile
                 Row(
                   children: [
+                    // Botão menu
+                    InkWell(
+                      onTap: () => scaffoldKey.currentState?.openDrawer(),
+                      borderRadius: BorderRadius.circular(10.0),
+                      child: Container(
+                        padding: EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF3C3D3E),
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        child: Icon(
+                          Icons.menu_rounded,
+                          color: Colors.white,
+                          size: 24.0,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12.0),
                     Container(
-                      width: 70.0,
-                      height: 70.0,
+                      width: 56.0,
+                      height: 56.0,
                       decoration: BoxDecoration(
                         color: Color(0xFF4CAF50).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(14.0),
+                        borderRadius: BorderRadius.circular(12.0),
                       ),
                       child: _comunidade?.fotoUrl != null && _comunidade!.fotoUrl!.isNotEmpty
                           ? ClipRRect(
-                              borderRadius: BorderRadius.circular(14.0),
+                              borderRadius: BorderRadius.circular(12.0),
                               child: Image.network(
                                 _comunidade!.fotoUrl!,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) => Icon(
                                   Icons.groups_rounded,
                                   color: Color(0xFF4CAF50),
-                                  size: 35.0,
+                                  size: 28.0,
                                 ),
                               ),
                             )
                           : Icon(
                               Icons.groups_rounded,
                               color: Color(0xFF4CAF50),
-                              size: 35.0,
+                              size: 28.0,
                             ),
                     ),
-                    SizedBox(width: 16.0),
+                    SizedBox(width: 12.0),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -537,41 +563,77 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
   }
 
   Widget _buildMembrosTab() {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return SingleChildScrollView(
-      padding: EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header com botão adicionar
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Membros da Comunidade',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 20.0,
-                  fontWeight: FontWeight.w600,
+          isMobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Membros da Comunidade',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 12.0),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FFButtonWidget(
+                        onPressed: () => _mostrarModalAdicionarMembro(),
+                        text: 'Adicionar Membro',
+                        icon: Icon(Icons.add_rounded, size: 18.0),
+                        options: FFButtonOptions(
+                          height: 44.0,
+                          padding: EdgeInsets.symmetric(horizontal: 16.0),
+                          color: FlutterFlowTheme.of(context).primary,
+                          textStyle: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 14.0,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Membros da Comunidade',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    FFButtonWidget(
+                      onPressed: () => _mostrarModalAdicionarMembro(),
+                      text: 'Adicionar',
+                      icon: Icon(Icons.add_rounded, size: 18.0),
+                      options: FFButtonOptions(
+                        height: 40.0,
+                        padding: EdgeInsets.symmetric(horizontal: 16.0),
+                        color: FlutterFlowTheme.of(context).primary,
+                        textStyle: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              FFButtonWidget(
-                onPressed: () => _mostrarModalAdicionarMembro(),
-                text: 'Adicionar',
-                icon: Icon(Icons.add_rounded, size: 18.0),
-                options: FFButtonOptions(
-                  height: 40.0,
-                  padding: EdgeInsets.symmetric(horizontal: 16.0),
-                  color: FlutterFlowTheme.of(context).primary,
-                  textStyle: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-              ),
-            ],
-          ),
 
           SizedBox(height: 16.0),
 
@@ -721,41 +783,77 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
   }
 
   Widget _buildAvisosTab() {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return SingleChildScrollView(
-      padding: EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header com botão criar
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Meus Avisos',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 20.0,
-                  fontWeight: FontWeight.w600,
+          isMobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Meus Avisos',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 12.0),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FFButtonWidget(
+                        onPressed: () => _mostrarModalCriarAviso(),
+                        text: 'Novo Aviso',
+                        icon: Icon(Icons.add_rounded, size: 18.0),
+                        options: FFButtonOptions(
+                          height: 44.0,
+                          padding: EdgeInsets.symmetric(horizontal: 16.0),
+                          color: FlutterFlowTheme.of(context).primary,
+                          textStyle: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 14.0,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Meus Avisos',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    FFButtonWidget(
+                      onPressed: () => _mostrarModalCriarAviso(),
+                      text: 'Novo Aviso',
+                      icon: Icon(Icons.add_rounded, size: 18.0),
+                      options: FFButtonOptions(
+                        height: 40.0,
+                        padding: EdgeInsets.symmetric(horizontal: 16.0),
+                        color: FlutterFlowTheme.of(context).primary,
+                        textStyle: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              FFButtonWidget(
-                onPressed: () => _mostrarModalCriarAviso(),
-                text: 'Novo Aviso',
-                icon: Icon(Icons.add_rounded, size: 18.0),
-                options: FFButtonOptions(
-                  height: 40.0,
-                  padding: EdgeInsets.symmetric(horizontal: 16.0),
-                  color: FlutterFlowTheme.of(context).primary,
-                  textStyle: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-              ),
-            ],
-          ),
 
           SizedBox(height: 16.0),
 

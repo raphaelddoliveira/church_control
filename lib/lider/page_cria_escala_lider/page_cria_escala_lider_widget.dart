@@ -156,6 +156,17 @@ class _PageCriaEscalaLiderWidgetState extends State<PageCriaEscalaLiderWidget> {
     setState(() => _isSaving = true);
 
     try {
+      // Buscar id_membro do usuário logado
+      final membroRows = await MembrosTable().queryRows(
+        queryFn: (q) => q.eq('id_auth', currentUserUid),
+      );
+
+      if (membroRows.isEmpty) {
+        throw Exception('Membro não encontrado para o usuário logado');
+      }
+
+      final idMembroResponsavel = membroRows.first.idMembro;
+
       // Combinar data e hora
       final dataHora = DateTime(
         _dataSelecionada!.year,
@@ -173,7 +184,7 @@ class _PageCriaEscalaLiderWidgetState extends State<PageCriaEscalaLiderWidget> {
         'descricao': _model.textController3?.text.isNotEmpty == true
             ? _model.textController3!.text
             : null,
-        'id_responsavel': currentUserUid,
+        'id_responsavel': idMembroResponsavel,
       });
 
       // Navegar para página de detalhes

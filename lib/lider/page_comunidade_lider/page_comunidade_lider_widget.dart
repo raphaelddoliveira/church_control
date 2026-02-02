@@ -193,9 +193,17 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
 
               // Conteudo principal
               Expanded(
-                child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
-                  child: Container(
+                child: Builder(
+                  builder: (context) {
+                    final isMobile = MediaQuery.sizeOf(context).width < 600;
+                    return Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        16.0,
+                        16.0 + (isMobile ? MediaQuery.of(context).padding.top : 0),
+                        16.0,
+                        16.0,
+                      ),
+                      child: Container(
                     width: 100.0,
                     height: MediaQuery.sizeOf(context).height * 1.0,
                     decoration: BoxDecoration(
@@ -214,6 +222,8 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
                             ? _buildNoComunidade()
                             : _buildConteudo(),
                   ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -302,8 +312,10 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
   }
 
   Widget _buildHeader() {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return Container(
-      padding: EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
       decoration: BoxDecoration(
         color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.only(
@@ -311,88 +323,180 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
           topRight: Radius.circular(12.0),
         ),
       ),
-      child: Row(
-        children: [
-          // Foto da comunidade
-          Container(
-            width: 80.0,
-            height: 80.0,
-            decoration: BoxDecoration(
-              color: Color(0xFF4CAF50).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16.0),
-            ),
-            child: _comunidade?.fotoUrl != null && _comunidade!.fotoUrl!.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(16.0),
-                    child: Image.network(
-                      _comunidade!.fotoUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        Icons.groups_rounded,
-                        color: Color(0xFF4CAF50),
-                        size: 40.0,
+      child: isMobile
+          ? Column(
+              children: [
+                // Foto e nome lado a lado no mobile
+                Row(
+                  children: [
+                    Container(
+                      width: 70.0,
+                      height: 70.0,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF4CAF50).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(14.0),
+                      ),
+                      child: _comunidade?.fotoUrl != null && _comunidade!.fotoUrl!.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(14.0),
+                              child: Image.network(
+                                _comunidade!.fotoUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Icon(
+                                  Icons.groups_rounded,
+                                  color: Color(0xFF4CAF50),
+                                  size: 35.0,
+                                ),
+                              ),
+                            )
+                          : Icon(
+                              Icons.groups_rounded,
+                              color: Color(0xFF4CAF50),
+                              size: 35.0,
+                            ),
+                    ),
+                    SizedBox(width: 16.0),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _comunidade?.nomeComunidade ?? 'Minha Comunidade',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (_comunidade?.descricaoComunidade != null &&
+                              _comunidade!.descricaoComunidade!.isNotEmpty) ...[
+                            SizedBox(height: 4.0),
+                            Text(
+                              _comunidade!.descricaoComunidade!,
+                              style: GoogleFonts.inter(
+                                color: Color(0xFF999999),
+                                fontSize: 12.0,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                  )
-                : Icon(
-                    Icons.groups_rounded,
-                    color: Color(0xFF4CAF50),
-                    size: 40.0,
-                  ),
-          ),
-          SizedBox(width: 20.0),
-
-          // Informações
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+                  ],
+                ),
+                SizedBox(height: 16.0),
+                // Cards de estatísticas abaixo no mobile
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildMiniStatCard(
+                        icon: Icons.people_rounded,
+                        value: _membrosComunidade.length.toString(),
+                        label: 'Membros',
+                        color: Color(0xFF2196F3),
+                      ),
+                    ),
+                    SizedBox(width: 12.0),
+                    Expanded(
+                      child: _buildMiniStatCard(
+                        icon: Icons.campaign_rounded,
+                        value: _avisos.where((a) =>
+                          a.expiraEm != null && a.expiraEm!.isAfter(DateTime.now())
+                        ).length.toString(),
+                        label: 'Avisos Ativos',
+                        color: Color(0xFF4CAF50),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          : Row(
               children: [
-                Text(
-                  _comunidade?.nomeComunidade ?? 'Minha Comunidade',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 28.0,
-                    fontWeight: FontWeight.bold,
+                // Foto da comunidade
+                Container(
+                  width: 80.0,
+                  height: 80.0,
+                  decoration: BoxDecoration(
+                    color: Color(0xFF4CAF50).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16.0),
+                  ),
+                  child: _comunidade?.fotoUrl != null && _comunidade!.fotoUrl!.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(16.0),
+                          child: Image.network(
+                            _comunidade!.fotoUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.groups_rounded,
+                              color: Color(0xFF4CAF50),
+                              size: 40.0,
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          Icons.groups_rounded,
+                          color: Color(0xFF4CAF50),
+                          size: 40.0,
+                        ),
+                ),
+                SizedBox(width: 20.0),
+
+                // Informações
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _comunidade?.nomeComunidade ?? 'Minha Comunidade',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 28.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8.0),
+                      if (_comunidade?.descricaoComunidade != null &&
+                          _comunidade!.descricaoComunidade!.isNotEmpty)
+                        Text(
+                          _comunidade!.descricaoComunidade!,
+                          style: GoogleFonts.inter(
+                            color: Color(0xFF999999),
+                            fontSize: 14.0,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
                   ),
                 ),
-                SizedBox(height: 8.0),
-                if (_comunidade?.descricaoComunidade != null &&
-                    _comunidade!.descricaoComunidade!.isNotEmpty)
-                  Text(
-                    _comunidade!.descricaoComunidade!,
-                    style: GoogleFonts.inter(
-                      color: Color(0xFF999999),
-                      fontSize: 14.0,
+
+                // Cards de estatísticas
+                Row(
+                  children: [
+                    _buildMiniStatCard(
+                      icon: Icons.people_rounded,
+                      value: _membrosComunidade.length.toString(),
+                      label: 'Membros',
+                      color: Color(0xFF2196F3),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    SizedBox(width: 16.0),
+                    _buildMiniStatCard(
+                      icon: Icons.campaign_rounded,
+                      value: _avisos.where((a) =>
+                        a.expiraEm != null && a.expiraEm!.isAfter(DateTime.now())
+                      ).length.toString(),
+                      label: 'Avisos Ativos',
+                      color: Color(0xFF4CAF50),
+                    ),
+                  ],
+                ),
               ],
             ),
-          ),
-
-          // Cards de estatísticas
-          Row(
-            children: [
-              _buildMiniStatCard(
-                icon: Icons.people_rounded,
-                value: _membrosComunidade.length.toString(),
-                label: 'Membros',
-                color: Color(0xFF2196F3),
-              ),
-              SizedBox(width: 16.0),
-              _buildMiniStatCard(
-                icon: Icons.campaign_rounded,
-                value: _avisos.where((a) =>
-                  a.expiraEm != null && a.expiraEm!.isAfter(DateTime.now())
-                ).length.toString(),
-                label: 'Avisos Ativos',
-                color: Color(0xFF4CAF50),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 

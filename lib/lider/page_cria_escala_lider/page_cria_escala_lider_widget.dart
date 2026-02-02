@@ -1,5 +1,6 @@
 import '/auth/supabase_auth/auth_util.dart';
 import '/backend/supabase/supabase.dart';
+import '/backend/supabase/storage/storage.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -38,7 +39,8 @@ class _PageCriaEscalaLiderWidgetState extends State<PageCriaEscalaLiderWidget> {
   bool _isSaving = false;
   DateTime? _dataSelecionada;
   TimeOfDay? _horaSelecionada;
-  List<FFUploadedFile> _arquivos = [];
+  List<SelectedFile> _arquivosSelecionados = [];
+  bool _isUploadingFiles = false;
 
   @override
   void initState() {
@@ -132,6 +134,24 @@ class _PageCriaEscalaLiderWidgetState extends State<PageCriaEscalaLiderWidget> {
     }
   }
 
+  Future<void> _selecionarArquivos() async {
+    final arquivos = await selectFiles(
+      storageFolderPath: 'escalas',
+      multiFile: true,
+    );
+    if (arquivos != null && arquivos.isNotEmpty) {
+      setState(() {
+        _arquivosSelecionados.addAll(arquivos);
+      });
+    }
+  }
+
+  void _removerArquivo(int index) {
+    setState(() {
+      _arquivosSelecionados.removeAt(index);
+    });
+  }
+
   Future<void> _criarEscala() async {
     if (_model.textController1?.text.isEmpty ?? true) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -176,6 +196,20 @@ class _PageCriaEscalaLiderWidgetState extends State<PageCriaEscalaLiderWidget> {
         _horaSelecionada!.minute,
       );
 
+      // Upload de arquivos (se houver)
+      List<String> urlsArquivos = [];
+      if (_arquivosSelecionados.isNotEmpty) {
+        setState(() => _isUploadingFiles = true);
+        try {
+          urlsArquivos = await uploadSupabaseStorageFiles(
+            bucketName: 'escalas',
+            selectedFiles: _arquivosSelecionados,
+          );
+        } catch (e) {
+          print('Erro ao fazer upload de arquivos: $e');
+        }
+      }
+
       // Criar escala
       final novaEscala = await EscalasTable().insert({
         'id_ministerio': widget.idministerio,
@@ -185,6 +219,7 @@ class _PageCriaEscalaLiderWidgetState extends State<PageCriaEscalaLiderWidget> {
             ? _model.textController3!.text
             : null,
         'id_responsavel': idMembroResponsavel,
+        if (urlsArquivos.isNotEmpty) 'arquivos': urlsArquivos,
       });
 
       // Navegar para página de detalhes
@@ -204,7 +239,10 @@ class _PageCriaEscalaLiderWidgetState extends State<PageCriaEscalaLiderWidget> {
         ),
       );
     } finally {
-      setState(() => _isSaving = false);
+      setState(() {
+        _isSaving = false;
+        _isUploadingFiles = false;
+      });
     }
   }
 
@@ -423,6 +461,98 @@ class _PageCriaEscalaLiderWidgetState extends State<PageCriaEscalaLiderWidget> {
                                             maxLines: 4,
                                           ),
 
+                                          SizedBox(height: 24.0),
+
+                                          // Arquivos
+                                          _buildLabel('Arquivos'),
+                                          SizedBox(height: 8.0),
+                                          InkWell(
+                                            onTap: _selecionarArquivos,
+                                            borderRadius: BorderRadius.circular(12.0),
+                                            child: Container(
+                                              width: double.infinity,
+                                              padding: EdgeInsets.all(16.0),
+                                              decoration: BoxDecoration(
+                                                color: Color(0xFF3A3A3A),
+                                                borderRadius: BorderRadius.circular(12.0),
+                                                border: Border.all(
+                                                  color: Color(0xFF4A4A4A),
+                                                  width: 1.0,
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.attach_file_rounded,
+                                                    color: FlutterFlowTheme.of(context).primary,
+                                                    size: 24.0,
+                                                  ),
+                                                  SizedBox(width: 8.0),
+                                                  Text(
+                                                    'Adicionar Arquivos',
+                                                    style: GoogleFonts.inter(
+                                                      color: FlutterFlowTheme.of(context).primary,
+                                                      fontSize: 16.0,
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+
+                                          // Lista de arquivos selecionados
+                                          if (_arquivosSelecionados.isNotEmpty) ...[
+                                            SizedBox(height: 12.0),
+                                            ..._arquivosSelecionados.asMap().entries.map((entry) {
+                                              final index = entry.key;
+                                              final arquivo = entry.value;
+                                              return Padding(
+                                                padding: EdgeInsets.only(bottom: 8.0),
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                                                  decoration: BoxDecoration(
+                                                    color: Color(0xFF3A3A3A),
+                                                    borderRadius: BorderRadius.circular(8.0),
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.insert_drive_file_rounded,
+                                                        color: Color(0xFF999999),
+                                                        size: 20.0,
+                                                      ),
+                                                      SizedBox(width: 10.0),
+                                                      Expanded(
+                                                        child: Text(
+                                                          arquivo.originalFilename,
+                                                          style: GoogleFonts.inter(
+                                                            color: Colors.white,
+                                                            fontSize: 14.0,
+                                                          ),
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                      InkWell(
+                                                        onTap: () => _removerArquivo(index),
+                                                        borderRadius: BorderRadius.circular(4.0),
+                                                        child: Padding(
+                                                          padding: EdgeInsets.all(4.0),
+                                                          child: Icon(
+                                                            Icons.close_rounded,
+                                                            color: Colors.red,
+                                                            size: 18.0,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ],
+
                                           SizedBox(height: 32.0),
 
                                           // Botão criar
@@ -430,7 +560,9 @@ class _PageCriaEscalaLiderWidgetState extends State<PageCriaEscalaLiderWidget> {
                                             width: double.infinity,
                                             child: FFButtonWidget(
                                               onPressed: _isSaving ? null : _criarEscala,
-                                              text: _isSaving ? 'Criando...' : 'Criar Escala',
+                                              text: _isUploadingFiles
+                                                  ? 'Enviando arquivos...'
+                                                  : (_isSaving ? 'Criando...' : 'Criar Escala'),
                                               icon: _isSaving
                                                   ? null
                                                   : Icon(

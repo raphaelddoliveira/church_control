@@ -1601,12 +1601,12 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                           onPressed: () async {
                             DateTime? dataHora;
                             if (dataSelecionada != null && horaSelecionada != null) {
-                              // Usar horário selecionado diretamente (sem adicionar 3h na edição)
+                              // Adicionar 3 horas para compensar o fuso horário UTC-3 Brasília
                               dataHora = DateTime(
                                 dataSelecionada!.year,
                                 dataSelecionada!.month,
                                 dataSelecionada!.day,
-                                horaSelecionada!.hour,
+                                horaSelecionada!.hour + 3,
                                 horaSelecionada!.minute,
                               );
                             }

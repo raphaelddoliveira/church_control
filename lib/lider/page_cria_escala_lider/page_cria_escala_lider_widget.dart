@@ -187,12 +187,12 @@ class _PageCriaEscalaLiderWidgetState extends State<PageCriaEscalaLiderWidget> {
 
       final idMembroResponsavel = membroRows.first.idMembro;
 
-      // Combinar data e hora
+      // Combinar data e hora (adicionar 3 horas para compensar o fuso horário UTC-3 Brasília)
       final dataHora = DateTime(
         _dataSelecionada!.year,
         _dataSelecionada!.month,
         _dataSelecionada!.day,
-        _horaSelecionada!.hour,
+        _horaSelecionada!.hour + 3,
         _horaSelecionada!.minute,
       );
 

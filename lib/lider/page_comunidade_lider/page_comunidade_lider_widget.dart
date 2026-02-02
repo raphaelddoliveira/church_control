@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import '/auth/supabase_auth/auth_util.dart';
 import '/lider/menu_lider/menu_lider_widget.dart';
+import '/lider/menu_lider_mobile/menu_lider_mobile_widget.dart';
 import '/backend/supabase/supabase.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -158,14 +159,7 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: Color(0xFF14181B),
-        drawer: MediaQuery.sizeOf(context).width < 600
-            ? Drawer(
-                backgroundColor: Color(0xFF3C3D3E),
-                child: SafeArea(
-                  child: MenuLiderWidget(),
-                ),
-              )
-            : null,
+        drawer: null,
         body: Container(
           width: MediaQuery.sizeOf(context).width * 1.0,
           height: MediaQuery.sizeOf(context).height * 1.0,
@@ -339,7 +333,13 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
                   children: [
                     // Botão menu
                     InkWell(
-                      onTap: () => scaffoldKey.currentState?.openDrawer(),
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          barrierColor: Colors.transparent,
+                          builder: (context) => MenuLiderMobileWidget(),
+                        );
+                      },
                       borderRadius: BorderRadius.circular(10.0),
                       child: Container(
                         padding: EdgeInsets.all(8.0),
@@ -925,10 +925,11 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
   Widget _buildAvisoCard(AvisoRow aviso) {
     final now = DateTime.now();
     final isAtivo = aviso.expiraEm != null && aviso.expiraEm!.isAfter(now);
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.0),
-      padding: EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
       decoration: BoxDecoration(
         color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(12.0),
@@ -937,106 +938,225 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
           width: 1.0,
         ),
       ),
-      child: Row(
-        children: [
-          // Ícone
-          Container(
-            width: 48.0,
-            height: 48.0,
-            decoration: BoxDecoration(
-              color: isAtivo
-                  ? Color(0xFF4CAF50).withOpacity(0.1)
-                  : Color(0xFFF44336).withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.campaign_rounded,
-              color: isAtivo ? Color(0xFF4CAF50) : Color(0xFFF44336),
-              size: 24.0,
-            ),
-          ),
-          SizedBox(width: 16.0),
-
-          // Informações
-          Expanded(
-            child: Column(
+      child: isMobile
+          ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header: título e status
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        aviso.nomeAviso ?? 'Sem título',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    // Ícone
+                    Container(
+                      width: 40.0,
+                      height: 40.0,
+                      decoration: BoxDecoration(
+                        color: isAtivo
+                            ? Color(0xFF4CAF50).withOpacity(0.1)
+                            : Color(0xFFF44336).withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.campaign_rounded,
+                        color: isAtivo ? Color(0xFF4CAF50) : Color(0xFFF44336),
+                        size: 20.0,
                       ),
                     ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                      decoration: BoxDecoration(
-                        color: isAtivo ? Color(0xFF4CAF50) : Color(0xFFF44336),
-                        borderRadius: BorderRadius.circular(6.0),
-                      ),
-                      child: Text(
-                        isAtivo ? 'ATIVO' : 'EXPIRADO',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 10.0,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    SizedBox(width: 12.0),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            aviso.nomeAviso ?? 'Sem título',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 15.0,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 4.0),
+                          Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                                decoration: BoxDecoration(
+                                  color: isAtivo ? Color(0xFF4CAF50) : Color(0xFFF44336),
+                                  borderRadius: BorderRadius.circular(4.0),
+                                ),
+                                child: Text(
+                                  isAtivo ? 'ATIVO' : 'EXPIRADO',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontSize: 9.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8.0),
+                              Text(
+                                aviso.categoria ?? 'Geral',
+                                style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 11.0),
+                              ),
+                              SizedBox(width: 8.0),
+                              Text(
+                                aviso.expiraEm != null
+                                    ? dateTimeFormat('dd/MM/yy', aviso.expiraEm!)
+                                    : '',
+                                style: GoogleFonts.inter(color: Color(0xFF666666), fontSize: 11.0),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 4.0),
+                SizedBox(height: 10.0),
+                // Botões de ação
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Icon(Icons.category_rounded, color: Color(0xFF666666), size: 14.0),
-                    SizedBox(width: 4.0),
-                    Text(
-                      aviso.categoria ?? 'Geral',
-                      style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 12.0),
+                    _buildActionButton(
+                      icon: Icons.visibility_rounded,
+                      color: Color(0xFF2196F3),
+                      onTap: () => _mostrarDetalhesAviso(aviso),
                     ),
-                    SizedBox(width: 12.0),
-                    Icon(Icons.event_rounded, color: Color(0xFF666666), size: 14.0),
-                    SizedBox(width: 4.0),
-                    Text(
-                      aviso.expiraEm != null
-                          ? dateTimeFormat('dd/MM/yyyy', aviso.expiraEm!)
-                          : 'Sem data',
-                      style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 12.0),
+                    SizedBox(width: 8.0),
+                    _buildActionButton(
+                      icon: Icons.edit_rounded,
+                      color: Color(0xFFFF9800),
+                      onTap: () => _mostrarModalEditarAviso(aviso),
+                    ),
+                    SizedBox(width: 8.0),
+                    _buildActionButton(
+                      icon: Icons.delete_rounded,
+                      color: Color(0xFFF44336),
+                      onTap: () => _confirmarExcluirAviso(aviso),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                // Ícone
+                Container(
+                  width: 48.0,
+                  height: 48.0,
+                  decoration: BoxDecoration(
+                    color: isAtivo
+                        ? Color(0xFF4CAF50).withOpacity(0.1)
+                        : Color(0xFFF44336).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.campaign_rounded,
+                    color: isAtivo ? Color(0xFF4CAF50) : Color(0xFFF44336),
+                    size: 24.0,
+                  ),
+                ),
+                SizedBox(width: 16.0),
+
+                // Informações
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              aviso.nomeAviso ?? 'Sem título',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                            decoration: BoxDecoration(
+                              color: isAtivo ? Color(0xFF4CAF50) : Color(0xFFF44336),
+                              borderRadius: BorderRadius.circular(6.0),
+                            ),
+                            child: Text(
+                              isAtivo ? 'ATIVO' : 'EXPIRADO',
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 10.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 4.0),
+                      Row(
+                        children: [
+                          Icon(Icons.category_rounded, color: Color(0xFF666666), size: 14.0),
+                          SizedBox(width: 4.0),
+                          Text(
+                            aviso.categoria ?? 'Geral',
+                            style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 12.0),
+                          ),
+                          SizedBox(width: 12.0),
+                          Icon(Icons.event_rounded, color: Color(0xFF666666), size: 14.0),
+                          SizedBox(width: 4.0),
+                          Text(
+                            aviso.expiraEm != null
+                                ? dateTimeFormat('dd/MM/yyyy', aviso.expiraEm!)
+                                : 'Sem data',
+                            style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 12.0),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Botões de ação
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: () => _mostrarDetalhesAviso(aviso),
+                      icon: Icon(Icons.visibility_rounded, color: Color(0xFF2196F3), size: 20.0),
+                      tooltip: 'Visualizar',
+                    ),
+                    IconButton(
+                      onPressed: () => _mostrarModalEditarAviso(aviso),
+                      icon: Icon(Icons.edit_rounded, color: Color(0xFFFF9800), size: 20.0),
+                      tooltip: 'Editar',
+                    ),
+                    IconButton(
+                      onPressed: () => _confirmarExcluirAviso(aviso),
+                      icon: Icon(Icons.delete_rounded, color: Color(0xFFF44336), size: 20.0),
+                      tooltip: 'Excluir',
                     ),
                   ],
                 ),
               ],
             ),
-          ),
+    );
+  }
 
-          // Botões de ação
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                onPressed: () => _mostrarDetalhesAviso(aviso),
-                icon: Icon(Icons.visibility_rounded, color: Color(0xFF2196F3), size: 20.0),
-                tooltip: 'Visualizar',
-              ),
-              IconButton(
-                onPressed: () => _mostrarModalEditarAviso(aviso),
-                icon: Icon(Icons.edit_rounded, color: Color(0xFFFF9800), size: 20.0),
-                tooltip: 'Editar',
-              ),
-              IconButton(
-                onPressed: () => _confirmarExcluirAviso(aviso),
-                icon: Icon(Icons.delete_rounded, color: Color(0xFFF44336), size: 20.0),
-                tooltip: 'Excluir',
-              ),
-            ],
-          ),
-        ],
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8.0),
+      child: Container(
+        padding: EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Icon(icon, color: color, size: 18.0),
       ),
     );
   }

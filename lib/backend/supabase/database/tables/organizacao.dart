@@ -26,4 +26,17 @@ class OrganizacaoRow extends SupabaseDataRow {
 
   int? get idEndereco => getField<int>('id_endereco');
   set idEndereco(int? value) => setField<int>('id_endereco', value);
+
+  String? get slug => getField<String>('slug');
+  set slug(String? value) => setField<String>('slug', value);
+
+  int? get idPlano => getField<int>('id_plano');
+  set idPlano(int? value) => setField<int>('id_plano', value);
+
+  bool? get ativo => getField<bool>('ativo');
+  set ativo(bool? value) => setField<bool>('ativo', value);
+
+  DateTime? get dataCadastro => getField<DateTime>('data_cadastro');
+  set dataCadastro(DateTime? value) =>
+      setField<DateTime>('data_cadastro', value);
 }

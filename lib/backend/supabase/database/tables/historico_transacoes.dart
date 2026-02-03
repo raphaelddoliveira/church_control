@@ -30,4 +30,7 @@ class HistoricoTransacoesRow extends SupabaseDataRow {
   DateTime? get dataHistorico => getField<DateTime>('data_historico');
   set dataHistorico(DateTime? value) =>
       setField<DateTime>('data_historico', value);
+
+  int? get idOrganizacao => getField<int>('id_organizacao');
+  set idOrganizacao(int? value) => setField<int>('id_organizacao', value);
 }

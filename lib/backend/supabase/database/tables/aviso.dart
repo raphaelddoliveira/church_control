@@ -51,4 +51,7 @@ class AvisoRow extends SupabaseDataRow {
 
   String? get status => getField<String>('status');
   set status(String? value) => setField<String>('status', value);
+
+  int? get idOrganizacao => getField<int>('id_organizacao');
+  set idOrganizacao(int? value) => setField<int>('id_organizacao', value);
 }

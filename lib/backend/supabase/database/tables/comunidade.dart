@@ -31,4 +31,7 @@ class ComunidadeRow extends SupabaseDataRow {
 
   String? get descricaoComunidade => getField<String>('descricao_comunidade');
   set descricaoComunidade(String? value) => setField<String>('descricao_comunidade', value);
+
+  int? get idOrganizacao => getField<int>('id_organizacao');
+  set idOrganizacao(int? value) => setField<int>('id_organizacao', value);
 }

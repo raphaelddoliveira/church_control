@@ -25,4 +25,7 @@ class CelulaRow extends SupabaseDataRow {
 
   String? get idLider => getField<String>('id_lider');
   set idLider(String? value) => setField<String>('id_lider', value);
+
+  int? get idOrganizacao => getField<int>('id_organizacao');
+  set idOrganizacao(int? value) => setField<int>('id_organizacao', value);
 }

@@ -39,4 +39,7 @@ class CaixaRow extends SupabaseDataRow {
   double? get saldoDiarioFinal => getField<double>('saldo_diario_final');
   set saldoDiarioFinal(double? value) =>
       setField<double>('saldo_diario_final', value);
+
+  int? get idOrganizacao => getField<int>('id_organizacao');
+  set idOrganizacao(int? value) => setField<int>('id_organizacao', value);
 }

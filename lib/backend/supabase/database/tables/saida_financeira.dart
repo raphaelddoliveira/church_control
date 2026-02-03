@@ -39,4 +39,7 @@ class SaidaFinanceiraRow extends SupabaseDataRow {
 
   String? get situacao => getField<String>('situacao');
   set situacao(String? value) => setField<String>('situacao', value);
+
+  int? get idOrganizacao => getField<int>('id_organizacao');
+  set idOrganizacao(int? value) => setField<int>('id_organizacao', value);
 }

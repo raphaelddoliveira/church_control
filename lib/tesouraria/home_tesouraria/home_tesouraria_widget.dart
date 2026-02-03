@@ -34,6 +34,14 @@ class _HomeTesourariaWidgetState extends State<HomeTesourariaWidget> {
   Map<String, double> _saidasPorMes = {};
   bool _isLoading = true;
 
+  // Alertas de contas
+  List<SaidaFinanceiraRow> _contasVencidas = [];
+  List<SaidaFinanceiraRow> _contasVencemHoje = [];
+  List<SaidaFinanceiraRow> _contasVencem1Dia = [];
+  List<SaidaFinanceiraRow> _contasVencem2Dias = [];
+  List<SaidaFinanceiraRow> _contasVencem3Dias = [];
+  bool _alertasJaMostrados = false;
+
   @override
   void initState() {
     super.initState();
@@ -57,12 +65,10 @@ class _HomeTesourariaWidgetState extends State<HomeTesourariaWidget> {
         queryFn: (q) => q,
       );
 
-      // Calcular saldo total da igreja (todas entradas - todas saídas pagas)
+      // Calcular saldo total da igreja (todas entradas - todas saídas)
       final totalTodasEntradas = entradas.fold(0.0, (sum, e) => sum + (e.valorEntrada ?? 0.0));
-      final totalTodasSaidasPagas = saidas
-          .where((s) => s.situacao == 'Pago')
-          .fold(0.0, (sum, s) => sum + (s.valorDespesa ?? 0.0));
-      final saldo = totalTodasEntradas - totalTodasSaidasPagas;
+      final totalTodasSaidas = saidas.fold(0.0, (sum, s) => sum + (s.valorDespesa ?? 0.0));
+      final saldo = totalTodasEntradas - totalTodasSaidas;
 
       // Filtrar entradas do mês atual
       final entradasMes = entradas.where((e) {
@@ -129,6 +135,39 @@ class _HomeTesourariaWidgetState extends State<HomeTesourariaWidget> {
         return b.dataEntrada!.compareTo(a.dataEntrada!);
       });
 
+      // Categorizar contas por vencimento para alertas
+      final hoje = DateTime(agora.year, agora.month, agora.day);
+      final contasNaoPagas = saidas.where((s) =>
+        s.dataVencimento != null && s.situacao != 'Pago'
+      ).toList();
+
+      final vencidas = <SaidaFinanceiraRow>[];
+      final vencemHoje = <SaidaFinanceiraRow>[];
+      final vencem1Dia = <SaidaFinanceiraRow>[];
+      final vencem2Dias = <SaidaFinanceiraRow>[];
+      final vencem3Dias = <SaidaFinanceiraRow>[];
+
+      for (var conta in contasNaoPagas) {
+        final dataVenc = DateTime(
+          conta.dataVencimento!.year,
+          conta.dataVencimento!.month,
+          conta.dataVencimento!.day,
+        );
+        final diffDias = dataVenc.difference(hoje).inDays;
+
+        if (diffDias < 0) {
+          vencidas.add(conta);
+        } else if (diffDias == 0) {
+          vencemHoje.add(conta);
+        } else if (diffDias == 1) {
+          vencem1Dia.add(conta);
+        } else if (diffDias == 2) {
+          vencem2Dias.add(conta);
+        } else if (diffDias == 3) {
+          vencem3Dias.add(conta);
+        }
+      }
+
       setState(() {
         _saldoAtual = saldo;
         _totalEntradasMes = totalEntradas;
@@ -138,8 +177,28 @@ class _HomeTesourariaWidgetState extends State<HomeTesourariaWidget> {
         _ultimasEntradas = entradas.take(5).toList();
         _entradasPorMes = entradasMesMap;
         _saidasPorMes = saidasMesMap;
+        _contasVencidas = vencidas;
+        _contasVencemHoje = vencemHoje;
+        _contasVencem1Dia = vencem1Dia;
+        _contasVencem2Dias = vencem2Dias;
+        _contasVencem3Dias = vencem3Dias;
         _isLoading = false;
       });
+
+      // Mostrar alertas se houver contas vencidas ou prestes a vencer
+      if (!_alertasJaMostrados) {
+        _alertasJaMostrados = true;
+        final temAlertas = vencidas.isNotEmpty ||
+                          vencemHoje.isNotEmpty ||
+                          vencem1Dia.isNotEmpty ||
+                          vencem2Dias.isNotEmpty ||
+                          vencem3Dias.isNotEmpty;
+        if (temAlertas) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _mostrarDialogoAlertas();
+          });
+        }
+      }
     } catch (e) {
       print('[Tesouraria] Erro ao carregar dados: $e');
       setState(() => _isLoading = false);
@@ -149,6 +208,281 @@ class _HomeTesourariaWidgetState extends State<HomeTesourariaWidget> {
   String _getNomeMes(int mes) {
     const meses = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     return meses[mes];
+  }
+
+  void _mostrarDialogoAlertas() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Color(0xFF2A2A2A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          child: Container(
+            width: 500,
+            constraints: BoxConstraints(maxHeight: 600),
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(10.0),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFE53935).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Icon(
+                        Icons.warning_amber_rounded,
+                        color: Color(0xFFE53935),
+                        size: 28.0,
+                      ),
+                    ),
+                    SizedBox(width: 16.0),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Alertas de Contas',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Atenção às contas pendentes',
+                            style: GoogleFonts.inter(
+                              color: Color(0xFF999999),
+                              fontSize: 14.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(Icons.close, color: Color(0xFF999999)),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20.0),
+                Divider(color: Color(0xFF404040)),
+                SizedBox(height: 16.0),
+                // Lista de alertas
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Contas vencidas
+                        if (_contasVencidas.isNotEmpty)
+                          _buildSecaoAlerta(
+                            titulo: 'Contas Vencidas',
+                            subtitulo: '${_contasVencidas.length} conta(s) em atraso',
+                            cor: Color(0xFFE53935),
+                            icone: Icons.error_rounded,
+                            contas: _contasVencidas,
+                            mensagem: 'VENCIDA',
+                          ),
+                        // Vence hoje
+                        if (_contasVencemHoje.isNotEmpty)
+                          _buildSecaoAlerta(
+                            titulo: 'Vencem Hoje',
+                            subtitulo: '${_contasVencemHoje.length} conta(s)',
+                            cor: Color(0xFFFF5722),
+                            icone: Icons.today_rounded,
+                            contas: _contasVencemHoje,
+                            mensagem: 'VENCE HOJE',
+                          ),
+                        // Vence em 1 dia
+                        if (_contasVencem1Dia.isNotEmpty)
+                          _buildSecaoAlerta(
+                            titulo: 'Vencem Amanhã',
+                            subtitulo: '${_contasVencem1Dia.length} conta(s)',
+                            cor: Color(0xFFFF9800),
+                            icone: Icons.schedule_rounded,
+                            contas: _contasVencem1Dia,
+                            mensagem: 'VENCE EM 1 DIA',
+                          ),
+                        // Vence em 2 dias
+                        if (_contasVencem2Dias.isNotEmpty)
+                          _buildSecaoAlerta(
+                            titulo: 'Vencem em 2 dias',
+                            subtitulo: '${_contasVencem2Dias.length} conta(s)',
+                            cor: Color(0xFFFFC107),
+                            icone: Icons.schedule_rounded,
+                            contas: _contasVencem2Dias,
+                            mensagem: 'VENCE EM 2 DIAS',
+                          ),
+                        // Vence em 3 dias
+                        if (_contasVencem3Dias.isNotEmpty)
+                          _buildSecaoAlerta(
+                            titulo: 'Vencem em 3 dias',
+                            subtitulo: '${_contasVencem3Dias.length} conta(s)',
+                            cor: Color(0xFF8BC34A),
+                            icone: Icons.schedule_rounded,
+                            contas: _contasVencem3Dias,
+                            mensagem: 'VENCE EM 3 DIAS',
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20.0),
+                // Botão fechar
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: FlutterFlowTheme.of(context).primary,
+                      padding: EdgeInsets.symmetric(vertical: 14.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    child: Text(
+                      'Entendi',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSecaoAlerta({
+    required String titulo,
+    required String subtitulo,
+    required Color cor,
+    required IconData icone,
+    required List<SaidaFinanceiraRow> contas,
+    required String mensagem,
+  }) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icone, color: cor, size: 20.0),
+              SizedBox(width: 8.0),
+              Text(
+                titulo,
+                style: GoogleFonts.poppins(
+                  color: cor,
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(width: 8.0),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                decoration: BoxDecoration(
+                  color: cor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6.0),
+                ),
+                child: Text(
+                  subtitulo,
+                  style: GoogleFonts.inter(
+                    color: cor,
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.0),
+          ...contas.map((conta) => _buildItemAlerta(conta, cor, mensagem)).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemAlerta(SaidaFinanceiraRow conta, Color cor, String mensagem) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 8.0),
+      padding: EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(10.0),
+        border: Border.all(color: cor.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  conta.descricao ?? 'Sem descrição',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 4.0),
+                Row(
+                  children: [
+                    Text(
+                      'Vencimento: ${dateTimeFormat('dd/MM/yyyy', conta.dataVencimento!)}',
+                      style: GoogleFonts.inter(
+                        color: Color(0xFF999999),
+                        fontSize: 12.0,
+                      ),
+                    ),
+                    SizedBox(width: 8.0),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                      decoration: BoxDecoration(
+                        color: cor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                      child: Text(
+                        mensagem,
+                        style: GoogleFonts.inter(
+                          color: cor,
+                          fontSize: 10.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Text(
+            _formatarMoeda(conta.valorDespesa ?? 0),
+            style: GoogleFonts.poppins(
+              color: cor,
+              fontSize: 14.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatarMoeda(double valor) {
@@ -168,60 +502,89 @@ class _HomeTesourariaWidgetState extends State<HomeTesourariaWidget> {
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: Color(0xFF14181B),
-        body: Row(
-          children: [
-            // Menu lateral
-            if (responsiveVisibility(context: context, phone: false, tablet: false))
-              Container(
-                width: 270.0,
-                decoration: BoxDecoration(color: Color(0xFF14181B)),
-                child: MenuTesourariaWidget(),
-              ),
-            // Conteúdo principal
-            Expanded(
-              child: _isLoading
-                  ? Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          FlutterFlowTheme.of(context).primary,
-                        ),
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      padding: EdgeInsets.all(24.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header
-                          _buildHeader(),
-                          SizedBox(height: 24.0),
-                          // Cards de estatísticas
-                          _buildCardsEstatisticas(),
-                          SizedBox(height: 24.0),
-                          // Gráfico e contas a vencer
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Gráfico
-                              Expanded(
-                                flex: 2,
-                                child: _buildGraficoMensal(),
-                              ),
-                              SizedBox(width: 24.0),
-                              // Contas a vencer
-                              Expanded(
-                                child: _buildContasAVencer(),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 24.0),
-                          // Últimas entradas
-                          _buildUltimasEntradas(),
-                        ],
-                      ),
+        body: Container(
+          width: MediaQuery.sizeOf(context).width,
+          height: MediaQuery.sizeOf(context).height,
+          decoration: BoxDecoration(
+            color: Color(0xFF14181B),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              // Menu lateral (desktop)
+              if (responsiveVisibility(
+                context: context,
+                phone: false,
+                tablet: false,
+                tabletLandscape: false,
+              ))
+                Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
+                  child: Container(
+                    width: 250.0,
+                    height: MediaQuery.sizeOf(context).height,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3C3D3E),
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
-            ),
-          ],
+                    child: MenuTesourariaWidget(),
+                  ),
+                ),
+              // Conteúdo principal
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Container(
+                    width: double.infinity,
+                    height: MediaQuery.sizeOf(context).height,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3C3D3E),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: _isLoading
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                FlutterFlowTheme.of(context).primary,
+                              ),
+                            ),
+                          )
+                        : SingleChildScrollView(
+                            padding: EdgeInsets.all(32.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Header
+                                _buildHeader(),
+                                SizedBox(height: 24.0),
+                                // Cards de estatísticas
+                                _buildCardsEstatisticas(),
+                                SizedBox(height: 24.0),
+                                // Gráfico e contas a vencer
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: _buildGraficoMensal(),
+                                    ),
+                                    SizedBox(width: 24.0),
+                                    Expanded(
+                                      child: _buildContasAVencer(),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 24.0),
+                                // Últimas entradas
+                                _buildUltimasEntradas(),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -365,7 +728,7 @@ class _HomeTesourariaWidgetState extends State<HomeTesourariaWidget> {
     return Container(
       padding: EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: Color(0xFF2D2D2D),
+        color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: Color(0xFF404040)),
       ),
@@ -421,7 +784,7 @@ class _HomeTesourariaWidgetState extends State<HomeTesourariaWidget> {
     return Container(
       padding: EdgeInsets.all(24.0),
       decoration: BoxDecoration(
-        color: Color(0xFF2D2D2D),
+        color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: Color(0xFF404040)),
       ),
@@ -584,7 +947,7 @@ class _HomeTesourariaWidgetState extends State<HomeTesourariaWidget> {
     return Container(
       padding: EdgeInsets.all(24.0),
       decoration: BoxDecoration(
-        color: Color(0xFF2D2D2D),
+        color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: Color(0xFF404040)),
       ),
@@ -719,7 +1082,7 @@ class _HomeTesourariaWidgetState extends State<HomeTesourariaWidget> {
     return Container(
       padding: EdgeInsets.all(24.0),
       decoration: BoxDecoration(
-        color: Color(0xFF2D2D2D),
+        color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: Color(0xFF404040)),
       ),

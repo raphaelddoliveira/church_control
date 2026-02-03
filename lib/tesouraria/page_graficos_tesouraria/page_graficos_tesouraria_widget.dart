@@ -151,47 +151,80 @@ class _PageGraficosTesourariaWidgetState extends State<PageGraficosTesourariaWid
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: Color(0xFF14181B),
-        body: Row(
-          children: [
-            if (responsiveVisibility(context: context, phone: false, tablet: false))
-              Container(
-                width: 270.0,
-                decoration: BoxDecoration(color: Color(0xFF14181B)),
-                child: MenuTesourariaWidget(),
-              ),
-            Expanded(
-              child: _isLoading
-                  ? Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          FlutterFlowTheme.of(context).primary,
-                        ),
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      padding: EdgeInsets.all(24.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeader(),
-                          SizedBox(height: 24.0),
-                          _buildFiltroPeriodo(),
-                          SizedBox(height: 24.0),
-                          _buildGraficoBarras(),
-                          SizedBox(height: 24.0),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(child: _buildGraficoPizzaEntradas()),
-                              SizedBox(width: 24.0),
-                              Expanded(child: _buildGraficoPizzaSaidas()),
-                            ],
-                          ),
-                        ],
-                      ),
+        body: Container(
+          width: MediaQuery.sizeOf(context).width,
+          height: MediaQuery.sizeOf(context).height,
+          decoration: BoxDecoration(
+            color: Color(0xFF14181B),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              // Menu lateral (desktop)
+              if (responsiveVisibility(
+                context: context,
+                phone: false,
+                tablet: false,
+                tabletLandscape: false,
+              ))
+                Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
+                  child: Container(
+                    width: 250.0,
+                    height: MediaQuery.sizeOf(context).height,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3C3D3E),
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
-            ),
-          ],
+                    child: MenuTesourariaWidget(),
+                  ),
+                ),
+              // Conteúdo principal
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Container(
+                    width: double.infinity,
+                    height: MediaQuery.sizeOf(context).height,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3C3D3E),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: _isLoading
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                FlutterFlowTheme.of(context).primary,
+                              ),
+                            ),
+                          )
+                        : SingleChildScrollView(
+                            padding: EdgeInsets.all(32.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildHeader(),
+                                SizedBox(height: 24.0),
+                                _buildFiltroPeriodo(),
+                                SizedBox(height: 24.0),
+                                _buildGraficoBarras(),
+                                SizedBox(height: 24.0),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: _buildGraficoPizzaEntradas()),
+                                    SizedBox(width: 24.0),
+                                    Expanded(child: _buildGraficoPizzaSaidas()),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -225,7 +258,7 @@ class _PageGraficosTesourariaWidgetState extends State<PageGraficosTesourariaWid
     return Container(
       padding: EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: Color(0xFF2D2D2D),
+        color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: Color(0xFF404040)),
       ),
@@ -287,7 +320,7 @@ class _PageGraficosTesourariaWidgetState extends State<PageGraficosTesourariaWid
     return Container(
       padding: EdgeInsets.all(24.0),
       decoration: BoxDecoration(
-        color: Color(0xFF2D2D2D),
+        color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: Color(0xFF404040)),
       ),
@@ -456,7 +489,7 @@ class _PageGraficosTesourariaWidgetState extends State<PageGraficosTesourariaWid
     return Container(
       padding: EdgeInsets.all(24.0),
       decoration: BoxDecoration(
-        color: Color(0xFF2D2D2D),
+        color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: Color(0xFF404040)),
       ),
@@ -560,7 +593,7 @@ class _PageGraficosTesourariaWidgetState extends State<PageGraficosTesourariaWid
     return Container(
       padding: EdgeInsets.all(24.0),
       decoration: BoxDecoration(
-        color: Color(0xFF2D2D2D),
+        color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: Color(0xFF404040)),
       ),

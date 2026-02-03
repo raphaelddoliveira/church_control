@@ -43,24 +43,18 @@ class _MenuTesourariaWidgetState extends State<MenuTesourariaWidget> {
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Padding(
-          padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
-          child: Container(
-            width: 250.0,
-            height: 500.0,
-            decoration: BoxDecoration(
-              color: Color(0xFF3C3D3E),
-              borderRadius: BorderRadius.circular(12.0),
-            ),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(8.0, 8.0, 8.0, 8.0),
             child: Column(
-              mainAxisSize: MainAxisSize.max,
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8.0),
                   child: Image.asset(
                     'assets/images/logo_igj.png',
-                    width: 300.0,
+                    width: 200.0,
                     height: 75.05,
                     fit: BoxFit.cover,
                   ),
@@ -106,15 +100,8 @@ class _MenuTesourariaWidgetState extends State<MenuTesourariaWidget> {
         ),
         // Configurações Conta
         Padding(
-          padding: EdgeInsetsDirectional.fromSTEB(8.0, 8.0, 8.0, 8.0),
-          child: Container(
-            width: 250.0,
-            height: 80.0,
-            decoration: BoxDecoration(
-              color: Color(0xFF3C3D3E),
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: InkWell(
+          padding: EdgeInsetsDirectional.fromSTEB(8.0, 8.0, 8.0, 16.0),
+          child: InkWell(
               splashColor: Colors.transparent,
               focusColor: Colors.transparent,
               hoverColor: Colors.transparent,
@@ -133,56 +120,55 @@ class _MenuTesourariaWidgetState extends State<MenuTesourariaWidget> {
                   },
                 ).then((value) => safeSetState(() {}));
               },
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(8.0, 0.0, 0.0, 0.0),
-                    child: Container(
-                      width: 40.0,
-                      height: 40.0,
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                      ),
-                      child: Image.asset(
-                        'assets/images/Screenshot_29.png',
-                        fit: BoxFit.contain,
-                      ),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(8.0, 0.0, 0.0, 0.0),
+                  child: Container(
+                    width: 40.0,
+                    height: 40.0,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                    ),
+                    child: Image.asset(
+                      'assets/images/Screenshot_29.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
-                  Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(8.0, 0.0, 0.0, 0.0),
-                    child: Text(
-                      'Configurações Conta',
-                      style: FlutterFlowTheme.of(context).bodyMedium.override(
-                            font: GoogleFonts.inter(
-                              fontWeight: FontWeight.w500,
-                              fontStyle: FlutterFlowTheme.of(context)
-                                  .bodyMedium
-                                  .fontStyle,
-                            ),
-                            color: FlutterFlowTheme.of(context).primaryBackground,
-                            fontSize: 14.0,
-                            letterSpacing: 0.0,
+                ),
+                Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(8.0, 0.0, 0.0, 0.0),
+                  child: Text(
+                    'Configurações Conta',
+                    style: FlutterFlowTheme.of(context).bodyMedium.override(
+                          font: GoogleFonts.inter(
                             fontWeight: FontWeight.w500,
                             fontStyle: FlutterFlowTheme.of(context)
                                 .bodyMedium
                                 .fontStyle,
                           ),
-                    ),
+                          color: FlutterFlowTheme.of(context).primaryBackground,
+                          fontSize: 14.0,
+                          letterSpacing: 0.0,
+                          fontWeight: FontWeight.w500,
+                          fontStyle: FlutterFlowTheme.of(context)
+                              .bodyMedium
+                              .fontStyle,
+                        ),
                   ),
-                  Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(8.0, 0.0, 0.0, 0.0),
-                    child: Icon(
-                      Icons.logout_sharp,
-                      color: FlutterFlowTheme.of(context).primaryBackground,
-                      size: 24.0,
-                    ),
+                ),
+                Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(8.0, 0.0, 0.0, 0.0),
+                  child: Icon(
+                    Icons.logout_sharp,
+                    color: FlutterFlowTheme.of(context).primaryBackground,
+                    size: 24.0,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

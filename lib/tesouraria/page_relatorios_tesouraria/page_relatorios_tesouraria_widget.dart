@@ -97,53 +97,86 @@ class _PageRelatoriosTesourariaWidgetState extends State<PageRelatoriosTesourari
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: Color(0xFF14181B),
-        body: Row(
-          children: [
-            if (responsiveVisibility(context: context, phone: false, tablet: false))
-              Container(
-                width: 270.0,
-                decoration: BoxDecoration(color: Color(0xFF14181B)),
-                child: MenuTesourariaWidget(),
-              ),
-            Expanded(
-              child: _isLoading
-                  ? Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          FlutterFlowTheme.of(context).primary,
-                        ),
-                      ),
-                    )
-                  : Column(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.all(24.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildHeader(),
-                              SizedBox(height: 24.0),
-                              _buildFiltros(),
-                              SizedBox(height: 24.0),
-                              _buildResumoGeral(),
-                            ],
-                          ),
-                        ),
-                        _buildTabs(),
-                        Expanded(
-                          child: TabBarView(
-                            controller: _model.tabController,
-                            children: [
-                              _buildTabelaEntradas(),
-                              _buildTabelaSaidas(),
-                              _buildTabelaFluxoCaixa(),
-                            ],
-                          ),
-                        ),
-                      ],
+        body: Container(
+          width: MediaQuery.sizeOf(context).width,
+          height: MediaQuery.sizeOf(context).height,
+          decoration: BoxDecoration(
+            color: Color(0xFF14181B),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              // Menu lateral (desktop)
+              if (responsiveVisibility(
+                context: context,
+                phone: false,
+                tablet: false,
+                tabletLandscape: false,
+              ))
+                Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 0.0, 16.0),
+                  child: Container(
+                    width: 250.0,
+                    height: MediaQuery.sizeOf(context).height,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3C3D3E),
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
-            ),
-          ],
+                    child: MenuTesourariaWidget(),
+                  ),
+                ),
+              // Conteúdo principal
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Container(
+                    width: double.infinity,
+                    height: MediaQuery.sizeOf(context).height,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3C3D3E),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: _isLoading
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                FlutterFlowTheme.of(context).primary,
+                              ),
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.all(32.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildHeader(),
+                                    SizedBox(height: 24.0),
+                                    _buildFiltros(),
+                                    SizedBox(height: 24.0),
+                                    _buildResumoGeral(),
+                                  ],
+                                ),
+                              ),
+                              _buildTabs(),
+                              Expanded(
+                                child: TabBarView(
+                                  controller: _model.tabController,
+                                  children: [
+                                    _buildTabelaEntradas(),
+                                    _buildTabelaSaidas(),
+                                    _buildTabelaFluxoCaixa(),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -233,7 +266,7 @@ class _PageRelatoriosTesourariaWidgetState extends State<PageRelatoriosTesourari
     return Container(
       padding: EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: Color(0xFF2D2D2D),
+        color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: Color(0xFF404040)),
       ),
@@ -395,7 +428,7 @@ class _PageRelatoriosTesourariaWidgetState extends State<PageRelatoriosTesourari
     return Container(
       padding: EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: Color(0xFF2D2D2D),
+        color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: Color(0xFF404040)),
       ),
@@ -437,7 +470,7 @@ class _PageRelatoriosTesourariaWidgetState extends State<PageRelatoriosTesourari
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 24.0),
       decoration: BoxDecoration(
-        color: Color(0xFF2D2D2D),
+        color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: TabBar(
@@ -468,7 +501,7 @@ class _PageRelatoriosTesourariaWidgetState extends State<PageRelatoriosTesourari
       padding: EdgeInsets.all(24.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Color(0xFF2D2D2D),
+          color: Color(0xFF2A2A2A),
           borderRadius: BorderRadius.circular(16.0),
           border: Border.all(color: Color(0xFF404040)),
         ),
@@ -496,7 +529,7 @@ class _PageRelatoriosTesourariaWidgetState extends State<PageRelatoriosTesourari
       padding: EdgeInsets.all(24.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Color(0xFF2D2D2D),
+          color: Color(0xFF2A2A2A),
           borderRadius: BorderRadius.circular(16.0),
           border: Border.all(color: Color(0xFF404040)),
         ),
@@ -557,7 +590,7 @@ class _PageRelatoriosTesourariaWidgetState extends State<PageRelatoriosTesourari
       padding: EdgeInsets.all(24.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Color(0xFF2D2D2D),
+          color: Color(0xFF2A2A2A),
           borderRadius: BorderRadius.circular(16.0),
           border: Border.all(color: Color(0xFF404040)),
         ),

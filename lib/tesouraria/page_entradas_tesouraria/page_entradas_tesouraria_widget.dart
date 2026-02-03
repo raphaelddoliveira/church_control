@@ -487,20 +487,23 @@ class _PageEntradasTesourariaWidgetState extends State<PageEntradasTesourariaWid
           ),
           Expanded(
             flex: 2,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
-              decoration: BoxDecoration(
-                color: isDizimo ? Color(0xFF4CAF50).withOpacity(0.15) : Color(0xFF9C27B0).withOpacity(0.15),
-                borderRadius: BorderRadius.circular(6.0),
-              ),
-              child: Text(
-                entrada.tipoEntrada ?? '-',
-                style: GoogleFonts.inter(
-                  color: isDizimo ? Color(0xFF4CAF50) : Color(0xFF9C27B0),
-                  fontSize: 12.0,
-                  fontWeight: FontWeight.w500,
+            child: Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                decoration: BoxDecoration(
+                  color: isDizimo ? Color(0xFF4CAF50).withOpacity(0.15) : Color(0xFF9C27B0).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6.0),
                 ),
-                textAlign: TextAlign.center,
+                child: Text(
+                  entrada.tipoEntrada ?? '-',
+                  style: GoogleFonts.inter(
+                    color: isDizimo ? Color(0xFF4CAF50) : Color(0xFF9C27B0),
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           ),

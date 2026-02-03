@@ -90,7 +90,9 @@ class _HomeTesourariaWidgetState extends State<HomeTesourariaWidget> {
       final limite = agora.add(Duration(days: 30));
       final contasVencer = saidas.where((s) {
         if (s.dataVencimento == null) return false;
-        if (s.situacao == 'Pago') return false;
+        // Aceita tanto 'Pago' quanto 'Paga' como status de conta paga
+        final situacaoLower = s.situacao?.toLowerCase() ?? '';
+        if (situacaoLower == 'pago' || situacaoLower == 'paga') return false;
         return s.dataVencimento!.isAfter(agora.subtract(Duration(days: 1))) &&
                s.dataVencimento!.isBefore(limite);
       }).toList();
@@ -137,9 +139,12 @@ class _HomeTesourariaWidgetState extends State<HomeTesourariaWidget> {
 
       // Categorizar contas por vencimento para alertas
       final hoje = DateTime(agora.year, agora.month, agora.day);
-      final contasNaoPagas = saidas.where((s) =>
-        s.dataVencimento != null && s.situacao != 'Pago'
-      ).toList();
+      // Aceita tanto 'Pago' quanto 'Paga' como status de conta paga
+      final contasNaoPagas = saidas.where((s) {
+        if (s.dataVencimento == null) return false;
+        final situacaoLower = s.situacao?.toLowerCase() ?? '';
+        return situacaoLower != 'pago' && situacaoLower != 'paga';
+      }).toList();
 
       final vencidas = <SaidaFinanceiraRow>[];
       final vencemHoje = <SaidaFinanceiraRow>[];
@@ -846,13 +851,17 @@ class _HomeTesourariaWidgetState extends State<HomeTesourariaWidget> {
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 60,
+                      reservedSize: 50,
+                      interval: _getMaxValue(entradasValues, saidasValues) / 4,
                       getTitlesWidget: (value, meta) {
-                        return Text(
-                          _formatarValorCurto(value),
-                          style: GoogleFonts.inter(
-                            color: Color(0xFF999999),
-                            fontSize: 11.0,
+                        return Padding(
+                          padding: EdgeInsets.only(right: 8.0),
+                          child: Text(
+                            _formatarValorCurto(value),
+                            style: GoogleFonts.inter(
+                              color: Color(0xFF999999),
+                              fontSize: 11.0,
+                            ),
                           ),
                         );
                       },

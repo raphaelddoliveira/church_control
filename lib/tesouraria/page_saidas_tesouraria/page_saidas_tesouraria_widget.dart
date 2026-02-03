@@ -2,6 +2,7 @@ import '/backend/supabase/supabase.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/tesouraria/menu_tesouraria/menu_tesouraria_widget.dart';
+import '/auth/supabase_auth/auth_util.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:easy_debounce/easy_debounce.dart';
@@ -28,6 +29,7 @@ class _PageSaidasTesourariaWidgetState extends State<PageSaidasTesourariaWidget>
   String? _filtroSituacao;
   DateTime? _filtroDataInicio;
   DateTime? _filtroDataFim;
+  String? _idMembroLogado;
 
   final List<String> _categorias = [
     'Despesa Fixa',
@@ -48,6 +50,14 @@ class _PageSaidasTesourariaWidgetState extends State<PageSaidasTesourariaWidget>
 
   Future<void> _carregarDados() async {
     try {
+      // Buscar membro logado pelo id_auth
+      final membroRows = await MembrosTable().queryRows(
+        queryFn: (q) => q.eq('id_auth', currentUserUid),
+      );
+      if (membroRows.isNotEmpty) {
+        _idMembroLogado = membroRows.first.idMembro;
+      }
+
       final saidas = await SaidaFinanceiraTable().queryRows(queryFn: (q) => q);
 
       saidas.sort((a, b) {
@@ -113,7 +123,9 @@ class _PageSaidasTesourariaWidgetState extends State<PageSaidasTesourariaWidget>
   }
 
   Color _getStatusColor(SaidaFinanceiraRow saida) {
-    if (saida.situacao == 'Pago') {
+    // Aceitar tanto 'Pago' quanto 'Paga'
+    final situacao = saida.situacao?.toLowerCase() ?? '';
+    if (situacao == 'pago' || situacao == 'paga') {
       return Color(0xFF4CAF50); // Verde
     }
     if (saida.dataVencimento != null && saida.dataVencimento!.isBefore(DateTime.now())) {
@@ -123,7 +135,9 @@ class _PageSaidasTesourariaWidgetState extends State<PageSaidasTesourariaWidget>
   }
 
   String _getStatusText(SaidaFinanceiraRow saida) {
-    if (saida.situacao == 'Pago') return 'Pago';
+    // Aceitar tanto 'Pago' quanto 'Paga'
+    final situacao = saida.situacao?.toLowerCase() ?? '';
+    if (situacao == 'pago' || situacao == 'paga') return 'Pago';
     if (saida.dataVencimento != null && saida.dataVencimento!.isBefore(DateTime.now())) {
       return 'Vencido';
     }
@@ -534,22 +548,25 @@ class _PageSaidasTesourariaWidgetState extends State<PageSaidasTesourariaWidget>
           ),
           Expanded(
             flex: 2,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-              decoration: BoxDecoration(
-                color: Color(0xFF2196F3).withOpacity(0.15),
-                borderRadius: BorderRadius.circular(6.0),
-              ),
-              child: Text(
-                saida.categoria ?? '-',
-                style: GoogleFonts.inter(
-                  color: Color(0xFF2196F3),
-                  fontSize: 12.0,
-                  fontWeight: FontWeight.w500,
+            child: Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                decoration: BoxDecoration(
+                  color: Color(0xFF2196F3).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6.0),
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                child: Text(
+                  saida.categoria ?? '-',
+                  style: GoogleFonts.inter(
+                    color: Color(0xFF2196F3),
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
           ),
@@ -571,20 +588,23 @@ class _PageSaidasTesourariaWidgetState extends State<PageSaidasTesourariaWidget>
           ),
           Expanded(
             flex: 1,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(6.0),
-              ),
-              child: Text(
-                statusText,
-                style: GoogleFonts.inter(
-                  color: statusColor,
-                  fontSize: 11.0,
-                  fontWeight: FontWeight.w600,
+            child: Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6.0),
                 ),
-                textAlign: TextAlign.center,
+                child: Text(
+                  statusText,
+                  style: GoogleFonts.inter(
+                    color: statusColor,
+                    fontSize: 11.0,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           ),
@@ -743,9 +763,9 @@ class _PageSaidasTesourariaWidgetState extends State<PageSaidasTesourariaWidget>
                               controller: codigoBarrasController,
                               style: GoogleFonts.inter(color: Colors.white, fontSize: 14.0),
                               keyboardType: TextInputType.number,
-                              maxLength: 47,
+                              maxLength: 48,
                               decoration: InputDecoration(
-                                hintText: 'Digite os 47 números da linha digitável',
+                                hintText: 'Digite os números da linha digitável',
                                 hintStyle: GoogleFonts.inter(color: Color(0xFF666666), fontSize: 13.0),
                                 filled: true,
                                 fillColor: Color(0xFF2D2D2D),
@@ -761,7 +781,8 @@ class _PageSaidasTesourariaWidgetState extends State<PageSaidasTesourariaWidget>
                             InkWell(
                               onTap: () {
                                 final codigo = codigoBarrasController.text.replaceAll(RegExp(r'\D'), '');
-                                if (codigo.length == 47) {
+                                // Aceita boletos bancários (47 dígitos) e de arrecadação (44-48 dígitos)
+                                if (codigo.length >= 44 && codigo.length <= 48) {
                                   final dadosBoleto = _parseBoleto(codigo);
                                   if (dadosBoleto != null) {
                                     setDialogState(() {
@@ -777,11 +798,18 @@ class _PageSaidasTesourariaWidgetState extends State<PageSaidasTesourariaWidget>
                                         backgroundColor: Color(0xFF4CAF50),
                                       ),
                                     );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Não foi possível ler o boleto. Verifique o código.'),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
                                   }
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Código de barras inválido. Digite os 47 números.'),
+                                      content: Text('Código inválido. Digite entre 44 e 48 números.'),
                                       backgroundColor: Colors.red,
                                     ),
                                   );
@@ -950,6 +978,7 @@ class _PageSaidasTesourariaWidgetState extends State<PageSaidasTesourariaWidget>
                                     'data_saida': dataSaida.toIso8601String(),
                                     'data_vencimento': dataVencimento?.toIso8601String(),
                                     'situacao': situacaoSelecionada,
+                                    'id_membro': _idMembroLogado,
                                   });
 
                                   Navigator.pop(dialogContext);
@@ -1057,26 +1086,174 @@ class _PageSaidasTesourariaWidgetState extends State<PageSaidasTesourariaWidget>
     );
   }
 
-  // Parser simples de boleto bancário brasileiro
+  // Parser de boleto brasileiro - suporta títulos bancários e arrecadação
   Map<String, String>? _parseBoleto(String codigo) {
+    try {
+      // Boleto de Arrecadação/Convênio (começa com 8)
+      if (codigo.startsWith('8')) {
+        return _parseBoletoArrecadacao(codigo);
+      }
+
+      // Boleto Bancário (Título) - 47 dígitos
+      if (codigo.length == 47) {
+        return _parseBoletoBancario(codigo);
+      }
+
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Parser para boletos de arrecadação (contas de luz, água, gás, etc.)
+  Map<String, String>? _parseBoletoArrecadacao(String codigo) {
+    try {
+      // Remove espaços e pontos que possam existir
+      codigo = codigo.replaceAll(RegExp(r'[\s\.\-]'), '');
+
+      // Boletos de arrecadação podem ter 44, 46, 47 ou 48 dígitos
+      if (codigo.length < 44) return null;
+
+      // Estrutura do boleto de arrecadação:
+      // Posição 0: Identificador do produto (8 = arrecadação)
+      // Posição 1: Identificador do segmento
+      // Posição 2: Identificador de valor/referência (6,7 = valor efetivo)
+      // Posição 3: Dígito verificador geral
+      // Posições 4-14: Valor (11 dígitos)
+
+      final segmento = codigo[1];
+      final tipoValor = codigo[2];
+
+      double valor = 0;
+
+      // Se tipoValor é 6 ou 7, o campo valor contém o valor efetivo
+      if (tipoValor == '6' || tipoValor == '7') {
+        // Valor está nas posições 4-14 (11 dígitos)
+        String valorStr;
+        if (codigo.length >= 15) {
+          valorStr = codigo.substring(4, 15);
+        } else {
+          valorStr = codigo.substring(4);
+        }
+        final valorCentavos = int.tryParse(valorStr) ?? 0;
+        valor = valorCentavos / 100;
+      }
+
+      // Tentar extrair data de vencimento do campo livre
+      // Posições comuns: 15-22 (YYYYMMDD) ou 19-26 (YYYYMMDD)
+      DateTime? vencimento = _extrairDataArrecadacao(codigo);
+
+      // Identificar o tipo de conta pelo segmento
+      final tiposConta = {
+        '1': 'Prefeitura',
+        '2': 'Saneamento',
+        '3': 'Energia Elétrica',
+        '4': 'Telecomunicações',
+        '5': 'Órgãos Governamentais',
+        '6': 'Carnes e Assemelhados',
+        '7': 'Multas de Trânsito',
+        '8': 'Uso Exclusivo Banco',
+        '9': 'Outros',
+      };
+
+      final tipoConta = tiposConta[segmento] ?? 'Conta';
+
+      return {
+        'valor': valor.toStringAsFixed(2).replaceAll('.', ','),
+        'descricao': 'Pagamento - $tipoConta',
+        if (vencimento != null) 'vencimento': vencimento.toIso8601String(),
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Tenta extrair a data de vencimento de boletos de arrecadação
+  DateTime? _extrairDataArrecadacao(String codigo) {
+    try {
+      // Posições comuns onde a data pode estar (varia por concessionária)
+      // Formato YYYYMMDD ou fator de dias
+      final posicoesPossiveis = [15, 19, 23, 27, 31];
+
+      for (var pos in posicoesPossiveis) {
+        if (codigo.length >= pos + 8) {
+          final dataStr = codigo.substring(pos, pos + 8);
+
+          // Tentar formato YYYYMMDD
+          final ano = int.tryParse(dataStr.substring(0, 4)) ?? 0;
+          final mes = int.tryParse(dataStr.substring(4, 6)) ?? 0;
+          final dia = int.tryParse(dataStr.substring(6, 8)) ?? 0;
+
+          if (ano >= 2020 && ano <= 2030 && mes >= 1 && mes <= 12 && dia >= 1 && dia <= 31) {
+            try {
+              final data = DateTime(ano, mes, dia);
+              // Validar se é uma data razoável (não muito no passado nem futuro)
+              final agora = DateTime.now();
+              if (data.isAfter(agora.subtract(Duration(days: 365))) &&
+                  data.isBefore(agora.add(Duration(days: 365)))) {
+                return data;
+              }
+            } catch (e) {
+              // Data inválida, continuar tentando
+            }
+          }
+
+          // Tentar formato DDMMYYYY
+          final dia2 = int.tryParse(dataStr.substring(0, 2)) ?? 0;
+          final mes2 = int.tryParse(dataStr.substring(2, 4)) ?? 0;
+          final ano2 = int.tryParse(dataStr.substring(4, 8)) ?? 0;
+
+          if (ano2 >= 2020 && ano2 <= 2030 && mes2 >= 1 && mes2 <= 12 && dia2 >= 1 && dia2 <= 31) {
+            try {
+              final data = DateTime(ano2, mes2, dia2);
+              final agora = DateTime.now();
+              if (data.isAfter(agora.subtract(Duration(days: 365))) &&
+                  data.isBefore(agora.add(Duration(days: 365)))) {
+                return data;
+              }
+            } catch (e) {
+              // Data inválida, continuar tentando
+            }
+          }
+        }
+      }
+
+      // Se não encontrou data válida, retorna null
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Parser para boletos bancários (títulos)
+  Map<String, String>? _parseBoletoBancario(String codigo) {
     try {
       if (codigo.length != 47) return null;
 
-      // Extrair valor (campos 4 e 5 do código de barras)
-      // Posições 37-47 contém o valor
-      final valorStr = codigo.substring(37, 47);
-      final valorCentavos = int.tryParse(valorStr) ?? 0;
-      final valor = valorCentavos / 100;
+      // Estrutura da linha digitável (47 dígitos):
+      // Campo 5 (posições 33-46): Fator de vencimento (4) + Valor (10)
 
       // Extrair fator de vencimento (posições 33-36)
       final fatorStr = codigo.substring(33, 37);
       final fator = int.tryParse(fatorStr) ?? 0;
 
+      // Extrair valor (posições 37-46)
+      final valorStr = codigo.substring(37, 47);
+      final valorCentavos = int.tryParse(valorStr) ?? 0;
+      final valor = valorCentavos / 100;
+
       DateTime? vencimento;
-      if (fator > 0) {
+      if (fator > 0 && fator < 9999) {
         // Data base: 07/10/1997
         final dataBase = DateTime(1997, 10, 7);
         vencimento = dataBase.add(Duration(days: fator));
+
+        // Se a data calculada for muito antiga ou muito futura, ignorar
+        final agora = DateTime.now();
+        if (vencimento.isBefore(DateTime(2000)) ||
+            vencimento.isAfter(agora.add(Duration(days: 365 * 5)))) {
+          vencimento = null;
+        }
       }
 
       // Identificar banco pelo código (primeiros 3 dígitos)
@@ -1109,6 +1286,11 @@ class _PageSaidasTesourariaWidgetState extends State<PageSaidasTesourariaWidget>
       '652': 'Itaú Unibanco',
       '745': 'Citibank',
       '756': 'Sicoob',
+      '748': 'Sicredi',
+      '077': 'Inter',
+      '260': 'Nubank',
+      '336': 'C6 Bank',
+      '212': 'Original',
     };
     return bancos[codigo] ?? 'Banco $codigo';
   }
@@ -1116,8 +1298,21 @@ class _PageSaidasTesourariaWidgetState extends State<PageSaidasTesourariaWidget>
   void _mostrarModalEditarSaida(SaidaFinanceiraRow saida) {
     final descricaoController = TextEditingController(text: saida.descricao ?? '');
     final valorController = TextEditingController(text: saida.valorDespesa?.toStringAsFixed(2).replaceAll('.', ',') ?? '');
-    String? categoriaSelecionada = saida.categoria ?? 'Contas';
+
+    // Verificar se a categoria existe na lista, senão usar 'Outros'
+    String? categoriaSelecionada = _categorias.contains(saida.categoria)
+        ? saida.categoria
+        : 'Outros';
+
+    // Normalizar situação (aceitar 'Paga' como 'Pago')
     String situacaoSelecionada = saida.situacao ?? 'Pendente';
+    if (situacaoSelecionada.toLowerCase() == 'paga') {
+      situacaoSelecionada = 'Pago';
+    }
+    if (situacaoSelecionada != 'Pendente' && situacaoSelecionada != 'Pago') {
+      situacaoSelecionada = 'Pendente';
+    }
+
     DateTime dataSaida = saida.dataSaida ?? DateTime.now();
     DateTime? dataVencimento = saida.dataVencimento;
     bool isSaving = false;

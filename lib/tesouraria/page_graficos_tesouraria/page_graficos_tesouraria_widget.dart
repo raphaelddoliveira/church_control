@@ -395,13 +395,17 @@ class _PageGraficosTesourariaWidgetState extends State<PageGraficosTesourariaWid
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 60,
+                      reservedSize: 50,
+                      interval: maxValue / 4,
                       getTitlesWidget: (value, meta) {
-                        return Text(
-                          _formatarValorCurto(value),
-                          style: GoogleFonts.inter(
-                            color: Color(0xFF999999),
-                            fontSize: 11.0,
+                        return Padding(
+                          padding: EdgeInsets.only(right: 8.0),
+                          child: Text(
+                            _formatarValorCurto(value),
+                            style: GoogleFonts.inter(
+                              color: Color(0xFF999999),
+                              fontSize: 11.0,
+                            ),
                           ),
                         );
                       },

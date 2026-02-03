@@ -103,3 +103,15 @@ export '/admin/page_comunidade_admin_detalhes/page_comunidade_admin_detalhes_wid
     show PageComunidadeAdminDetalhesWidget;
 export '/lider/page_comunidade_lider/page_comunidade_lider_widget.dart'
     show PageComunidadeLiderWidget;
+
+// Tesouraria exports
+export '/tesouraria/home_tesouraria/home_tesouraria_widget.dart'
+    show HomeTesourariaWidget;
+export '/tesouraria/page_entradas_tesouraria/page_entradas_tesouraria_widget.dart'
+    show PageEntradasTesourariaWidget;
+export '/tesouraria/page_saidas_tesouraria/page_saidas_tesouraria_widget.dart'
+    show PageSaidasTesourariaWidget;
+export '/tesouraria/page_relatorios_tesouraria/page_relatorios_tesouraria_widget.dart'
+    show PageRelatoriosTesourariaWidget;
+export '/tesouraria/page_graficos_tesouraria/page_graficos_tesouraria_widget.dart'
+    show PageGraficosTesourariaWidget;

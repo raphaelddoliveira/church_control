@@ -529,6 +529,37 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           requireAuth: true,
           builder: (context, params) => PageComunidadeLiderWidget(),
         ),
+        // Tesouraria Routes
+        FFRoute(
+          name: HomeTesourariaWidget.routeName,
+          path: HomeTesourariaWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => HomeTesourariaWidget(),
+        ),
+        FFRoute(
+          name: PageEntradasTesourariaWidget.routeName,
+          path: PageEntradasTesourariaWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageEntradasTesourariaWidget(),
+        ),
+        FFRoute(
+          name: PageSaidasTesourariaWidget.routeName,
+          path: PageSaidasTesourariaWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageSaidasTesourariaWidget(),
+        ),
+        FFRoute(
+          name: PageRelatoriosTesourariaWidget.routeName,
+          path: PageRelatoriosTesourariaWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageRelatoriosTesourariaWidget(),
+        ),
+        FFRoute(
+          name: PageGraficosTesourariaWidget.routeName,
+          path: PageGraficosTesourariaWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => PageGraficosTesourariaWidget(),
+        ),
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );
 

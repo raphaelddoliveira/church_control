@@ -1870,8 +1870,8 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
                                       'descricao_resumida': descricaoResumidaController.text.trim().isNotEmpty ? descricaoResumidaController.text.trim() : null,
                                       'categoria': 'Comunidade',
                                       'criado_por': _membroLogado?.idMembro,
-                                      'data_hora_aviso': dataHoraAviso?.toIso8601String(),
-                                      'expira_em': dataExpiracao?.toIso8601String(),
+                                      'data_hora_aviso': dataHoraAviso?.add(Duration(hours: 3)).toIso8601String(),
+                                      'expira_em': dataExpiracao?.add(Duration(hours: 3)).toIso8601String(),
                                       'imagem': imagemUrl,
                                       'fixado': false,
                                     });
@@ -2147,8 +2147,8 @@ class _PageComunidadeLiderWidgetState extends State<PageComunidadeLiderWidget>
                                         'descricao': descricaoController.text.trim().isNotEmpty ? descricaoController.text.trim() : null,
                                         'descricao_resumida': descricaoResumidaController.text.trim().isNotEmpty ? descricaoResumidaController.text.trim() : null,
                                         'categoria': 'Comunidade',
-                                        'data_hora_aviso': dataHoraAviso?.toIso8601String(),
-                                        'expira_em': dataExpiracao?.toIso8601String(),
+                                        'data_hora_aviso': dataHoraAviso?.add(Duration(hours: 3)).toIso8601String(),
+                                        'expira_em': dataExpiracao?.add(Duration(hours: 3)).toIso8601String(),
                                       },
                                       matchingRows: (rows) => rows.eq('id', aviso.id),
                                     );

@@ -54,6 +54,8 @@ class _SelecionaPerfilWidgetState extends State<SelecionaPerfilWidget> {
     switch (_membroAtual?.idNivelAcesso) {
       case 1:
         return 'Secretaria';
+      case 2:
+        return 'Tesouraria';
       case 3:
         return 'Administração';
       case 4:
@@ -69,6 +71,9 @@ class _SelecionaPerfilWidgetState extends State<SelecionaPerfilWidget> {
     switch (_membroAtual?.idNivelAcesso) {
       case 1:
         context.pushReplacementNamed(PageHomeSecretariaWidget.routeName);
+        break;
+      case 2:
+        context.pushReplacementNamed(HomeTesourariaWidget.routeName);
         break;
       case 3:
         context.pushReplacementNamed(HomePageAdminWidget.routeName);

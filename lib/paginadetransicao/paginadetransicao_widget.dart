@@ -91,6 +91,9 @@ class _PaginadetransicaoWidgetState extends State<PaginadetransicaoWidget> {
         case 1:
           context.pushNamed(PageHomeSecretariaWidget.routeName);
           break;
+        case 2:
+          context.pushNamed(HomeTesourariaWidget.routeName);
+          break;
         case 3:
           context.pushNamed(HomePageAdminWidget.routeName);
           break;

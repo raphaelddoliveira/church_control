@@ -65,8 +65,9 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
   }
 
   Future<List<AvisoRow>> _carregarAvisos(MembrosRow? membroAtual) async {
-    // Limpar o map de fotos
-    _fotosAvisos = {};
+    // Manter as fotos em cache para evitar piscar ao curtir
+    // Só limpa se for a primeira carga
+    final bool isFirstLoad = _fotosAvisos.isEmpty;
 
     // Buscar todos os avisos
     var query = AvisoTable().queryRows(
@@ -109,7 +110,9 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
       // Se não tem criador definido, mostrar para todos (aviso antigo) - usa logo da igreja
       if (aviso.criadoPor == null) {
         avisosFiltrados.add(aviso);
-        _fotosAvisos[aviso.id] = null; // null = logo da igreja
+        if (isFirstLoad || !_fotosAvisos.containsKey(aviso.id)) {
+          _fotosAvisos[aviso.id] = null; // null = logo da igreja
+        }
         continue;
       }
 
@@ -121,7 +124,9 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
       if (criadorRows.isEmpty) {
         // Se não encontrou o criador, mostrar para todos - usa logo da igreja
         avisosFiltrados.add(aviso);
-        _fotosAvisos[aviso.id] = null;
+        if (isFirstLoad || !_fotosAvisos.containsKey(aviso.id)) {
+          _fotosAvisos[aviso.id] = null;
+        }
         continue;
       }
 
@@ -130,7 +135,9 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
       // Se o criador é secretaria (nivel_acesso = 1), mostrar para todos - usa logo da igreja
       if (criador.idNivelAcesso == 1) {
         avisosFiltrados.add(aviso);
-        _fotosAvisos[aviso.id] = null; // Secretaria usa logo da igreja
+        if (isFirstLoad || !_fotosAvisos.containsKey(aviso.id)) {
+          _fotosAvisos[aviso.id] = null; // Secretaria usa logo da igreja
+        }
         continue;
       }
 
@@ -154,7 +161,9 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
           if (membroAtual != null && idsMembros.contains(membroAtual.idMembro)) {
             avisosFiltrados.add(aviso);
             // Usa a foto da comunidade
-            _fotosAvisos[aviso.id] = comunidadeDoLider.fotoUrl;
+            if (isFirstLoad || !_fotosAvisos.containsKey(aviso.id)) {
+              _fotosAvisos[aviso.id] = comunidadeDoLider.fotoUrl;
+            }
           }
         }
         continue;
@@ -162,7 +171,9 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
 
       // Para outros níveis de acesso, mostrar para todos por padrão
       avisosFiltrados.add(aviso);
-      _fotosAvisos[aviso.id] = null;
+      if (isFirstLoad || !_fotosAvisos.containsKey(aviso.id)) {
+        _fotosAvisos[aviso.id] = null;
+      }
     }
 
     // Separar fixados e não fixados

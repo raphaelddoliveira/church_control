@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -73,8 +74,9 @@ class _MyAppState extends State<MyApp> {
     userStream = churchControlSupabaseUserStream()
       ..listen((user) {
         _appStateNotifier.update(user);
-        // Inicializar notificações quando usuário logar
-        if (user.loggedIn) {
+        // Inicializar notificações quando usuário logar (apenas Web por enquanto)
+        // Android desabilitado temporariamente para investigar lentidão
+        if (user.loggedIn && kIsWeb) {
           NotificationService.instance.initialize();
         }
       });

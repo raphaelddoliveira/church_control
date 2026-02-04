@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "176781023738",
+    "project_id": "churchcontrol-1dff9",
+    "storage_bucket": "churchcontrol-1dff9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:176781023738:android:68fedc92f9b4e3cadeec43",
+        "android_client_info": {
+          "package_name": "com.mycompany.churchcontrol"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCERSQ9aRsFWFP5TU3f5f1jqjVCN__z0y8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -8,9 +8,10 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:csv/csv.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+// Imports condicionais para web
+import 'csv_export_stub.dart'
+    if (dart.library.html) 'csv_export_web.dart'
+    if (dart.library.io) 'csv_export_mobile.dart' as csv_export;
 import 'page_relatorios_tesouraria_model.dart';
 export 'page_relatorios_tesouraria_model.dart';
 
@@ -678,72 +679,81 @@ class _PageRelatoriosTesourariaWidgetState extends State<PageRelatoriosTesourari
   }
 
   Future<void> _exportarPDF() async {
-    final pdf = pw.Document();
+    try {
+      final pdf = pw.Document();
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        build: (context) => [
-          pw.Header(
-            level: 0,
-            child: pw.Text('Relatório Financeiro', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-          ),
-          pw.Paragraph(text: 'Período: ${dateTimeFormat('dd/MM/yyyy', _dataInicio)} até ${dateTimeFormat('dd/MM/yyyy', _dataFim)}'),
-          pw.SizedBox(height: 20),
-
-          // Resumo
-          pw.Container(
-            padding: pw.EdgeInsets.all(10),
-            decoration: pw.BoxDecoration(border: pw.Border.all()),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text('Resumo', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 10),
-                pw.Text('Total de Entradas: ${_formatarMoeda(_totalEntradas)}'),
-                pw.Text('Total de Saídas: ${_formatarMoeda(_totalSaidas)}'),
-                pw.Text('Saldo do Período: ${_formatarMoeda(_saldo)}'),
-              ],
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          build: (context) => [
+            pw.Header(
+              level: 0,
+              child: pw.Text('Relatorio Financeiro', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
             ),
-          ),
-          pw.SizedBox(height: 20),
+            pw.Paragraph(text: 'Periodo: ${dateTimeFormat('dd/MM/yyyy', _dataInicio)} ate ${dateTimeFormat('dd/MM/yyyy', _dataFim)}'),
+            pw.SizedBox(height: 20),
 
-          // Entradas
-          pw.Header(level: 1, child: pw.Text('Entradas')),
-          if (_entradasFiltradas.isEmpty)
-            pw.Text('Nenhuma entrada no período.')
-          else
-            pw.Table.fromTextArray(
-              headers: ['Data', 'Tipo', 'Descrição', 'Valor'],
-              data: _entradasFiltradas.map((e) => [
-                e.dataEntrada != null ? dateTimeFormat('dd/MM/yyyy', e.dataEntrada!) : '-',
-                e.tipoEntrada ?? '-',
-                e.descricao ?? '-',
-                _formatarMoeda(e.valorEntrada ?? 0),
-              ]).toList(),
+            // Resumo
+            pw.Container(
+              padding: pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(border: pw.Border.all()),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text('Resumo', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 10),
+                  pw.Text('Total de Entradas: ${_formatarMoeda(_totalEntradas)}'),
+                  pw.Text('Total de Saidas: ${_formatarMoeda(_totalSaidas)}'),
+                  pw.Text('Saldo do Periodo: ${_formatarMoeda(_saldo)}'),
+                ],
+              ),
             ),
-          pw.SizedBox(height: 20),
+            pw.SizedBox(height: 20),
 
-          // Saídas
-          pw.Header(level: 1, child: pw.Text('Saídas')),
-          if (_saidasFiltradas.isEmpty)
-            pw.Text('Nenhuma saída no período.')
-          else
-            pw.Table.fromTextArray(
-              headers: ['Data', 'Categoria', 'Descrição', 'Situação', 'Valor'],
-              data: _saidasFiltradas.map((s) => [
-                s.dataSaida != null ? dateTimeFormat('dd/MM/yyyy', s.dataSaida!) : '-',
-                s.categoria ?? '-',
-                s.descricao ?? '-',
-                s.situacao ?? '-',
-                _formatarMoeda(s.valorDespesa ?? 0),
-              ]).toList(),
-            ),
-        ],
-      ),
-    );
+            // Entradas
+            pw.Header(level: 1, child: pw.Text('Entradas')),
+            if (_entradasFiltradas.isEmpty)
+              pw.Text('Nenhuma entrada no periodo.')
+            else
+              pw.Table.fromTextArray(
+                headers: ['Data', 'Tipo', 'Descricao', 'Valor'],
+                data: _entradasFiltradas.map((e) => [
+                  e.dataEntrada != null ? dateTimeFormat('dd/MM/yyyy', e.dataEntrada!) : '-',
+                  e.tipoEntrada ?? '-',
+                  e.descricao ?? '-',
+                  _formatarMoeda(e.valorEntrada ?? 0),
+                ]).toList(),
+              ),
+            pw.SizedBox(height: 20),
 
-    await Printing.layoutPdf(onLayout: (format) async => pdf.save());
+            // Saídas
+            pw.Header(level: 1, child: pw.Text('Saidas')),
+            if (_saidasFiltradas.isEmpty)
+              pw.Text('Nenhuma saida no periodo.')
+            else
+              pw.Table.fromTextArray(
+                headers: ['Data', 'Categoria', 'Descricao', 'Situacao', 'Valor'],
+                data: _saidasFiltradas.map((s) => [
+                  s.dataSaida != null ? dateTimeFormat('dd/MM/yyyy', s.dataSaida!) : '-',
+                  s.categoria ?? '-',
+                  s.descricao ?? '-',
+                  s.situacao ?? '-',
+                  _formatarMoeda(s.valorDespesa ?? 0),
+                ]).toList(),
+              ),
+          ],
+        ),
+      );
+
+      await Printing.layoutPdf(
+        onLayout: (format) async => pdf.save(),
+        name: 'relatorio_financeiro_${dateTimeFormat('yyyyMMdd', DateTime.now())}',
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao exportar PDF: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Future<void> _exportarCSV() async {
@@ -777,13 +787,10 @@ class _PageRelatoriosTesourariaWidgetState extends State<PageRelatoriosTesourari
         ]),
       ];
 
-      String csv = const ListToCsvConverter().convert(rows);
+      String csvContent = const ListToCsvConverter().convert(rows);
+      final filename = 'relatorio_financeiro_${dateTimeFormat('yyyyMMdd', DateTime.now())}.csv';
 
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/relatorio_financeiro.csv');
-      await file.writeAsString(csv);
-
-      await Share.shareXFiles([XFile(file.path)], text: 'Relatório Financeiro');
+      await csv_export.downloadCsv(csvContent, filename);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('CSV exportado com sucesso!'), backgroundColor: Color(0xFF4CAF50)),

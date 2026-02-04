@@ -29,18 +29,23 @@ class NotificationService {
     if (_initialized) return;
 
     try {
-      // Inicializar Firebase
-      await Firebase.initializeApp(
-        options: const FirebaseOptions(
-          apiKey: 'AIzaSyDVpo_KOv4lorUEXrCIbHhT983MGQqMTKI',
-          authDomain: 'churchcontrol-1dff9.firebaseapp.com',
-          projectId: 'churchcontrol-1dff9',
-          storageBucket: 'churchcontrol-1dff9.firebasestorage.app',
-          messagingSenderId: '176781023738',
-          appId: '1:176781023738:web:4fddabc3c1dab16edeec43',
-          measurementId: 'G-HVYF9NBMD8',
-        ),
-      );
+      // Inicializar Firebase - só passa options na Web
+      // No Android/iOS, usa google-services.json / GoogleService-Info.plist
+      if (kIsWeb) {
+        await Firebase.initializeApp(
+          options: const FirebaseOptions(
+            apiKey: 'AIzaSyDVpo_KOv4lorUEXrCIbHhT983MGQqMTKI',
+            authDomain: 'churchcontrol-1dff9.firebaseapp.com',
+            projectId: 'churchcontrol-1dff9',
+            storageBucket: 'churchcontrol-1dff9.firebasestorage.app',
+            messagingSenderId: '176781023738',
+            appId: '1:176781023738:web:4fddabc3c1dab16edeec43',
+            measurementId: 'G-HVYF9NBMD8',
+          ),
+        );
+      } else {
+        await Firebase.initializeApp();
+      }
 
       _messaging = FirebaseMessaging.instance;
 

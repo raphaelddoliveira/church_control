@@ -49,7 +49,26 @@
   <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#f1f4f8">
 
   <link rel="manifest" href="manifest.json">
-  
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDVpo_KOv4lorUEXrCIbHhT983MGQqMTKI",
+      authDomain: "churchcontrol-1dff9.firebaseapp.com",
+      projectId: "churchcontrol-1dff9",
+      storageBucket: "churchcontrol-1dff9.firebasestorage.app",
+      messagingSenderId: "176781023738",
+      appId: "1:176781023738:web:4fddabc3c1dab16edeec43",
+      measurementId: "G-HVYF9NBMD8"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
 </head>
 <body>
   

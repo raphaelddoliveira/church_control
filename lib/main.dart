@@ -8,6 +8,7 @@ import 'auth/supabase_auth/supabase_user_provider.dart';
 import 'auth/supabase_auth/auth_util.dart';
 
 import '/backend/supabase/supabase.dart';
+import '/backend/services/notification_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/internationalization.dart';
@@ -72,6 +73,10 @@ class _MyAppState extends State<MyApp> {
     userStream = churchControlSupabaseUserStream()
       ..listen((user) {
         _appStateNotifier.update(user);
+        // Inicializar notificações quando usuário logar
+        if (user.loggedIn) {
+          NotificationService.instance.initialize();
+        }
       });
     jwtTokenStream.listen((_) {});
     Future.delayed(

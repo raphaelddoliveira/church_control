@@ -66,4 +66,7 @@ class MembrosRow extends SupabaseDataRow {
 
   int? get idOrganizacao => getField<int>('id_organizacao');
   set idOrganizacao(int? value) => setField<int>('id_organizacao', value);
+
+  String? get fcmToken => getField<String>('fcm_token');
+  set fcmToken(String? value) => setField<String>('fcm_token', value);
 }

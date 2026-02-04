@@ -6,12 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import 'package:csv/csv.dart';
 // Imports condicionais para web
 import 'csv_export_stub.dart'
     if (dart.library.html) 'csv_export_web.dart'
     if (dart.library.io) 'csv_export_mobile.dart' as csv_export;
+import 'pdf_export_stub.dart'
+    if (dart.library.html) 'pdf_export_web.dart'
+    if (dart.library.io) 'pdf_export_mobile.dart' as pdf_export;
 import 'page_relatorios_tesouraria_model.dart';
 export 'page_relatorios_tesouraria_model.dart';
 
@@ -745,10 +747,9 @@ class _PageRelatoriosTesourariaWidgetState extends State<PageRelatoriosTesourari
         ),
       );
 
-      await Printing.layoutPdf(
-        onLayout: (format) async => pdf.save(),
-        name: 'relatorio_financeiro_${dateTimeFormat('yyyyMMdd', DateTime.now())}',
-      );
+      final pdfBytes = await pdf.save();
+      final filename = 'relatorio_financeiro_${dateTimeFormat('yyyyMMdd', DateTime.now())}.pdf';
+      await pdf_export.downloadPdf(pdfBytes, filename);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro ao exportar PDF: $e'), backgroundColor: Colors.red),

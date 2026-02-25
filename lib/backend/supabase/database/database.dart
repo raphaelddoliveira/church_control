@@ -47,3 +47,4 @@ export 'tables/membro_comunidade.dart';
 export 'tables/planos.dart';
 export 'tables/assinaturas.dart';
 export 'tables/organizacao_config.dart';
+export 'tables/membro_indisponibilidade.dart';

@@ -40,6 +40,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
   List<ArquivosRow> _arquivos = [];
   List<Map<String, dynamic>> _musicasEscala = [];
   List<MusicasRow> _todasMusicas = [];
+  Map<String, List<MembroIndisponibilidadeRow>> _indisponibilidades = {};
   bool _isLoading = true;
   bool _modoEdicaoMusicas = false;
 
@@ -147,6 +148,26 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
         );
       }
 
+      // Carregar indisponibilidades dos membros do ministério
+      Map<String, List<MembroIndisponibilidadeRow>> indisponibilidades = {};
+      final todosIdsMembros = <String>{};
+      for (var me in membrosEscala) {
+        if (me.idMembro != null) todosIdsMembros.add(me.idMembro!);
+      }
+      for (var m in membrosDisponiveis) {
+        todosIdsMembros.add(m.idMembro);
+      }
+      for (var idMembro in todosIdsMembros) {
+        final rows = await MembroIndisponibilidadeTable().queryRows(
+          queryFn: (q) => q
+              .eq('id_membro', idMembro)
+              .gte('data_fim', DateTime.now().toIso8601String().substring(0, 10)),
+        );
+        if (rows.isNotEmpty) {
+          indisponibilidades[idMembro] = rows;
+        }
+      }
+
       setState(() {
         _escala = escala;
         _ministerio = ministerio;
@@ -156,6 +177,7 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
         _arquivos = arquivos;
         _musicasEscala = musicasEscala;
         _todasMusicas = todasMusicas;
+        _indisponibilidades = indisponibilidades;
         _isLoading = false;
       });
     } catch (e) {
@@ -173,6 +195,42 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
       return membro.nomeMembro.toLowerCase().contains(query) ||
           (me.funcaoEscala?.toLowerCase().contains(query) ?? false);
     }).toList();
+  }
+
+  bool _membroIndisponivelNaData(String idMembro) {
+    final dataEscala = _escala?.dataHoraEscala;
+    if (dataEscala == null) return false;
+    final indisps = _indisponibilidades[idMembro];
+    if (indisps == null || indisps.isEmpty) return false;
+    final dataEscalaSoData = DateTime(dataEscala.year, dataEscala.month, dataEscala.day);
+    for (var indisp in indisps) {
+      if (indisp.dataInicio != null && indisp.dataFim != null) {
+        final inicio = DateTime(indisp.dataInicio!.year, indisp.dataInicio!.month, indisp.dataInicio!.day);
+        final fim = DateTime(indisp.dataFim!.year, indisp.dataFim!.month, indisp.dataFim!.day);
+        if (!dataEscalaSoData.isBefore(inicio) && !dataEscalaSoData.isAfter(fim)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  String? _motivoIndisponibilidade(String idMembro) {
+    final dataEscala = _escala?.dataHoraEscala;
+    if (dataEscala == null) return null;
+    final indisps = _indisponibilidades[idMembro];
+    if (indisps == null || indisps.isEmpty) return null;
+    final dataEscalaSoData = DateTime(dataEscala.year, dataEscala.month, dataEscala.day);
+    for (var indisp in indisps) {
+      if (indisp.dataInicio != null && indisp.dataFim != null) {
+        final inicio = DateTime(indisp.dataInicio!.year, indisp.dataInicio!.month, indisp.dataInicio!.day);
+        final fim = DateTime(indisp.dataFim!.year, indisp.dataFim!.month, indisp.dataFim!.day);
+        if (!dataEscalaSoData.isBefore(inicio) && !dataEscalaSoData.isAfter(fim)) {
+          return indisp.motivo;
+        }
+      }
+    }
+    return null;
   }
 
   @override
@@ -1221,28 +1279,57 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
             ? 'Recusado'
             : 'Pendente';
 
+    final isIndisponivel = membroEscala.idMembro != null && _membroIndisponivelNaData(membroEscala.idMembro!);
+    final motivo = membroEscala.idMembro != null ? _motivoIndisponibilidade(membroEscala.idMembro!) : null;
+
     return Container(
       margin: EdgeInsets.only(bottom: 12.0),
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(12.0),
+        border: isIndisponivel
+            ? Border.all(color: Color(0xFFFF9800).withOpacity(0.4), width: 1.0)
+            : null,
       ),
       child: Row(
         children: [
           // Avatar
-          Container(
-            width: 48.0,
-            height: 48.0,
-            decoration: BoxDecoration(
-              color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.person_rounded,
-              color: FlutterFlowTheme.of(context).primary,
-              size: 24.0,
-            ),
+          Stack(
+            children: [
+              Container(
+                width: 48.0,
+                height: 48.0,
+                decoration: BoxDecoration(
+                  color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.person_rounded,
+                  color: FlutterFlowTheme.of(context).primary,
+                  size: 24.0,
+                ),
+              ),
+              if (isIndisponivel)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 18.0,
+                    height: 18.0,
+                    decoration: BoxDecoration(
+                      color: Color(0xFFFF9800),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Color(0xFF2A2A2A), width: 2.0),
+                    ),
+                    child: Icon(
+                      Icons.warning_rounded,
+                      color: Colors.white,
+                      size: 10.0,
+                    ),
+                  ),
+                ),
+            ],
           ),
           SizedBox(width: 16.0),
           // Informações
@@ -1267,6 +1354,30 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                         color: Color(0xFF999999),
                         fontSize: 13.0,
                       ),
+                    ),
+                  ),
+                if (isIndisponivel)
+                  Padding(
+                    padding: EdgeInsets.only(top: 4.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.event_busy_rounded, color: Color(0xFFFF9800), size: 14.0),
+                        SizedBox(width: 4.0),
+                        Flexible(
+                          child: Text(
+                            motivo != null && motivo.isNotEmpty
+                                ? 'Indisponível: $motivo'
+                                : 'Indisponível nesta data',
+                            style: GoogleFonts.inter(
+                              color: Color(0xFFFF9800),
+                              fontSize: 12.0,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
               ],
@@ -1741,6 +1852,8 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                             itemBuilder: (context, index) {
                               final membro = _membrosDisponiveis[index];
                               final isSelected = membroSelecionado?.idMembro == membro.idMembro;
+                              final isIndisponivel = _membroIndisponivelNaData(membro.idMembro);
+                              final motivo = _motivoIndisponibilidade(membro.idMembro);
 
                               return InkWell(
                                 onTap: () {
@@ -1754,39 +1867,95 @@ class _PageEscalaDetalhesLiderWidgetState extends State<PageEscalaDetalhesLiderW
                                   decoration: BoxDecoration(
                                     color: isSelected
                                         ? FlutterFlowTheme.of(context).primary.withOpacity(0.1)
-                                        : Color(0xFF2A2A2A),
+                                        : isIndisponivel
+                                            ? Color(0xFFFF9800).withOpacity(0.05)
+                                            : Color(0xFF2A2A2A),
                                     borderRadius: BorderRadius.circular(12.0),
                                     border: Border.all(
                                       color: isSelected
                                           ? FlutterFlowTheme.of(context).primary
-                                          : Color(0xFF3A3A3A),
+                                          : isIndisponivel
+                                              ? Color(0xFFFF9800).withOpacity(0.4)
+                                              : Color(0xFF3A3A3A),
                                       width: isSelected ? 2.0 : 1.0,
                                     ),
                                   ),
                                   child: Row(
                                     children: [
-                                      Container(
-                                        width: 40.0,
-                                        height: 40.0,
-                                        decoration: BoxDecoration(
-                                          color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          Icons.person_rounded,
-                                          color: FlutterFlowTheme.of(context).primary,
-                                          size: 20.0,
-                                        ),
+                                      Stack(
+                                        children: [
+                                          Container(
+                                            width: 40.0,
+                                            height: 40.0,
+                                            decoration: BoxDecoration(
+                                              color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.person_rounded,
+                                              color: FlutterFlowTheme.of(context).primary,
+                                              size: 20.0,
+                                            ),
+                                          ),
+                                          if (isIndisponivel)
+                                            Positioned(
+                                              right: 0,
+                                              bottom: 0,
+                                              child: Container(
+                                                width: 16.0,
+                                                height: 16.0,
+                                                decoration: BoxDecoration(
+                                                  color: Color(0xFFFF9800),
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(color: Color(0xFF1A1A1A), width: 2.0),
+                                                ),
+                                                child: Icon(
+                                                  Icons.warning_rounded,
+                                                  color: Colors.white,
+                                                  size: 9.0,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
                                       ),
                                       SizedBox(width: 12.0),
                                       Expanded(
-                                        child: Text(
-                                          membro.nomeMembro,
-                                          style: GoogleFonts.inter(
-                                            color: Colors.white,
-                                            fontSize: 15.0,
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              membro.nomeMembro,
+                                              style: GoogleFonts.inter(
+                                                color: Colors.white,
+                                                fontSize: 15.0,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            if (isIndisponivel)
+                                              Padding(
+                                                padding: EdgeInsets.only(top: 4.0),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.event_busy_rounded, color: Color(0xFFFF9800), size: 13.0),
+                                                    SizedBox(width: 4.0),
+                                                    Flexible(
+                                                      child: Text(
+                                                        motivo != null && motivo.isNotEmpty
+                                                            ? 'Indisponível: $motivo'
+                                                            : 'Indisponível nesta data',
+                                                        style: GoogleFonts.inter(
+                                                          color: Color(0xFFFF9800),
+                                                          fontSize: 12.0,
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                       ),
                                       if (isSelected)

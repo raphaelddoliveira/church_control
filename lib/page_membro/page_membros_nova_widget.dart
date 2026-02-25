@@ -26,6 +26,10 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   int _paginaAtual = 0; // 0 = Feed, 1 = Devocionais, 2 = Comunidades, 3 = Escalas
 
+  // Escalas: ministério selecionado (null = lista de ministérios)
+  int? _ministerioSelecionado;
+  String? _nomeMinisterioSelecionado;
+
   // Map para armazenar a foto do avatar de cada aviso (null = logo da igreja)
   Map<int, String?> _fotosAvisos = {};
 
@@ -756,6 +760,191 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
         },
       ),
     );
+  }
+
+  // ============================================================
+  // MÉTODOS DE DADOS - ESCALAS / MINISTÉRIOS / INDISPONIBILIDADE
+  // ============================================================
+
+  Future<List<Map<String, dynamic>>> _carregarMinisteriosDoMembro(String? idMembro) async {
+    if (idMembro == null) return [];
+
+    final membrosMinisterios = await MembrosMinisteriosTable().queryRows(
+      queryFn: (q) => q.eqOrNull('id_membro', idMembro),
+    );
+
+    if (membrosMinisterios.isEmpty) return [];
+
+    List<Map<String, dynamic>> resultado = [];
+    for (var mm in membrosMinisterios) {
+      if (mm.idMinisterio == null) continue;
+
+      final ministerios = await MinisterioTable().queryRows(
+        queryFn: (q) => q.eq('id_ministerio', mm.idMinisterio!),
+      );
+      if (ministerios.isEmpty) continue;
+
+      // Contar convites pendentes neste ministério
+      final membrosEscalas = await MembrosEscalasTable().queryRows(
+        queryFn: (q) => q.eqOrNull('id_membro', idMembro),
+      );
+
+      int pendentes = 0;
+      for (var me in membrosEscalas) {
+        if (me.aceitouEscala == null || me.aceitouEscala!.isEmpty) {
+          if (me.idEscala != null) {
+            final escalas = await EscalasTable().queryRows(
+              queryFn: (q) => q.eq('id_escala', me.idEscala!),
+            );
+            if (escalas.isNotEmpty && escalas.first.idMinisterio == mm.idMinisterio) {
+              pendentes++;
+            }
+          }
+        }
+      }
+
+      resultado.add({
+        'ministerio': ministerios.first,
+        'cargo': mm.cargo,
+        'pendentes': pendentes,
+      });
+    }
+
+    return resultado;
+  }
+
+  Future<List<Map<String, dynamic>>> _carregarEscalasDoMinisterio(String? idMembro, int idMinisterio) async {
+    if (idMembro == null) return [];
+
+    final membrosEscalas = await MembrosEscalasTable().queryRows(
+      queryFn: (q) => q.eqOrNull('id_membro', idMembro),
+    );
+
+    if (membrosEscalas.isEmpty) return [];
+
+    List<Map<String, dynamic>> escalasCompletas = [];
+    for (var membroEscala in membrosEscalas) {
+      if (membroEscala.idEscala != null) {
+        final escalas = await EscalasTable().queryRows(
+          queryFn: (q) => q.eq('id_escala', membroEscala.idEscala!),
+        );
+
+        if (escalas.isNotEmpty) {
+          final escala = escalas.first;
+
+          // Filtrar por ministério
+          if (escala.idMinisterio != idMinisterio) continue;
+
+          String? nomeMinisterio;
+          if (escala.idMinisterio != null) {
+            final ministerios = await MinisterioTable().queryRows(
+              queryFn: (q) => q.eq('id_ministerio', escala.idMinisterio!),
+            );
+            if (ministerios.isNotEmpty) {
+              nomeMinisterio = ministerios.first.nomeMinisterio;
+            }
+          }
+
+          final arquivos = await ArquivosTable().queryRows(
+            queryFn: (q) => q.eq('id_escala', escala.idEscala),
+          );
+
+          List<Map<String, dynamic>> musicasEscala = [];
+          if (escala.idMinisterio == 1) {
+            final escalaMusicasRows = await EscalaMusicasTable().queryRows(
+              queryFn: (q) => q.eq('id_escala', escala.idEscala).order('ordem'),
+            );
+
+            for (var em in escalaMusicasRows) {
+              if (em.idMusica != null) {
+                final musicasRows = await MusicasTable().queryRows(
+                  queryFn: (q) => q.eq('id', em.idMusica!),
+                );
+                if (musicasRows.isNotEmpty) {
+                  musicasEscala.add({
+                    'musica': musicasRows.first,
+                    'tomEscala': em.tomEscala,
+                    'ordem': em.ordem,
+                    'observacoes': em.observacoes,
+                  });
+                }
+              }
+            }
+          }
+
+          List<Map<String, dynamic>> membrosEscalaCompletos = [];
+          final todosMembrosDaEscala = await MembrosEscalasTable().queryRows(
+            queryFn: (q) => q.eq('id_escala', escala.idEscala),
+          );
+          for (var me in todosMembrosDaEscala) {
+            if (me.idMembro != null) {
+              final membroRows = await MembrosTable().queryRows(
+                queryFn: (q) => q.eq('id_membro', me.idMembro!),
+              );
+              if (membroRows.isNotEmpty) {
+                membrosEscalaCompletos.add({
+                  'membro': membroRows.first,
+                  'funcao': me.funcaoEscala,
+                  'aceitou': me.aceitouEscala,
+                });
+              }
+            }
+          }
+
+          escalasCompletas.add({
+            'escala': escala,
+            'funcao': membroEscala.funcaoEscala,
+            'aceitou': membroEscala.aceitouEscala,
+            'nomeMinisterio': nomeMinisterio,
+            'idMinisterio': escala.idMinisterio,
+            'idMembroEscala': membroEscala.idMembroEscala,
+            'arquivos': arquivos,
+            'musicas': musicasEscala,
+            'membrosEscala': membrosEscalaCompletos,
+          });
+        }
+      }
+    }
+
+    // Filtrar: mês corrente + futuras
+    final agora = DateTime.now();
+    final inicioMesAtual = DateTime(agora.year, agora.month, 1);
+    escalasCompletas = escalasCompletas.where((item) {
+      final data = (item['escala'] as EscalasRow).dataHoraEscala;
+      if (data == null) return false;
+      return !data.isBefore(inicioMesAtual);
+    }).toList();
+
+    // Ordenar por data ascendente (próximas primeiro)
+    escalasCompletas.sort((a, b) {
+      final dataA = (a['escala'] as EscalasRow).dataHoraEscala;
+      final dataB = (b['escala'] as EscalasRow).dataHoraEscala;
+      if (dataA == null && dataB == null) return 0;
+      if (dataA == null) return 1;
+      if (dataB == null) return -1;
+      return dataA.compareTo(dataB);
+    });
+
+    return escalasCompletas;
+  }
+
+  Future<List<MembroIndisponibilidadeRow>> _carregarIndisponibilidades(String? idMembro) async {
+    if (idMembro == null) return [];
+    try {
+      final rows = await MembroIndisponibilidadeTable().queryRows(
+        queryFn: (q) => q.eqOrNull('id_membro', idMembro).order('data_inicio'),
+      );
+      // Filtrar apenas indisponibilidades futuras ou do dia atual
+      final hoje = DateTime.now();
+      final hojeSemHora = DateTime(hoje.year, hoje.month, hoje.day);
+      return rows.where((r) {
+        final fim = r.dataFim;
+        if (fim == null) return false;
+        return !fim.isBefore(hojeSemHora);
+      }).toList();
+    } catch (e) {
+      return [];
+    }
   }
 
   Future<List<Map<String, dynamic>>> _carregarEscalasDoMembro(String? idMembro) async {
@@ -2532,8 +2721,255 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
       );
     }
 
+    // Se tem ministério selecionado, mostra escalas desse ministério
+    if (_ministerioSelecionado != null) {
+      return _buildTelaEscalasMinisterio(membroAtual);
+    }
+
+    // Caso contrário, mostra lista de ministérios
+    return _buildTelaMinisterios(membroAtual);
+  }
+
+  Widget _buildTelaMinisterios(MembrosRow membroAtual) {
+    return FutureBuilder<List<Object>>(
+      future: Future.wait([
+        _carregarMinisteriosDoMembro(membroAtual.idMembro),
+        _carregarIndisponibilidades(membroAtual.idMembro),
+      ]),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(
+                FlutterFlowTheme.of(context).primary,
+              ),
+            ),
+          );
+        }
+
+        final ministerios = snapshot.data![0] as List<Map<String, dynamic>>;
+        final indisponibilidades = snapshot.data![1] as List<MembroIndisponibilidadeRow>;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+              child: Text(
+                'Escalas',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.all(16.0),
+                children: [
+                  // Card Minha Disponibilidade
+                  InkWell(
+                    onTap: () => _mostrarModalIndisponibilidade(context, membroAtual.idMembro),
+                    borderRadius: BorderRadius.circular(16.0),
+                    child: Container(
+                      margin: EdgeInsets.only(bottom: 16.0),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(16.0),
+                        border: Border.all(color: Color(0xFF2A2A2A), width: 1.0),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48.0,
+                              height: 48.0,
+                              decoration: BoxDecoration(
+                                color: Color(0xFFFF9800).withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.event_busy_rounded,
+                                color: Color(0xFFFF9800),
+                                size: 24.0,
+                              ),
+                            ),
+                            SizedBox(width: 16.0),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Minha Disponibilidade',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 14.0,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2.0),
+                                  Text(
+                                    indisponibilidades.isEmpty
+                                        ? 'Nenhuma data bloqueada'
+                                        : '${indisponibilidades.length} data${indisponibilidades.length > 1 ? 's' : ''} bloqueada${indisponibilidades.length > 1 ? 's' : ''}',
+                                    style: GoogleFonts.inter(
+                                      color: Color(0xFF999999),
+                                      fontSize: 12.0,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              color: Color(0xFF666666),
+                              size: 24.0,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Seção Meus Ministérios
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 12.0, top: 8.0),
+                    child: Text(
+                      'Meus Ministérios',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+
+                  if (ministerios.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(48.0),
+                        child: Column(
+                          children: [
+                            Icon(Icons.groups_rounded, size: 64.0, color: Color(0xFF666666)),
+                            SizedBox(height: 16.0),
+                            Text(
+                              'Você não faz parte de nenhum ministério',
+                              style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 16.0),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    ...ministerios.map((item) {
+                      final ministerio = item['ministerio'] as MinisterioRow;
+                      final cargo = item['cargo'] as String?;
+                      final pendentes = item['pendentes'] as int;
+                      final isLouvor = ministerio.idMinisterio == 1;
+
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            _ministerioSelecionado = ministerio.idMinisterio;
+                            _nomeMinisterioSelecionado = ministerio.nomeMinisterio;
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(16.0),
+                        child: Container(
+                          margin: EdgeInsets.only(bottom: 12.0),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF1A1A1A),
+                            borderRadius: BorderRadius.circular(16.0),
+                            border: Border.all(color: Color(0xFF2A2A2A), width: 1.0),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48.0,
+                                  height: 48.0,
+                                  decoration: BoxDecoration(
+                                    color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    isLouvor ? Icons.music_note_rounded : Icons.assignment_rounded,
+                                    color: FlutterFlowTheme.of(context).primary,
+                                    size: 24.0,
+                                  ),
+                                ),
+                                SizedBox(width: 16.0),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        ministerio.nomeMinisterio ?? 'Ministério',
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: 16.0,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      if (cargo != null && cargo.isNotEmpty) ...[
+                                        SizedBox(height: 2.0),
+                                        Text(
+                                          cargo,
+                                          style: GoogleFonts.inter(
+                                            color: Color(0xFF999999),
+                                            fontSize: 13.0,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                if (pendentes > 0)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(12.0),
+                                    ),
+                                    child: Text(
+                                      '$pendentes',
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white,
+                                        fontSize: 12.0,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                SizedBox(width: 8.0),
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: Color(0xFF666666),
+                                  size: 24.0,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTelaEscalasMinisterio(MembrosRow membroAtual) {
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _carregarEscalasDoMembro(membroAtual.idMembro),
+      future: _carregarEscalasDoMinisterio(membroAtual.idMembro, _ministerioSelecionado!),
       builder: (context, snapshotEscalas) {
         if (!snapshotEscalas.hasData) {
           return Center(
@@ -2547,205 +2983,588 @@ class _PageMembrosNovaWidgetState extends State<PageMembrosNovaWidget> {
 
         final escalasCompletas = snapshotEscalas.data!;
 
-        if (escalasCompletas.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.calendar_today_rounded,
-                  size: 64.0,
-                  color: Color(0xFF666666),
-                ),
-                SizedBox(height: 16.0),
-                Text(
-                  'Nenhuma escala disponível',
-                  style: GoogleFonts.inter(
-                    color: Color(0xFF999999),
-                    fontSize: 16.0,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Título "Escalas"
+            // Header com botão voltar
             Padding(
-              padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-              child: Text(
-                'Escalas',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 24.0,
-                  fontWeight: FontWeight.bold,
-                ),
+              padding: EdgeInsets.fromLTRB(8.0, 8.0, 16.0, 8.0),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _ministerioSelecionado = null;
+                        _nomeMinisterioSelecionado = null;
+                      });
+                    },
+                    icon: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 24.0),
+                  ),
+                  SizedBox(width: 4.0),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _nomeMinisterioSelecionado ?? 'Escalas',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${escalasCompletas.length} escala${escalasCompletas.length != 1 ? 's' : ''}',
+                          style: GoogleFonts.inter(
+                            color: Color(0xFF999999),
+                            fontSize: 13.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            // Lista de escalas
-            Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.all(16.0),
-                itemCount: escalasCompletas.length,
-                itemBuilder: (context, index) {
-                  final item = escalasCompletas[index];
-                  final escala = item['escala'] as EscalasRow;
-                  final funcao = item['funcao'] as String?;
-                  final aceitou = item['aceitou'] as String?;
-                  final nomeMinisterio = item['nomeMinisterio'] as String?;
-                  final idMinisterio = item['idMinisterio'] as int?;
-                  final idMembroEscala = item['idMembroEscala'] as int;
-                  final arquivos = item['arquivos'] as List<ArquivosRow>? ?? [];
-                  final musicas = item['musicas'] as List<Map<String, dynamic>>? ?? [];
-                  final membrosEscala = item['membrosEscala'] as List<Map<String, dynamic>>? ?? [];
-                  final bool isLouvor = idMinisterio == 1;
 
-                  return InkWell(
-                    onTap: () {
-                      _mostrarModalEscala(
-                        context, escala, funcao, aceitou, idMembroEscala, nomeMinisterio, arquivos,
-                        idMinisterio: idMinisterio,
-                        musicas: musicas,
-                        membrosEscala: membrosEscala,
-                      );
-                    },
-                    child: Container(
-                      margin: EdgeInsets.only(bottom: 16.0),
-                      decoration: BoxDecoration(
-                        color: Color(0xFF1A1A1A),
-                        borderRadius: BorderRadius.circular(16.0),
-                        border: Border.all(
-                          color: Color(0xFF2A2A2A),
-                          width: 1.0,
-                        ),
+            if (escalasCompletas.isEmpty)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.calendar_today_rounded, size: 64.0, color: Color(0xFF666666)),
+                      SizedBox(height: 16.0),
+                      Text(
+                        'Nenhuma escala disponível',
+                        style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 16.0),
                       ),
-                      child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            // Ícone (diferente para ministério de louvor)
-                            Container(
-                              width: 48.0,
-                              height: 48.0,
-                              decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                isLouvor ? Icons.music_note_rounded : Icons.event_rounded,
-                                color: FlutterFlowTheme.of(context).primary,
-                                size: 24.0,
-                              ),
-                            ),
-                            SizedBox(width: 16.0),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: ListView.builder(
+                  padding: EdgeInsets.all(16.0),
+                  itemCount: escalasCompletas.length,
+                  itemBuilder: (context, index) {
+                    final item = escalasCompletas[index];
+                    final escala = item['escala'] as EscalasRow;
+                    final funcao = item['funcao'] as String?;
+                    final aceitou = item['aceitou'] as String?;
+                    final nomeMinisterio = item['nomeMinisterio'] as String?;
+                    final idMinisterio = item['idMinisterio'] as int?;
+                    final idMembroEscala = item['idMembroEscala'] as int;
+                    final arquivos = item['arquivos'] as List<ArquivosRow>? ?? [];
+                    final musicas = item['musicas'] as List<Map<String, dynamic>>? ?? [];
+                    final membrosEscala = item['membrosEscala'] as List<Map<String, dynamic>>? ?? [];
+                    final bool isLouvor = idMinisterio == 1;
 
-                            // Informações
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    escala.nomeEscala ?? 'Escala',
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontSize: 16.0,
+                    return InkWell(
+                      onTap: () {
+                        _mostrarModalEscala(
+                          context, escala, funcao, aceitou, idMembroEscala, nomeMinisterio, arquivos,
+                          idMinisterio: idMinisterio,
+                          musicas: musicas,
+                          membrosEscala: membrosEscala,
+                        );
+                      },
+                      child: Container(
+                        margin: EdgeInsets.only(bottom: 16.0),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF1A1A1A),
+                          borderRadius: BorderRadius.circular(16.0),
+                          border: Border.all(color: Color(0xFF2A2A2A), width: 1.0),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48.0,
+                                height: 48.0,
+                                decoration: BoxDecoration(
+                                  color: FlutterFlowTheme.of(context).primary.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  isLouvor ? Icons.music_note_rounded : Icons.event_rounded,
+                                  color: FlutterFlowTheme.of(context).primary,
+                                  size: 24.0,
+                                ),
+                              ),
+                              SizedBox(width: 16.0),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      escala.nomeEscala ?? 'Escala',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontSize: 16.0,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.0),
+                                    if (funcao != null && funcao.isNotEmpty) ...[
+                                      Text(
+                                        funcao,
+                                        style: GoogleFonts.inter(
+                                          color: FlutterFlowTheme.of(context).primary,
+                                          fontSize: 13.0,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      SizedBox(height: 2.0),
+                                    ],
+                                    Row(
+                                      children: [
+                                        Text(
+                                          escala.dataHoraEscala != null
+                                              ? dateTimeFormat('dd/MM/yyyy - HH:mm', escala.dataHoraEscala)
+                                              : 'Data não informada',
+                                          style: GoogleFonts.inter(
+                                            color: Color(0xFF999999),
+                                            fontSize: 14.0,
+                                          ),
+                                        ),
+                                        if (isLouvor && musicas.isNotEmpty) ...[
+                                          SizedBox(width: 8.0),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange.withOpacity(0.15),
+                                              borderRadius: BorderRadius.circular(4.0),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.queue_music_rounded, color: Colors.orange, size: 12.0),
+                                                SizedBox(width: 4.0),
+                                                Text(
+                                                  '${musicas.length}',
+                                                  style: GoogleFonts.inter(color: Colors.orange, fontSize: 11.0, fontWeight: FontWeight.w600),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (aceitou != null && aceitou.isNotEmpty)
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                                  decoration: BoxDecoration(
+                                    color: aceitou == 'aceito' ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20.0),
+                                    border: Border.all(
+                                      color: aceitou == 'aceito' ? Colors.green : Colors.red,
+                                      width: 1.0,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    aceitou == 'aceito' ? 'Aceito' : 'Recusado',
+                                    style: GoogleFonts.inter(
+                                      color: aceitou == 'aceito' ? Colors.green : Colors.red,
+                                      fontSize: 12.0,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  SizedBox(height: 4.0),
-                                  // Nome do ministério
-                                  if (nomeMinisterio != null && nomeMinisterio.isNotEmpty) ...[
-                                    Text(
-                                      nomeMinisterio,
-                                      style: GoogleFonts.inter(
-                                        color: FlutterFlowTheme.of(context).primary,
-                                        fontSize: 13.0,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                )
+                              else
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: Color(0xFF666666),
+                                  size: 24.0,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ============================================================
+  // MODAL DE INDISPONIBILIDADE
+  // ============================================================
+
+  void _mostrarModalIndisponibilidade(BuildContext context, String? idMembro) {
+    if (idMembro == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: BoxDecoration(
+                color: Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
+              ),
+              child: Column(
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: EdgeInsets.only(top: 12.0),
+                    width: 40.0,
+                    height: 4.0,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF666666),
+                      borderRadius: BorderRadius.circular(2.0),
+                    ),
+                  ),
+
+                  // Header
+                  Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Minha Disponibilidade',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(modalContext),
+                          icon: Icon(Icons.close_rounded, color: Color(0xFF999999)),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Botões de adicionar
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () async {
+                              final data = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now().add(Duration(days: 1)),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now().add(Duration(days: 180)),
+                                builder: (context, child) => Theme(
+                                  data: ThemeData.dark().copyWith(
+                                    colorScheme: ColorScheme.dark(
+                                      primary: FlutterFlowTheme.of(context).primary,
+                                      surface: Color(0xFF2A2A2A),
                                     ),
-                                    SizedBox(height: 2.0),
-                                  ],
-                                  Row(
-                                    children: [
-                                      Text(
-                                        escala.dataHoraEscala != null
-                                            ? dateTimeFormat('dd/MM/yyyy - HH:mm', escala.dataHoraEscala)
-                                            : 'Data não informada',
-                                        style: GoogleFonts.inter(
-                                          color: Color(0xFF999999),
-                                          fontSize: 14.0,
-                                        ),
-                                      ),
-                                      // Indicador de músicas para ministério de louvor
-                                      if (isLouvor && musicas.isNotEmpty) ...[
-                                        SizedBox(width: 8.0),
-                                        Container(
-                                          padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-                                          decoration: BoxDecoration(
-                                            color: Colors.orange.withOpacity(0.15),
-                                            borderRadius: BorderRadius.circular(4.0),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(Icons.queue_music_rounded, color: Colors.orange, size: 12.0),
-                                              SizedBox(width: 4.0),
-                                              Text(
-                                                '${musicas.length}',
-                                                style: GoogleFonts.inter(color: Colors.orange, fontSize: 11.0, fontWeight: FontWeight.w600),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ],
+                                  ),
+                                  child: child!,
+                                ),
+                              );
+                              if (data != null) {
+                                await _adicionarIndisponibilidade(
+                                  context, idMembro, data, data, setModalState,
+                                );
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(12.0),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: 12.0),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF2A2A2A),
+                                borderRadius: BorderRadius.circular(12.0),
+                                border: Border.all(color: Color(0xFF404040)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.today_rounded, color: Color(0xFFFF9800), size: 18.0),
+                                  SizedBox(width: 8.0),
+                                  Text(
+                                    'Data Específica',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 13.0,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-
-                            // Status badge (se já respondeu)
-                            if (aceitou != null && aceitou.isNotEmpty)
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                                decoration: BoxDecoration(
-                                  color: aceitou == 'aceito' ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20.0),
-                                  border: Border.all(
-                                    color: aceitou == 'aceito' ? Colors.green : Colors.red,
-                                    width: 1.0,
-                                  ),
-                                ),
-                                child: Text(
-                                  aceitou == 'aceito' ? 'Aceito' : 'Recusado',
-                                  style: GoogleFonts.inter(
-                                    color: aceitou == 'aceito' ? Colors.green : Colors.red,
-                                    fontSize: 12.0,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              )
-                            else
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                color: Color(0xFF666666),
-                                size: 24.0,
-                              ),
-                          ],
+                          ),
                         ),
-                      ),
+                        SizedBox(width: 12.0),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () async {
+                              final result = await showDateRangePicker(
+                                context: context,
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now().add(Duration(days: 180)),
+                                builder: (context, child) => Theme(
+                                  data: ThemeData.dark().copyWith(
+                                    colorScheme: ColorScheme.dark(
+                                      primary: FlutterFlowTheme.of(context).primary,
+                                      surface: Color(0xFF2A2A2A),
+                                    ),
+                                  ),
+                                  child: child!,
+                                ),
+                              );
+                              if (result != null) {
+                                await _adicionarIndisponibilidade(
+                                  context, idMembro, result.start, result.end, setModalState,
+                                );
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(12.0),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: 12.0),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF2A2A2A),
+                                borderRadius: BorderRadius.circular(12.0),
+                                border: Border.all(color: Color(0xFF404040)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.date_range_rounded, color: Color(0xFFFF9800), size: 18.0),
+                                  SizedBox(width: 8.0),
+                                  Text(
+                                    'Período',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 13.0,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  );
-                },
+                  ),
+
+                  SizedBox(height: 20.0),
+
+                  // Divider
+                  Divider(color: Color(0xFF2A2A2A), height: 1.0),
+
+                  // Lista de indisponibilidades
+                  Expanded(
+                    child: FutureBuilder<List<MembroIndisponibilidadeRow>>(
+                      future: _carregarIndisponibilidades(idMembro),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                FlutterFlowTheme.of(context).primary,
+                              ),
+                            ),
+                          );
+                        }
+
+                        final indisponibilidades = snapshot.data!;
+
+                        if (indisponibilidades.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle_outline_rounded, size: 64.0, color: Color(0xFF4CAF50)),
+                                SizedBox(height: 16.0),
+                                Text(
+                                  'Nenhuma data bloqueada',
+                                  style: GoogleFonts.inter(color: Color(0xFF999999), fontSize: 16.0),
+                                ),
+                                SizedBox(height: 4.0),
+                                Text(
+                                  'Adicione datas em que você não pode ser escalado',
+                                  style: GoogleFonts.inter(color: Color(0xFF666666), fontSize: 13.0),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return ListView.builder(
+                          padding: EdgeInsets.all(16.0),
+                          itemCount: indisponibilidades.length,
+                          itemBuilder: (context, index) {
+                            final item = indisponibilidades[index];
+                            final inicio = item.dataInicio;
+                            final fim = item.dataFim;
+                            final isSingleDay = inicio != null && fim != null &&
+                                inicio.year == fim.year &&
+                                inicio.month == fim.month &&
+                                inicio.day == fim.day;
+
+                            String dateText = '';
+                            if (inicio != null && fim != null) {
+                              if (isSingleDay) {
+                                dateText = dateTimeFormat('dd/MM/yyyy', inicio);
+                              } else {
+                                dateText = '${dateTimeFormat('dd/MM/yyyy', inicio)} - ${dateTimeFormat('dd/MM/yyyy', fim)}';
+                              }
+                            }
+
+                            return Container(
+                              margin: EdgeInsets.only(bottom: 12.0),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF2A2A2A),
+                                borderRadius: BorderRadius.circular(12.0),
+                                border: Border.all(color: Color(0xFF404040)),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(12.0),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 36.0,
+                                      height: 36.0,
+                                      decoration: BoxDecoration(
+                                        color: Color(0xFFE53935).withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(8.0),
+                                      ),
+                                      child: Icon(
+                                        Icons.block_rounded,
+                                        color: Color(0xFFE53935),
+                                        size: 18.0,
+                                      ),
+                                    ),
+                                    SizedBox(width: 12.0),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            dateText,
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white,
+                                              fontSize: 14.0,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          if (item.motivo != null && item.motivo!.isNotEmpty) ...[
+                                            SizedBox(height: 2.0),
+                                            Text(
+                                              item.motivo!,
+                                              style: GoogleFonts.inter(
+                                                color: Color(0xFF999999),
+                                                fontSize: 12.0,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: () async {
+                                        await MembroIndisponibilidadeTable().delete(
+                                          matchingRows: (rows) => rows.eq('id', item.id),
+                                        );
+                                        setModalState(() {});
+                                        setState(() {});
+                                      },
+                                      icon: Icon(Icons.delete_outline_rounded, color: Color(0xFFE53935), size: 20.0),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _adicionarIndisponibilidade(
+    BuildContext context,
+    String idMembro,
+    DateTime dataInicio,
+    DateTime dataFim,
+    StateSetter setModalState,
+  ) async {
+    String? motivo;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        final motivoController = TextEditingController();
+        return AlertDialog(
+          backgroundColor: Color(0xFF2A2A2A),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+          title: Text(
+            'Motivo (opcional)',
+            style: GoogleFonts.poppins(color: Colors.white, fontSize: 18.0, fontWeight: FontWeight.w600),
+          ),
+          content: TextField(
+            controller: motivoController,
+            style: GoogleFonts.inter(color: Colors.white, fontSize: 14.0),
+            decoration: InputDecoration(
+              hintText: 'Ex: Viagem, Compromisso...',
+              hintStyle: GoogleFonts.inter(color: Color(0xFF666666), fontSize: 14.0),
+              filled: true,
+              fillColor: Color(0xFF1E1E1E),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.0),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                motivo = motivoController.text.isNotEmpty ? motivoController.text : null;
+                Navigator.pop(dialogContext);
+              },
+              child: Text('Pular', style: GoogleFonts.inter(color: Color(0xFF999999))),
+            ),
+            TextButton(
+              onPressed: () {
+                motivo = motivoController.text.isNotEmpty ? motivoController.text : null;
+                Navigator.pop(dialogContext);
+              },
+              child: Text('Salvar', style: GoogleFonts.inter(color: FlutterFlowTheme.of(context).primary, fontWeight: FontWeight.w600)),
             ),
           ],
         );
       },
     );
+
+    await MembroIndisponibilidadeTable().insert({
+      'id_membro': idMembro,
+      'data_inicio': dataInicio.toIso8601String().split('T')[0],
+      'data_fim': dataFim.toIso8601String().split('T')[0],
+      'motivo': motivo,
+    });
+
+    setModalState(() {});
+    setState(() {});
   }
 
   Widget _buildInfoRow({required String label, required String value}) {

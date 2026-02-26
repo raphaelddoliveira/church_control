@@ -5,6 +5,7 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import 'dart:ui';
 import '/index.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -80,7 +81,32 @@ class _PaginadetransicaoWidgetState extends State<PaginadetransicaoWidget> {
                              membro.idNivelAcesso != null;
       final podeAcessarMembro = membro.podeAcessarAreaMembro == true;
 
-      // Se tem ambos os acessos, ir para tela de seleção
+      // Níveis que são somente web (1=Secretaria, 2=Tesouraria, 3=Admin, 4=Pastor)
+      final niveisApenasWeb = [1, 2, 3, 4];
+      final isNivelApenasWeb = niveisApenasWeb.contains(membro.idNivelAcesso);
+
+      // BLOQUEIO MOBILE: Se não é web e o nível é apenas web
+      if (!kIsWeb && isNivelApenasWeb) {
+        // Se também pode acessar área de membro, redireciona direto
+        if (podeAcessarMembro) {
+          context.pushNamed(PageMembrosNovaWidget.routeName);
+          return;
+        }
+
+        // Senão, mostra dialog informativo e faz logout
+        if (mounted) {
+          _mostrarDialogApenasWeb(context, membro.idNivelAcesso!);
+        }
+        return;
+      }
+
+      // Se tem ambos os acessos no mobile, ir direto para área de membro
+      if (!kIsWeb && temAcessoAdmin && podeAcessarMembro) {
+        context.pushNamed(PageMembrosNovaWidget.routeName);
+        return;
+      }
+
+      // Se tem ambos os acessos na web, ir para tela de seleção
       if (temAcessoAdmin && podeAcessarMembro) {
         context.pushNamed('SelecionaPerfil');
         return;
@@ -126,6 +152,119 @@ class _PaginadetransicaoWidgetState extends State<PaginadetransicaoWidget> {
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
+  }
+
+  String _getNomeNivel(int nivel) {
+    switch (nivel) {
+      case 1: return 'Secretaria';
+      case 2: return 'Tesouraria';
+      case 3: return 'Administração';
+      case 4: return 'Pastor';
+      default: return 'Administrativo';
+    }
+  }
+
+  void _mostrarDialogApenasWeb(BuildContext context, int nivelAcesso) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.0),
+          ),
+          child: Container(
+            constraints: BoxConstraints(maxWidth: 380.0),
+            padding: EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Ícone
+                Container(
+                  width: 80.0,
+                  height: 80.0,
+                  decoration: BoxDecoration(
+                    color: Color(0xFF2196F3).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.computer_rounded,
+                    color: Color(0xFF2196F3),
+                    size: 40.0,
+                  ),
+                ),
+                SizedBox(height: 24.0),
+                // Título
+                Text(
+                  'Acesso apenas via Web',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 20.0,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 12.0),
+                // Mensagem
+                Text(
+                  'A área de ${_getNomeNivel(nivelAcesso)} está disponível apenas pela versão web do ChurchControl.',
+                  style: GoogleFonts.inter(
+                    color: Color(0xFF999999),
+                    fontSize: 14.0,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 8.0),
+                Text(
+                  'Acesse pelo navegador do seu computador ou celular.',
+                  style: GoogleFonts.inter(
+                    color: Color(0xFF666666),
+                    fontSize: 13.0,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 32.0),
+                // Botão Logout
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(dialogContext);
+                      GoRouter.of(context).prepareAuthEvent();
+                      await authManager.signOut();
+                      GoRouter.of(context).clearRedirectLocation();
+                      context.goNamedAuth(
+                        LoginTesteWidget.routeName,
+                        context.mounted,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF2196F3),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 16.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Voltar para o Login',
+                      style: GoogleFonts.inter(
+                        fontSize: 15.0,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override

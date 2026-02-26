@@ -4,6 +4,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/index.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -37,6 +38,12 @@ class _SelecionaPerfilWidgetState extends State<SelecionaPerfilWidget> {
       );
 
       final membro = membros.firstOrNull;
+
+      // No mobile, redirecionar direto para área do membro (admin é apenas web)
+      if (!kIsWeb && membro != null) {
+        context.pushReplacementNamed(PageMembrosNovaWidget.routeName);
+        return;
+      }
 
       setState(() {
         _membroAtual = membro;

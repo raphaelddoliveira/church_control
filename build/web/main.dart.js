@@ -79893,6 +79893,7 @@ s=1
 break}g=t.S
 j=o.k("id_nivel_acesso",g)!=null&&o.k("id_nivel_acesso",g)!==5&&o.k("id_nivel_acesso",g)!=null
 i=o.k("pode_acessar_area_membro",t.y)===!0
+B.o.t(A.b([1,2,3,4],t.t),o.k("id_nivel_acesso",g))
 if(j&&i){h=h.c
 h.toString
 A.bq(h,"SelecionaPerfil",null,B.ai,B.aR,t.X)
